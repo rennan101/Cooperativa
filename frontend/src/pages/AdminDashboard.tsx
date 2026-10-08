@@ -21,8 +21,8 @@ export const AdminDashboard: React.FC = () => {
     return (
       <div className="max-w-md mx-auto py-16 px-4 text-center animate-fade-in">
         <Icon name="lock" size="xl" className="text-red-600 mb-2" />
-        <h2 className="text-xl font-black text-slate-950">Acesso Restrito</h2>
-        <p className="text-xs font-semibold text-slate-700 mt-1 mb-4">Esta área é restrita a administradores da Cooperativa.</p>
+        <h2 className="text-xl font-bold text-uber-black">Acesso Restrito</h2>
+        <p className="text-xs font-normal text-uber-iron mt-1 mb-4">Esta área é restrita a administradores da Cooperativa.</p>
         <Button variant="primary" size="md" onClick={() => navigate('/')}>Voltar ao Início</Button>
       </div>
     );
@@ -65,10 +65,10 @@ export const AdminDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6 h-10">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-950">Painel de Gestão e Administração</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-uber-black">Painel de Gestão</h1>
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs font-extrabold text-coop-primary bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-300">
+        <div className="flex items-center gap-1.5 text-xs font-bold text-uber-black bg-uber-gray px-3 py-1 rounded-full border border-uber-border">
           <Icon name="shield" size="sm" />
           <span>Perfil {role === 'ADMIN' ? 'Administrador' : 'Gestor'}</span>
         </div>
@@ -76,28 +76,28 @@ export const AdminDashboard: React.FC = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        <Card className="p-4 border-2 border-slate-300 bg-white shadow-xs">
-          <span className="text-xs font-bold text-slate-700 block">Volume Transacionado</span>
-          <p className="text-2xl font-black text-slate-950 mt-1">R$ {totalVolume.toFixed(2).replace('.', ',')}</p>
-          <span className="text-[11px] font-bold text-emerald-800 flex items-center gap-1 mt-1">
+        <Card className="p-4 border border-uber-border bg-white rounded-xl">
+          <span className="text-xs font-semibold text-uber-iron block uppercase tracking-wider text-[11px]">Volume Transacionado</span>
+          <p className="text-2xl font-extrabold text-uber-black mt-1">R$ {totalVolume.toFixed(2).replace('.', ',')}</p>
+          <span className="text-[11px] font-semibold text-uber-black flex items-center gap-1 mt-1">
             <Icon name="trending_up" size="sm" />
             +14% este mês
           </span>
         </Card>
 
-        <Card className="p-4 border-2 border-slate-300 bg-white shadow-xs">
-          <span className="text-xs font-bold text-slate-700 block">Saldo em Custódia Protegida</span>
-          <p className="text-2xl font-black text-coop-primary mt-1">R$ {custodyBalance.toFixed(2).replace('.', ',')}</p>
-          <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1 mt-1">
+        <Card className="p-4 border border-uber-border bg-white rounded-xl">
+          <span className="text-xs font-semibold text-uber-iron block uppercase tracking-wider text-[11px]">Saldo em Custódia</span>
+          <p className="text-2xl font-extrabold text-uber-black mt-1">R$ {custodyBalance.toFixed(2).replace('.', ',')}</p>
+          <span className="text-[11px] font-normal text-uber-iron flex items-center gap-1 mt-1">
             <Icon name="lock" size="sm" />
             Garantia de viagens ativas
           </span>
         </Card>
 
-        <Card className="p-4 border-2 border-slate-300 bg-white shadow-xs">
-          <span className="text-xs font-bold text-slate-700 block">Solicitações de Motoristas</span>
-          <p className="text-2xl font-black text-amber-700 mt-1">{pendingRequests.length} pendentes</p>
-          <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1 mt-1">
+        <Card className="p-4 border border-uber-border bg-white rounded-xl">
+          <span className="text-xs font-semibold text-uber-iron block uppercase tracking-wider text-[11px]">Fila de Motoristas</span>
+          <p className="text-2xl font-extrabold text-uber-black mt-1">{pendingRequests.length} pendentes</p>
+          <span className="text-[11px] font-normal text-uber-iron flex items-center gap-1 mt-1">
             <Icon name="pending_actions" size="sm" />
             Fila de moderação
           </span>
@@ -105,13 +105,13 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Main Tabs */}
-      <div className="flex border-b-2 border-slate-300 mb-6 gap-2">
+      <div className="flex border-b border-uber-border mb-6 gap-2">
         <button
           onClick={() => setActiveTab('REQUESTS')}
-          className={`pb-2 px-3 text-xs sm:text-sm font-black border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
             activeTab === 'REQUESTS'
-              ? 'text-coop-primary border-coop-primary'
-              : 'text-slate-600 border-transparent hover:text-slate-950'
+              ? 'text-uber-black border-uber-black'
+              : 'text-uber-iron border-transparent hover:text-uber-black'
           }`}
         >
           <Icon name="how_to_reg" size="sm" />
@@ -120,10 +120,10 @@ export const AdminDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('FINANCES')}
-          className={`pb-2 px-3 text-xs sm:text-sm font-black border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
             activeTab === 'FINANCES'
-              ? 'text-coop-primary border-coop-primary'
-              : 'text-slate-600 border-transparent hover:text-slate-950'
+              ? 'text-uber-black border-uber-black'
+              : 'text-uber-iron border-transparent hover:text-uber-black'
           }`}
         >
           <Icon name="account_balance_wallet" size="sm" />
@@ -132,10 +132,10 @@ export const AdminDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('SETTINGS')}
-          className={`pb-2 px-3 text-xs sm:text-sm font-black border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
             activeTab === 'SETTINGS'
-              ? 'text-coop-primary border-coop-primary'
-              : 'text-slate-600 border-transparent hover:text-slate-950'
+              ? 'text-uber-black border-uber-black'
+              : 'text-uber-iron border-transparent hover:text-uber-black'
           }`}
         >
           <Icon name="settings" size="sm" />
@@ -153,10 +153,10 @@ export const AdminDashboard: React.FC = () => {
               <button
                 key={filter}
                 onClick={() => setRequestFilter(filter)}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold border transition-colors ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                   requestFilter === filter
-                    ? 'bg-emerald-950 text-white border-emerald-950 font-black'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                    ? 'bg-uber-black text-white border-uber-black'
+                    : 'bg-white text-uber-black border-uber-border hover:bg-uber-gray'
                 }`}
               >
                 {filter === 'ALL' && 'Todos'}
@@ -169,28 +169,28 @@ export const AdminDashboard: React.FC = () => {
 
           {filteredRequests.length > 0 ? (
             filteredRequests.map(req => (
-              <Card key={req.id} className="p-4 sm:p-5 border-2 border-slate-300 bg-white shadow-xs">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-200">
+              <Card key={req.id} className="p-4 sm:p-5 border border-uber-border bg-white rounded-xl">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-uber-border">
                   <div>
-                    <h3 className="text-base font-black text-slate-950">{req.userName}</h3>
-                    <p className="text-xs text-slate-700 font-semibold">{req.userEmail} • {req.userPhone}</p>
+                    <h3 className="text-base font-bold text-uber-black">{req.userName}</h3>
+                    <p className="text-xs text-uber-iron font-normal">{req.userEmail} • {req.userPhone}</p>
                   </div>
 
                   <div className="flex items-center gap-1">
                     {req.status === 'PENDING' && (
-                      <span className="flex items-center gap-1 text-xs font-black text-amber-800 bg-amber-100 px-2.5 py-1 rounded-md border border-amber-300">
+                      <span className="flex items-center gap-1.5 text-[11px] font-bold text-amber-900 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
                         <Icon name="hourglass_top" size="sm" />
                         Pendente
                       </span>
                     )}
                     {req.status === 'APPROVED' && (
-                      <span className="flex items-center gap-1 text-xs font-black text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-md border border-emerald-300">
+                      <span className="flex items-center gap-1.5 text-[11px] font-bold text-uber-black bg-uber-gray px-2.5 py-1 rounded-full border border-uber-border">
                         <Icon name="check_circle" size="sm" />
                         Aprovado
                       </span>
                     )}
                     {req.status === 'REJECTED' && (
-                      <span className="flex items-center gap-1 text-xs font-black text-red-800 bg-red-100 px-2.5 py-1 rounded-md border border-red-300">
+                      <span className="flex items-center gap-1.5 text-[11px] font-bold text-red-700 bg-red-50 px-2.5 py-1 rounded-full border border-red-200">
                         <Icon name="cancel" size="sm" />
                         Recusado
                       </span>
@@ -198,27 +198,27 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="py-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-800">
-                  <div className="p-2.5 bg-slate-50 border border-slate-300 rounded-md">
-                    <span className="font-bold text-slate-600 block">Documento CNH</span>
-                    <p className="font-mono font-black text-sm text-slate-950">{req.cnhNumber}</p>
+                <div className="py-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 bg-uber-gray border border-uber-border rounded-lg">
+                    <span className="font-semibold text-uber-iron block text-[11px]">Documento CNH</span>
+                    <p className="font-mono font-bold text-sm text-uber-black mt-0.5">{req.cnhNumber}</p>
                   </div>
 
-                  <div className="p-2.5 bg-slate-50 border border-slate-300 rounded-md">
-                    <span className="font-bold text-slate-600 block">Veículo Declarado</span>
-                    <p className="font-black text-slate-950">{req.vehicle.brand} {req.vehicle.model} ({req.vehicle.year})</p>
-                    <p className="text-slate-700">Placa: {req.vehicle.plate} • {req.vehicle.hasAC ? 'Com Ar' : 'Sem Ar'} • {req.vehicle.hasUSB ? 'Com USB' : 'Sem USB'}</p>
+                  <div className="p-3 bg-uber-gray border border-uber-border rounded-lg">
+                    <span className="font-semibold text-uber-iron block text-[11px]">Veículo Declarado</span>
+                    <p className="font-bold text-uber-black mt-0.5">{req.vehicle.brand} {req.vehicle.model} ({req.vehicle.year})</p>
+                    <p className="text-uber-iron mt-0.5">Placa: {req.vehicle.plate} • {req.vehicle.hasAC ? 'Com Ar' : 'Sem Ar'} • {req.vehicle.hasUSB ? 'Com USB' : 'Sem USB'}</p>
                   </div>
                 </div>
 
                 {req.rejectionReason && (
-                  <div className="mb-3 p-2.5 bg-red-50 border border-red-300 rounded-md text-xs text-red-900 font-semibold">
+                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-800 font-normal">
                     Motivo da Recusa: {req.rejectionReason}
                   </div>
                 )}
 
                 {req.status === 'PENDING' && (
-                  <div className="pt-3 border-t border-slate-200 flex flex-col sm:flex-row justify-end gap-2">
+                  <div className="pt-3 border-t border-uber-border flex flex-col sm:flex-row justify-end gap-2">
                     {rejectingId === req.id ? (
                       <div className="flex-1 flex gap-2">
                         <input
@@ -226,7 +226,7 @@ export const AdminDashboard: React.FC = () => {
                           placeholder="Motivo da recusa..."
                           value={rejectReason}
                           onChange={(e) => setRejectReason(e.target.value)}
-                          className="flex-1 text-xs border border-slate-400 rounded-md px-2.5 h-10 font-medium"
+                          className="flex-1 text-xs border border-uber-border bg-uber-gray rounded-lg px-3 h-10 font-normal focus:outline-none focus:border-uber-black"
                         />
                         <Button
                           variant="danger"
@@ -252,7 +252,7 @@ export const AdminDashboard: React.FC = () => {
                           size="sm"
                           iconLeft="cancel"
                           onClick={() => setRejectingId(req.id)}
-                          className="h-10 text-xs font-bold text-red-700 hover:bg-red-50 border-red-300"
+                          className="h-10 text-xs font-bold text-red-600 hover:bg-red-50 border-red-200"
                         >
                           Recusar Cadastro
                         </Button>
@@ -261,7 +261,7 @@ export const AdminDashboard: React.FC = () => {
                           size="sm"
                           iconLeft="check_circle"
                           onClick={() => handleApprove(req.id, req.userName)}
-                          className="h-10 text-xs font-black"
+                          className="h-10 text-xs font-bold"
                         >
                           Aprovar Motorista & Gerar Acesso
                         </Button>
@@ -272,7 +272,7 @@ export const AdminDashboard: React.FC = () => {
               </Card>
             ))
           ) : (
-            <div className="bg-white border-2 border-slate-300 rounded-md p-6 text-center text-slate-700 text-xs font-bold">
+            <div className="bg-white border border-uber-border rounded-xl p-8 text-center text-uber-iron text-xs font-normal">
               Nenhuma solicitação encontrada nesta categoria.
             </div>
           )}
@@ -282,17 +282,17 @@ export const AdminDashboard: React.FC = () => {
       {/* Tab 2: Financial & Custody */}
       {activeTab === 'FINANCES' && (
         <div className="space-y-4">
-          <Card className="p-5 border-2 border-slate-300 bg-white">
-            <h3 className="font-black text-base text-slate-950 mb-3">Transações em Custódia Aberta</h3>
+          <Card className="p-5 border border-uber-border rounded-xl bg-white">
+            <h3 className="font-bold text-base text-uber-black mb-3">Transações em Custódia Aberta</h3>
             
             <div className="space-y-3">
               {bookings.filter(b => b.status === 'SIGNAL_CONFIRMED').length > 0 ? (
                 bookings.filter(b => b.status === 'SIGNAL_CONFIRMED').map(b => (
-                  <div key={b.id} className="p-3 bg-slate-50 border border-slate-300 rounded-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
+                  <div key={b.id} className="p-3.5 bg-uber-gray border border-uber-border rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
                     <div>
-                      <span className="font-mono font-bold text-slate-600 block">{b.id}</span>
-                      <p className="font-black text-slate-950 text-sm">Passageiro: {b.passengerName}</p>
-                      <p className="text-slate-700">Sinal Retido: <strong>R$ {b.amountPaidSignal.toFixed(2).replace('.', ',')}</strong></p>
+                      <span className="font-mono font-medium text-uber-iron block">{b.id}</span>
+                      <p className="font-bold text-uber-black text-sm">Passageiro: {b.passengerName}</p>
+                      <p className="text-uber-charcoal mt-0.5">Sinal Retido: <strong>R$ {b.amountPaidSignal.toFixed(2).replace('.', ',')}</strong></p>
                     </div>
 
                     <Button
@@ -300,14 +300,14 @@ export const AdminDashboard: React.FC = () => {
                       size="sm"
                       iconLeft="payments"
                       onClick={() => handleReleaseCustody(b.id, b.amountPaidSignal)}
-                      className="h-9 px-3 text-xs font-black"
+                      className="h-9 px-3.5 text-xs font-bold"
                     >
                       Liberar Repasse (72h)
                     </Button>
                   </div>
                 ))
               ) : (
-                <p className="text-xs text-slate-600 font-semibold p-4 text-center bg-slate-50 rounded-md border border-slate-200">
+                <p className="text-xs text-uber-iron font-normal p-6 text-center bg-uber-gray rounded-xl border border-uber-border">
                   Nenhuma transação com sinal pendente de liberação no momento.
                 </p>
               )}
@@ -318,25 +318,25 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Tab 3: Settings */}
       {activeTab === 'SETTINGS' && (
-        <Card className="p-5 border-2 border-slate-300 bg-white space-y-4 text-xs">
-          <h3 className="font-black text-base text-slate-950">Parâmetros Operacionais da Plataforma</h3>
+        <Card className="p-5 border border-uber-border rounded-xl bg-white space-y-4 text-xs">
+          <h3 className="font-bold text-base text-uber-black">Parâmetros Operacionais da Plataforma</h3>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="p-3 bg-slate-50 border border-slate-300 rounded-md">
-              <span className="font-bold text-slate-600 block">Divisão Padrão do PIX:</span>
-              <p className="font-black text-slate-950 text-sm">50% Sinal / 50% Chegada</p>
+            <div className="p-3 bg-uber-gray border border-uber-border rounded-lg">
+              <span className="font-semibold text-uber-iron block text-[11px]">Divisão Padrão do PIX:</span>
+              <p className="font-bold text-uber-black text-sm mt-0.5">50% Sinal / 50% Chegada</p>
             </div>
-            <div className="p-3 bg-slate-50 border border-slate-300 rounded-md">
-              <span className="font-bold text-slate-600 block">Prazo de Resgate ao Motorista:</span>
-              <p className="font-black text-slate-950 text-sm">Até 72 horas pós-viagem</p>
+            <div className="p-3 bg-uber-gray border border-uber-border rounded-lg">
+              <span className="font-semibold text-uber-iron block text-[11px]">Prazo de Resgate ao Motorista:</span>
+              <p className="font-bold text-uber-black text-sm mt-0.5">Até 72 horas pós-viagem</p>
             </div>
-            <div className="p-3 bg-slate-50 border border-slate-300 rounded-md">
-              <span className="font-bold text-slate-600 block">Antecedência Mínima para Publicação:</span>
-              <p className="font-black text-slate-950 text-sm">2 horas (RN-06)</p>
+            <div className="p-3 bg-uber-gray border border-uber-border rounded-lg">
+              <span className="font-semibold text-uber-iron block text-[11px]">Antecedência Mínima para Publicação:</span>
+              <p className="font-bold text-uber-black text-sm mt-0.5">2 horas (RN-06)</p>
             </div>
-            <div className="p-3 bg-slate-50 border border-slate-300 rounded-md">
-              <span className="font-bold text-slate-600 block">Taxa de Estorno (&gt;1h):</span>
-              <p className="font-black text-slate-950 text-sm">70% devolvido ao passageiro</p>
+            <div className="p-3 bg-uber-gray border border-uber-border rounded-lg">
+              <span className="font-semibold text-uber-iron block text-[11px]">Taxa de Estorno (&gt;1h):</span>
+              <p className="font-bold text-uber-black text-sm mt-0.5">70% devolvido ao passageiro</p>
             </div>
           </div>
         </Card>
@@ -345,3 +345,4 @@ export const AdminDashboard: React.FC = () => {
     </div>
   );
 };
+

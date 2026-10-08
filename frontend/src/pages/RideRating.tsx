@@ -48,13 +48,13 @@ export const RideRating: React.FC = () => {
 
   if (submitted) {
     return (
-      <div className="max-w-md mx-auto py-16 px-4 text-center">
-        <Icon name="verified" size="xl" className="text-coop-primary mb-3" fill />
-        <h2 className="text-2xl font-black text-slate-950">Avaliação Enviada!</h2>
-        <p className="text-slate-700 text-xs sm:text-sm font-semibold mt-1 mb-6">
+      <div className="max-w-md mx-auto py-16 px-4 text-center animate-fade-in">
+        <Icon name="verified" size="xl" className="text-uber-black mb-3" fill />
+        <h2 className="text-2xl font-bold text-uber-black">Avaliação Enviada!</h2>
+        <p className="text-uber-iron text-xs sm:text-sm font-normal mt-1 mb-6">
           Obrigado por fortalecer a comunidade e a reputação dos membros da Cooperativa.
         </p>
-        <Button variant="primary" size="md" onClick={() => navigate('/minhas-viagens')} className="w-full font-black">
+        <Button variant="primary" size="md" onClick={() => navigate('/minhas-viagens')} className="w-full font-bold">
           Voltar para Minhas Viagens
         </Button>
       </div>
@@ -68,24 +68,24 @@ export const RideRating: React.FC = () => {
       <div className="mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 text-xs font-black text-slate-800 hover:text-coop-primary mb-3 transition-colors"
+          className="flex items-center gap-1.5 text-xs font-bold text-uber-black hover:text-uber-iron mb-3 transition-colors"
         >
           <Icon name="arrow_back" size="sm" />
           <span>Voltar</span>
         </button>
-        <h1 className="text-2xl font-black text-slate-950">Avaliar Experiência da Viagem</h1>
-        <p className="text-slate-700 text-xs font-semibold mt-0.5">
+        <h1 className="text-2xl font-bold text-uber-black">Avaliar Experiência</h1>
+        <p className="text-uber-iron text-xs font-normal mt-0.5">
           {ride ? `${ride.originCity} ➔ ${ride.destinationCity} com ${ride.driverName}` : 'Sua avaliação ajuda a manter a qualidade e segurança da Cooperativa.'}
         </p>
       </div>
 
-      <Card className="p-5 sm:p-6 border-2 border-slate-300 bg-white">
+      <Card className="p-5 sm:p-6 border border-uber-border rounded-xl bg-white">
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           
           {/* Star Rating Selector */}
-          <div className="text-center py-2 bg-slate-50 border border-slate-300 rounded-md">
-            <span className="text-xs font-black text-slate-900 block mb-2 uppercase tracking-wider">
-              Nota de 1 a 5 estrelas:
+          <div className="text-center py-4 bg-uber-gray border border-uber-border rounded-xl">
+            <span className="text-xs font-bold text-uber-black block mb-3 uppercase tracking-wider">
+              Nota da Viagem:
             </span>
             <div className="flex justify-center gap-2">
               {[1, 2, 3, 4, 5].map(star => (
@@ -93,25 +93,25 @@ export const RideRating: React.FC = () => {
                   type="button"
                   key={star}
                   onClick={() => setRating(star)}
-                  className="p-1 hover:scale-110 transition-transform focus:outline-none"
+                  className="p-1 hover:scale-110 active:scale-95 transition-transform focus:outline-none"
                 >
                   <Icon
                     name="star"
                     size="xl"
-                    className={star <= rating ? 'text-amber-500' : 'text-slate-300'}
+                    className={star <= rating ? 'text-uber-black' : 'text-uber-border'}
                     fill={star <= rating}
                   />
                 </button>
               ))}
             </div>
-            <span className="text-xs font-black text-amber-700 mt-1 block">
+            <span className="text-xs font-semibold text-uber-black mt-2 block">
               {rating === 5 ? 'Excelente!' : rating === 4 ? 'Muito Bom' : rating === 3 ? 'Regular' : 'Abaixo do esperado'}
             </span>
           </div>
 
-          {/* Quick Tags (No Badges, structured click chips) */}
+          {/* Quick Tags */}
           <div>
-            <span className="text-xs font-black text-slate-900 block mb-2">
+            <span className="text-xs font-bold text-uber-black block mb-2 uppercase tracking-wider">
               Destaques da viagem:
             </span>
             <div className="flex flex-wrap gap-2">
@@ -122,13 +122,13 @@ export const RideRating: React.FC = () => {
                     type="button"
                     key={tag}
                     onClick={() => toggleTag(tag)}
-                    className={`h-9 px-3 text-xs font-black rounded-md border-2 transition-colors flex items-center gap-1.5 ${
+                    className={`h-9 px-3.5 text-xs font-semibold rounded-full border transition-all flex items-center gap-1.5 active:scale-95 ${
                       isSelected
-                        ? 'bg-emerald-100 text-emerald-950 border-coop-primary'
-                        : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-100'
+                        ? 'bg-uber-black text-white border-uber-black'
+                        : 'bg-white text-uber-black border-uber-border hover:bg-uber-gray'
                     }`}
                   >
-                    <Icon name={isSelected ? "check" : "add"} size="sm" className={isSelected ? 'text-coop-primary' : 'text-slate-500'} />
+                    <Icon name={isSelected ? "check" : "add"} size="sm" className={isSelected ? 'text-white' : 'text-uber-iron'} />
                     <span>{tag}</span>
                   </button>
                 );
@@ -138,8 +138,8 @@ export const RideRating: React.FC = () => {
 
           {/* Comment */}
           <div>
-            <label htmlFor="rating-comment" className="block text-xs font-black text-slate-900 mb-1.5">
-              Comentário sobre a viagem (Opcional):
+            <label htmlFor="rating-comment" className="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">
+              Comentário (Opcional):
             </label>
             <textarea
               id="rating-comment"
@@ -147,13 +147,13 @@ export const RideRating: React.FC = () => {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Ex: Motorista super pontual, carro impecável e viagem muito tranquila."
-              className="w-full bg-white border-2 border-slate-300 font-medium rounded-md p-3 text-xs text-slate-950 focus:outline-none focus:ring-2 focus:ring-coop-primary"
+              className="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white font-normal rounded-xl p-3 text-xs text-uber-black focus:outline-none transition-all"
             />
           </div>
 
           <Alert variant="info">
-            <p className="text-xs font-bold text-slate-950">
-              As avaliações são mútuas e calculadas automaticamente no perfil dos membros.
+            <p className="text-xs font-normal text-uber-charcoal">
+              As avaliações são calculadas automaticamente no perfil dos membros.
             </p>
           </Alert>
 
@@ -162,7 +162,7 @@ export const RideRating: React.FC = () => {
             variant="primary"
             size="lg"
             iconLeft="star"
-            className="w-full h-14 font-black mt-1"
+            className="w-full h-12 font-bold mt-1"
           >
             Enviar Avaliação
           </Button>
@@ -173,3 +173,4 @@ export const RideRating: React.FC = () => {
     </div>
   );
 };
+

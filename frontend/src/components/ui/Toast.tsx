@@ -12,27 +12,27 @@ export const ToastContainer: React.FC = () => {
       case 'success':
         return {
           icon: 'check_circle',
-          bg: 'bg-emerald-950 text-white border-emerald-500',
-          iconColor: 'text-emerald-400',
+          bg: 'bg-uber-black text-white border-uber-charcoal',
+          iconColor: 'text-white',
         };
       case 'warning':
         return {
           icon: 'warning',
-          bg: 'bg-amber-950 text-white border-amber-500',
+          bg: 'bg-uber-black text-white border-amber-500',
           iconColor: 'text-amber-400',
         };
       case 'error':
         return {
           icon: 'error',
-          bg: 'bg-red-950 text-white border-red-500',
+          bg: 'bg-uber-black text-white border-red-500',
           iconColor: 'text-red-400',
         };
       case 'info':
       default:
         return {
           icon: 'info',
-          bg: 'bg-slate-900 text-white border-slate-600',
-          iconColor: 'text-sky-400',
+          bg: 'bg-uber-black text-white border-uber-charcoal',
+          iconColor: 'text-white',
         };
     }
   };
@@ -44,15 +44,15 @@ export const ToastContainer: React.FC = () => {
         return (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-center justify-between gap-3 p-3.5 rounded-md border-2 shadow-2xl animate-scale-up ${style.bg}`}
+            className={`pointer-events-auto flex items-center justify-between gap-3 p-4 rounded-lg border shadow-xl animate-fade-in ${style.bg}`}
           >
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center gap-3 min-w-0">
               <Icon name={style.icon} size="md" className={`${style.iconColor} shrink-0`} fill />
-              <span className="text-xs sm:text-sm font-black leading-tight text-left truncate">{toast.message}</span>
+              <span className="text-xs sm:text-sm font-semibold leading-tight text-left truncate">{toast.message}</span>
             </div>
             <button
               onClick={() => removeToast(toast.id)}
-              className="text-slate-400 hover:text-white p-1 rounded-sm transition-colors shrink-0"
+              className="text-uber-slate hover:text-white p-1 rounded-sm transition-colors shrink-0"
               aria-label="Fechar notificação"
             >
               <Icon name="close" size="sm" />
@@ -63,3 +63,4 @@ export const ToastContainer: React.FC = () => {
     </aside>
   );
 };
+

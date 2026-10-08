@@ -22,14 +22,14 @@ export const Alert: React.FC<AlertProps> = ({
   };
 
   const variantStyles = {
-    info: 'bg-sky-50 border-sky-300 text-slate-950',
-    warning: 'bg-amber-50 border-amber-300 text-slate-950',
-    success: 'bg-emerald-50 border-emerald-300 text-slate-950',
-    danger: 'bg-red-50 border-red-300 text-slate-950',
+    info: 'bg-uber-gray border-uber-border text-uber-black',
+    warning: 'bg-amber-50 border-amber-200 text-uber-black',
+    success: 'bg-emerald-50 border-emerald-200 text-uber-black',
+    danger: 'bg-red-50 border-red-200 text-uber-black',
   };
 
   const iconColors = {
-    info: 'text-sky-700',
+    info: 'text-uber-black',
     warning: 'text-amber-700',
     success: 'text-emerald-700',
     danger: 'text-red-700',
@@ -44,9 +44,10 @@ export const Alert: React.FC<AlertProps> = ({
         <Icon name={iconMap[variant]} size="md" />
       </div>
       <div className="flex-1 text-xs sm:text-sm">
-        {title && <p className="font-extrabold text-sm sm:text-base text-slate-950 mb-1">{title}</p>}
-        <div className="leading-relaxed font-medium text-slate-900">{children}</div>
+        {title && <p className="font-bold text-sm sm:text-base text-uber-black mb-1">{title}</p>}
+        <div className="leading-relaxed font-normal text-uber-charcoal">{children}</div>
       </div>
     </div>
   );
 };
+

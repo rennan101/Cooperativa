@@ -52,50 +52,50 @@ export const RideChat: React.FC = () => {
     <div className="max-w-2xl mx-auto px-4 py-6 text-left pb-24 md:pb-12 flex flex-col h-[85vh] animate-fade-in">
       
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-3 border-b-2 border-slate-300 mb-3 shrink-0">
+      <div className="flex items-center justify-between pb-3 border-b border-uber-border mb-3 shrink-0">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1 text-xs font-black text-slate-800 hover:text-coop-primary transition-colors"
+          className="flex items-center gap-1 text-xs font-bold text-uber-black hover:text-uber-iron transition-colors"
         >
           <Icon name="arrow_back" size="sm" />
           <span>Voltar</span>
         </button>
 
         <div className="text-center">
-          <h1 className="text-sm font-black text-slate-950">
+          <h1 className="text-sm font-bold text-uber-black">
             {ride ? `${ride.originCity} ➔ ${ride.destinationCity}` : 'Chat da Viagem'}
           </h1>
-          <p className="text-[11px] font-bold text-slate-600">Comunicação direta com o motorista e passageiros</p>
+          <p className="text-[11px] font-normal text-uber-iron">Comunicação direta com o motorista e passageiros</p>
         </div>
 
         <div className="w-12" />
       </div>
 
       {/* Messages Box */}
-      <Card className="flex-1 p-4 border-2 border-slate-300 bg-slate-50 flex flex-col gap-3 overflow-y-auto">
+      <Card className="flex-1 p-4 border border-uber-border bg-white rounded-xl flex flex-col gap-3 overflow-y-auto">
         {rideMessages.length > 0 ? (
           rideMessages.map(msg => {
             const isMe = msg.senderId === currentUser.id;
             return (
               <div
                 key={msg.id}
-                className={`flex gap-2.5 max-w-[85%] ${isMe ? 'self-end flex-row-reverse' : 'self-start'} animate-scale-up`}
+                className={`flex gap-2.5 max-w-[85%] ${isMe ? 'self-end flex-row-reverse' : 'self-start'} animate-fade-in`}
               >
                 <img
                   src={msg.senderAvatar}
                   alt={msg.senderName}
-                  className="w-8 h-8 rounded-md object-cover border border-slate-300 shrink-0 mt-1"
+                  className="w-7 h-7 rounded-full object-cover border border-uber-border shrink-0 mt-1"
                 />
-                <div className={`p-3 rounded-md text-xs font-medium ${
+                <div className={`p-3 rounded-xl text-xs ${
                   isMe
-                    ? 'bg-coop-primary text-white text-left shadow-xs'
-                    : 'bg-white text-slate-950 border border-slate-300 text-left shadow-xs'
+                    ? 'bg-uber-black text-white text-left'
+                    : 'bg-uber-gray text-uber-black text-left'
                 }`}>
-                  <p className={`font-black text-[11px] mb-1 ${isMe ? 'text-emerald-100' : 'text-slate-800'}`}>
+                  <p className={`font-bold text-[11px] mb-0.5 ${isMe ? 'text-uber-slate' : 'text-uber-black'}`}>
                     {msg.senderName}
                   </p>
-                  <p className="leading-relaxed font-semibold">{msg.text}</p>
-                  <span className={`text-[10px] block text-right mt-1 font-bold ${isMe ? 'text-emerald-200' : 'text-slate-500'}`}>
+                  <p className="leading-relaxed font-normal">{msg.text}</p>
+                  <span className={`text-[10px] block text-right mt-1 font-medium ${isMe ? 'text-uber-iron' : 'text-uber-iron'}`}>
                     {msg.createdAt}
                   </span>
                 </div>
@@ -103,16 +103,16 @@ export const RideChat: React.FC = () => {
             );
           })
         ) : (
-          <div className="m-auto text-center text-slate-600 text-xs font-bold">
-            <Icon name="chat" size="lg" className="text-slate-400 mb-1" />
+          <div className="m-auto text-center text-uber-iron text-xs font-normal">
+            <Icon name="chat" size="lg" className="text-uber-border mb-1" />
             <p>Nenhuma mensagem ainda. Inicie a conversa sobre pontos de encontro ou horários.</p>
           </div>
         )}
 
         {/* Typing indicator */}
         {isTyping && (
-          <div className="self-start flex items-center gap-2 p-2 bg-white rounded-md border border-slate-300 text-xs font-bold text-slate-600 animate-pulse">
-            <Icon name="edit" size="sm" className="text-coop-primary" />
+          <div className="self-start flex items-center gap-2 p-2.5 bg-uber-gray rounded-xl text-xs font-medium text-uber-charcoal animate-pulse">
+            <Icon name="edit" size="sm" className="text-uber-black" />
             <span>{ride?.driverName || 'Motorista'} está digitando...</span>
           </div>
         )}
@@ -127,7 +127,7 @@ export const RideChat: React.FC = () => {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Digite sua mensagem..."
-          className="flex-1 h-12 bg-white border-2 border-slate-400 text-slate-950 font-bold px-3.5 rounded-md focus:outline-none focus:ring-2 focus:ring-coop-primary text-xs sm:text-sm"
+          className="flex-1 h-12 bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-uber-black font-medium px-4 rounded-xl focus:outline-none text-xs sm:text-sm transition-all"
           required
         />
         <Button
@@ -135,7 +135,7 @@ export const RideChat: React.FC = () => {
           variant="primary"
           size="md"
           iconLeft="send"
-          className="h-12 px-5 font-black"
+          className="h-12 px-5 font-bold"
         >
           Enviar
         </Button>
@@ -144,3 +144,4 @@ export const RideChat: React.FC = () => {
     </div>
   );
 };
+

@@ -32,11 +32,11 @@ export const PublishRide: React.FC = () => {
   if (role !== 'DRIVER') {
     return (
       <div className="max-w-md mx-auto py-16 px-4 text-center animate-fade-in">
-        <div className="w-14 h-14 bg-slate-100 text-slate-600 rounded-md flex items-center justify-center mx-auto mb-3 shadow-xs">
+        <div className="w-14 h-14 bg-uber-gray text-uber-black rounded-full flex items-center justify-center mx-auto mb-3">
           <Icon name="lock" size="lg" />
         </div>
-        <h2 className="text-xl font-black text-slate-950">Acesso Restrito</h2>
-        <p className="text-slate-700 text-xs sm:text-sm font-semibold mt-1 mb-5">
+        <h2 className="text-xl font-bold text-uber-black">Acesso Restrito</h2>
+        <p className="text-uber-iron text-xs sm:text-sm font-normal mt-1 mb-5">
           Apenas motoristas credenciados podem cadastrar viagens na plataforma.
         </p>
         <Button
@@ -126,13 +126,13 @@ export const PublishRide: React.FC = () => {
       <div className="mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 text-xs font-black text-slate-800 hover:text-coop-primary mb-3 transition-colors"
+          className="flex items-center gap-1.5 text-xs font-bold text-uber-black hover:text-uber-iron mb-3 transition-colors"
         >
           <Icon name="arrow_back" size="sm" />
           <span>Voltar</span>
         </button>
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-950">Nova Viagem</h1>
-        <p className="text-slate-700 text-xs sm:text-sm font-semibold mt-0.5">
+        <h1 className="text-2xl sm:text-3xl font-bold text-uber-black">Nova Viagem</h1>
+        <p className="text-uber-iron text-xs sm:text-sm font-normal mt-0.5">
           Cadastre uma nova rota e receba passageiros verificados.
         </p>
       </div>
@@ -140,10 +140,10 @@ export const PublishRide: React.FC = () => {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         
         {/* Step 1: Route */}
-        <Card className="p-4 sm:p-5 border-2 border-slate-300 flex flex-col gap-3 bg-white">
-          <div className="flex items-center gap-2 pb-2.5 border-b border-slate-200 h-8">
-            <Icon name="route" size="sm" className="text-coop-primary" />
-            <h2 className="font-black text-sm sm:text-base text-slate-950">1. Trajeto</h2>
+        <Card className="p-4 sm:p-5 border border-uber-border rounded-xl flex flex-col gap-3 bg-white">
+          <div className="flex items-center gap-2 pb-3 border-b border-uber-border h-8">
+            <Icon name="route" size="sm" className="text-uber-black" />
+            <h2 className="font-bold text-sm sm:text-base text-uber-black">1. Trajeto</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -186,10 +186,10 @@ export const PublishRide: React.FC = () => {
         </Card>
 
         {/* Step 2: Date & Time */}
-        <Card className="p-4 sm:p-5 border-2 border-slate-300 flex flex-col gap-3 bg-white">
-          <div className="flex items-center gap-2 pb-2.5 border-b border-slate-200 h-8">
-            <Icon name="schedule" size="sm" className="text-coop-primary" />
-            <h2 className="font-black text-sm sm:text-base text-slate-950">2. Data e Horário</h2>
+        <Card className="p-4 sm:p-5 border border-uber-border rounded-xl flex flex-col gap-3 bg-white">
+          <div className="flex items-center gap-2 pb-3 border-b border-uber-border h-8">
+            <Icon name="schedule" size="sm" className="text-uber-black" />
+            <h2 className="font-bold text-sm sm:text-base text-uber-black">2. Data e Horário</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -216,23 +216,23 @@ export const PublishRide: React.FC = () => {
               {errorMessage}
             </Alert>
           ) : (
-            <div className="flex items-center gap-2 text-xs font-black text-emerald-950 bg-emerald-50 p-2.5 rounded-md border-2 border-emerald-300 h-10">
-              <Icon name="check_circle" size="sm" className="text-coop-primary shrink-0" />
+            <div className="flex items-center gap-2 text-xs font-semibold text-uber-black bg-uber-gray p-3 rounded-lg border border-uber-border">
+              <Icon name="check_circle" size="sm" className="text-uber-black shrink-0" />
               <span>Antecedência mínima de 2h respeitada.</span>
             </div>
           )}
         </Card>
 
         {/* Step 3: Seats & Pricing */}
-        <Card className="p-4 sm:p-5 border-2 border-slate-300 flex flex-col gap-3 bg-white">
-          <div className="flex items-center gap-2 pb-2.5 border-b border-slate-200 h-8">
-            <Icon name="payments" size="sm" className="text-coop-primary" />
-            <h2 className="font-black text-sm sm:text-base text-slate-950">3. Vagas e Valor</h2>
+        <Card className="p-4 sm:p-5 border border-uber-border rounded-xl flex flex-col gap-3 bg-white">
+          <div className="flex items-center gap-2 pb-3 border-b border-uber-border h-8">
+            <Icon name="payments" size="sm" className="text-uber-black" />
+            <h2 className="font-bold text-sm sm:text-base text-uber-black">3. Vagas e Valor</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label htmlFor="publish-seats-select" className="block text-xs font-black text-slate-900 mb-1.5">
+              <label htmlFor="publish-seats-select" className="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">
                 Vagas Livres
               </label>
               <select
@@ -240,7 +240,7 @@ export const PublishRide: React.FC = () => {
                 aria-label="Quantidade de vagas livres"
                 value={totalSeats}
                 onChange={(e) => setTotalSeats(Number(e.target.value))}
-                className="w-full bg-white border-2 border-slate-300 text-slate-950 rounded-md h-[46px] px-3 font-bold focus:outline-none focus:ring-2 focus:ring-coop-primary text-sm cursor-pointer"
+                className="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-uber-black rounded-lg h-[48px] px-3 font-semibold text-sm cursor-pointer transition-all focus:outline-none"
               >
                 <option value={1}>1 passageiro</option>
                 <option value={2}>2 passageiros</option>
@@ -261,7 +261,7 @@ export const PublishRide: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="publish-notes-input" className="block text-xs font-black text-slate-900 mb-1.5">
+            <label htmlFor="publish-notes-input" className="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">
               Observações (Opcional)
             </label>
             <textarea
@@ -271,7 +271,7 @@ export const PublishRide: React.FC = () => {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Ex: Tolerância de 10 minutos no ponto de encontro."
-              className="w-full bg-white border-2 border-slate-300 font-medium rounded-md p-2.5 text-xs text-slate-950 focus:outline-none focus:ring-2 focus:ring-coop-primary"
+              className="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white font-normal rounded-lg p-3 text-xs text-uber-black focus:outline-none transition-all"
             />
           </div>
         </Card>
@@ -283,7 +283,7 @@ export const PublishRide: React.FC = () => {
           size="lg"
           iconLeft="check_circle"
           disabled={!!errorMessage}
-          className="w-full h-14 mt-2 font-black shadow-md hover:shadow-lg"
+          className="w-full h-12 mt-2 font-bold"
         >
           Publicar Nova Viagem
         </Button>
@@ -292,3 +292,4 @@ export const PublishRide: React.FC = () => {
     </div>
   );
 };
+

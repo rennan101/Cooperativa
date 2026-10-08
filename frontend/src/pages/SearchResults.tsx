@@ -35,30 +35,30 @@ export const SearchResults: React.FC = () => {
       </div>
 
       {/* Quick Filter Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 bg-white p-3 rounded-md border-2 border-slate-300 shadow-xs mb-5 h-auto sm:h-14">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 bg-white p-3 rounded-xl border border-uber-border shadow-xs mb-5 h-auto sm:h-14">
         
         <div className="flex items-center gap-2 overflow-x-auto py-1">
           {/* AC Filter Toggle Button */}
           <button
             onClick={() => setHasAC(!hasAC)}
-            className={`h-9 px-3 flex items-center gap-1.5 text-xs font-black rounded-md border-2 transition-colors shrink-0 ${
+            className={`h-9 px-3.5 flex items-center gap-2 text-xs font-semibold rounded-full border transition-all shrink-0 active:scale-95 ${
               hasAC
-                ? 'bg-emerald-100 text-emerald-950 border-coop-primary'
-                : 'bg-white text-slate-900 border-slate-400 hover:bg-slate-100'
+                ? 'bg-uber-black text-white border-uber-black'
+                : 'bg-white text-uber-black border-uber-border hover:bg-uber-gray'
             }`}
           >
-            <Icon name="ac_unit" size="sm" className={hasAC ? 'text-sky-700' : 'text-slate-600'} />
+            <Icon name="ac_unit" size="sm" className={hasAC ? 'text-white' : 'text-uber-iron'} />
             <span>Ar-condicionado</span>
           </button>
         </div>
 
         {/* Sort selector */}
-        <div className="flex items-center gap-1.5 h-9 shrink-0">
-          <Icon name="sort" size="sm" className="text-slate-700" />
+        <div className="flex items-center gap-2 h-9 shrink-0">
+          <Icon name="sort" size="sm" className="text-uber-iron" />
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as 'EARLIEST' | 'CHEAPEST')}
-            className="h-9 bg-slate-100 border border-slate-400 rounded-md px-2.5 text-xs font-black text-slate-950 focus:outline-none focus:ring-1 focus:ring-coop-primary cursor-pointer"
+            className="h-9 bg-uber-gray border border-uber-border rounded-lg px-3 text-xs font-semibold text-uber-black focus:outline-none focus:border-uber-black cursor-pointer"
           >
             <option value="EARLIEST">Mais cedo</option>
             <option value="CHEAPEST">Menor preço</option>
@@ -68,11 +68,11 @@ export const SearchResults: React.FC = () => {
       </div>
 
       {/* Results Header */}
-      <div className="flex items-center justify-between mb-3 h-6">
-        <span className="text-sm font-black text-slate-950">
+      <div className="flex items-center justify-between mb-3.5 px-1">
+        <span className="text-sm font-bold text-uber-black">
           {filteredRides.length} {filteredRides.length === 1 ? 'viagem encontrada' : 'viagens encontradas'}
         </span>
-        <span className="text-xs font-bold text-slate-700">
+        <span className="text-xs font-normal text-uber-iron">
           Data: {new Date(searchParams.date + 'T00:00:00').toLocaleDateString('pt-BR')}
         </span>
       </div>
@@ -84,20 +84,20 @@ export const SearchResults: React.FC = () => {
             <RideCard key={ride.id} ride={ride} />
           ))
         ) : (
-          <div className="bg-white border-2 border-slate-300 rounded-lg p-8 text-center flex flex-col items-center gap-3">
-            <div className="w-12 h-12 bg-slate-100 text-slate-600 rounded-md flex items-center justify-center">
+          <div className="bg-white border border-uber-border rounded-xl p-10 text-center flex flex-col items-center gap-3">
+            <div className="w-12 h-12 bg-uber-gray text-uber-iron rounded-full flex items-center justify-center">
               <Icon name="search_off" size="md" />
             </div>
             <div>
-              <h3 className="text-base font-black text-slate-950">Nenhuma viagem disponível</h3>
-              <p className="text-slate-700 text-xs font-medium mt-0.5">Tente limpar os filtros ou selecionar outra data.</p>
+              <h3 className="text-base font-bold text-uber-black">Nenhuma viagem disponível</h3>
+              <p className="text-uber-iron text-xs font-normal mt-1">Tente limpar os filtros ou selecionar outra data.</p>
             </div>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               iconLeft="restart_alt"
               onClick={() => setHasAC(false)}
-              className="h-10 font-bold"
+              className="mt-2"
             >
               Limpar Filtros
             </Button>

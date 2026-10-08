@@ -11,32 +11,32 @@ export const Header: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="bg-white border-b border-slate-300 sticky top-0 z-40 shadow-xs">
+    <header className="bg-uber-black text-white sticky top-0 z-40 border-b border-uber-charcoal">
       <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 shrink-0">
-          <div className="bg-coop-primary text-white w-9 h-9 rounded-md flex items-center justify-center font-bold shadow-xs">
-            <Icon name="directions_car" size="md" />
+        <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
+          <div className="bg-white text-uber-black w-8 h-8 rounded-lg flex items-center justify-center font-bold transition-transform group-hover:scale-105">
+            <Icon name="directions_car" size="sm" />
           </div>
           <div className="flex flex-col text-left">
-            <span className="font-black text-lg tracking-tight text-slate-950 leading-none">
+            <span className="font-extrabold text-lg tracking-tight text-white leading-none">
               Cooperativa
             </span>
-            <span className="text-[10px] font-extrabold text-coop-700 uppercase tracking-wider">
+            <span className="text-[10px] font-semibold text-uber-iron uppercase tracking-wider">
               Viagens
             </span>
           </div>
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-5 h-full">
+        <nav className="hidden md:flex items-center gap-6 h-full">
           <Link
             to="/buscar"
-            className={`h-full flex items-center gap-1 text-sm font-extrabold transition-colors border-b-2 ${
+            className={`h-full flex items-center gap-1.5 text-sm font-semibold transition-colors border-b-2 ${
               isSearchActive
-                ? 'text-coop-700 border-coop-primary'
-                : 'text-slate-800 border-transparent hover:text-coop-700'
+                ? 'text-white border-white'
+                : 'text-uber-slate border-transparent hover:text-white'
             }`}
           >
             <Icon name="search" size="sm" />
@@ -46,23 +46,23 @@ export const Header: React.FC = () => {
           {role === 'DRIVER' && (
             <Link
               to="/publicar"
-              className={`h-full flex items-center gap-1 text-sm font-extrabold transition-colors border-b-2 ${
+              className={`h-full flex items-center gap-1.5 text-sm font-semibold transition-colors border-b-2 ${
                 isActive('/publicar')
-                  ? 'text-coop-700 border-coop-primary'
-                  : 'text-slate-800 border-transparent hover:text-coop-700'
+                  ? 'text-white border-white'
+                  : 'text-uber-slate border-transparent hover:text-white'
               }`}
             >
-              <Icon name="add_circle" size="sm" />
+              <Icon name="add" size="sm" />
               <span>Nova Viagem</span>
             </Link>
           )}
 
           <Link
             to="/minhas-viagens"
-            className={`h-full flex items-center gap-1 text-sm font-extrabold transition-colors border-b-2 ${
+            className={`h-full flex items-center gap-1.5 text-sm font-semibold transition-colors border-b-2 ${
               isActive('/minhas-viagens')
-                ? 'text-coop-700 border-coop-primary'
-                : 'text-slate-800 border-transparent hover:text-coop-700'
+                ? 'text-white border-white'
+                : 'text-uber-slate border-transparent hover:text-white'
             }`}
           >
             <Icon name="history" size="sm" />
@@ -72,10 +72,10 @@ export const Header: React.FC = () => {
           {(role === 'ADMIN' || role === 'MANAGER') && (
             <Link
               to="/admin"
-              className={`h-full flex items-center gap-1 text-sm font-extrabold transition-colors border-b-2 ${
+              className={`h-full flex items-center gap-1.5 text-sm font-semibold transition-colors border-b-2 ${
                 isActive('/admin')
-                  ? 'text-coop-700 border-coop-primary'
-                  : 'text-slate-800 border-transparent hover:text-coop-700'
+                  ? 'text-white border-white'
+                  : 'text-uber-slate border-transparent hover:text-white'
               }`}
             >
               <Icon name="admin_panel_settings" size="sm" />
@@ -85,10 +85,10 @@ export const Header: React.FC = () => {
 
           <Link
             to="/perfil"
-            className={`h-full flex items-center gap-1 text-sm font-extrabold transition-colors border-b-2 ${
+            className={`h-full flex items-center gap-1.5 text-sm font-semibold transition-colors border-b-2 ${
               isActive('/perfil')
-                ? 'text-coop-700 border-coop-primary'
-                : 'text-slate-800 border-transparent hover:text-coop-700'
+                ? 'text-white border-white'
+                : 'text-uber-slate border-transparent hover:text-white'
             }`}
           >
             <Icon name="account_circle" size="sm" />
@@ -97,19 +97,23 @@ export const Header: React.FC = () => {
         </nav>
 
         {/* User Info & Role Switcher */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           <Link to="/perfil" className="flex items-center gap-1.5 text-right hover:opacity-90">
-            <span className="text-xs sm:text-sm font-black text-slate-950 hidden sm:inline">{currentUser.name.split(' ')[0]}</span>
+            <span className="text-xs sm:text-sm font-semibold text-white hidden sm:inline">
+              {currentUser.name.split(' ')[0]}
+            </span>
           </Link>
 
           {/* Quick Role Switcher Button */}
           <button
             onClick={() => setRole(role === 'PASSENGER' ? 'DRIVER' : role === 'DRIVER' ? 'ADMIN' : 'PASSENGER')}
             title="Alternar Perfil para Teste"
-            className="h-9 px-2.5 flex items-center gap-1 text-xs font-bold text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-400 rounded-md transition-colors"
+            className="h-8 px-3 flex items-center gap-1.5 text-xs font-semibold text-white bg-uber-charcoal hover:bg-uber-iron/30 rounded-full transition-colors active:scale-95"
           >
-            <Icon name="swap_horiz" size="sm" className="text-slate-700" />
-            <span className="text-[11px] font-extrabold">{role === 'DRIVER' ? 'Motorista' : role === 'ADMIN' ? 'Admin' : 'Passageiro'}</span>
+            <Icon name="swap_horiz" size="sm" className="text-uber-slate" />
+            <span className="text-[11px] font-bold">
+              {role === 'DRIVER' ? 'Motorista' : role === 'ADMIN' ? 'Admin' : 'Passageiro'}
+            </span>
           </button>
         </div>
 
@@ -117,3 +121,4 @@ export const Header: React.FC = () => {
     </header>
   );
 };
+
