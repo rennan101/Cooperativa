@@ -880,40 +880,216 @@ function toggleRole() {
 }
 
 // ==========================================
-// 6. COMPONENTES REUTILIZÁVEIS
+// 6. BASE DE DADOS DE MOTORISTAS & PERFIL PÚBLICO
 // ==========================================
 
-function renderDatalists() {
-  return `
-    <datalist id="nordeste-cities-list">
-      ${NORDESTE_CITIES.map(c => `<option value="${c}">`).join('')}
-    </datalist>
-  `;
+const DRIVERS_DATABASE = {
+  'drv-01': {
+    id: 'drv-01',
+    name: 'Marcos Silva',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    rating: 4.95,
+    totalTrips: 142,
+    memberSince: 'Março de 2023',
+    city: 'Fortaleza, CE',
+    bio: 'Motorista com mais de 8 anos de experiência em viagens intermunicipais no Ceará. Carro sempre higienizado, direção defensiva e pontualidade.',
+    vehicle: {
+      brand: 'Toyota',
+      model: 'Corolla 2.0 XEi',
+      plate: 'CE-FOR-2023',
+      year: 2023,
+      hasAC: true,
+      hasUSB: true,
+    },
+    badges: [
+      { name: 'Motorista Verificado', iconName: 'verified_user', desc: 'Identidade e CNH validadas' },
+      { name: 'Super Pontual', iconName: 'schedule', desc: '99% de partidas no horário' },
+      { name: 'Veículo Inspecionado', iconName: 'car_repair', desc: 'Revisões em dia na cooperativa' }
+    ],
+    reviews: [
+      { passenger: 'Carlos Oliveira', rating: 5, date: 'Há 2 dias', comment: 'Excelente motorista! Viagem muito tranquila de Fortaleza até Juazeiro. Carro impecável e ar-condicionado funcionando perfeitamente.', tags: ['Pontualidade', 'Direção Segura'] },
+      { passenger: 'Juliana Mendes', rating: 5, date: 'Há 1 semana', comment: 'Super educado e pontual. Parou certinho no ponto combinado e ajudou com as bagagens.', tags: ['Carro Limpo', 'Boa Comunicação'] },
+      { passenger: 'Rodrigo Lima', rating: 5, date: 'Há 2 semanas', comment: 'Já viajei várias vezes com o Marcos. Sempre 10/10.', tags: ['Confortável', 'Respeitoso'] }
+    ]
+  },
+  'drv-02': {
+    id: 'drv-02',
+    name: 'Fernanda Costa',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80',
+    rating: 4.92,
+    totalTrips: 98,
+    memberSince: 'Maio de 2023',
+    city: 'Recife, PE',
+    bio: 'Engenheira, viajo com frequência entre Recife e Caruaru. Carro muito espaçoso e confortável com ar duplo.',
+    vehicle: {
+      brand: 'Honda',
+      model: 'Civic Touring 1.5 Turbo',
+      plate: 'PE-REC-9988',
+      year: 2023,
+      hasAC: true,
+      hasUSB: true,
+    },
+    badges: [
+      { name: 'Motorista Verificada', iconName: 'verified_user', desc: 'Identidade e CNH validadas' },
+      { name: 'Viagem Confortável', iconName: 'airline_seat_recline_extra', desc: 'Espaço e ar duplo' }
+    ],
+    reviews: [
+      { passenger: 'Mariana Souza', rating: 5, date: 'Há 3 dias', comment: 'Fernanda é nota mil! Carro muito limpo e conversa agradável.', tags: ['Direção Segura', 'Carro Limpo'] },
+      { passenger: 'Lucas Silveira', rating: 5, date: 'Há 2 semanas', comment: 'Chegamos no horário exato em Caruaru.', tags: ['Pontualidade'] }
+    ]
+  },
+  'drv-03': {
+    id: 'drv-03',
+    name: 'Rafael Guimarães',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+    rating: 4.98,
+    totalTrips: 210,
+    memberSince: 'Janeiro de 2023',
+    city: 'Salvador, BA',
+    bio: 'Viagens frequentes entre Salvador e Feira de Santana. Segurança total, pontualidade e respeito.',
+    vehicle: {
+      brand: 'Jeep',
+      model: 'Compass Limited',
+      plate: 'BA-SAL-1020',
+      year: 2024,
+      hasAC: true,
+      hasUSB: true,
+    },
+    badges: [
+      { name: 'Motorista Verificado', iconName: 'verified_user', desc: 'Identidade e CNH validadas' },
+      { name: 'Top Avaliado', iconName: 'star', desc: 'Nota 4.98 em mais de 200 viagens' }
+    ],
+    reviews: [
+      { passenger: 'Bruno Castro', rating: 5, date: 'Há 1 dia', comment: 'Melhor opção de carona em Salvador. Rafael é extremamente profissional.', tags: ['Pontualidade', 'Direção Segura', 'Confortável'] }
+    ]
+  }
+};
+
+function getDriverProfile(driverId) {
+  if (DRIVERS_DATABASE[driverId]) return DRIVERS_DATABASE[driverId];
+  const ride = store.state.rides.find(r => r.driverId === driverId);
+  return {
+    id: driverId,
+    name: ride ? ride.driverName : 'Motorista Credenciado',
+    avatar: ride ? ride.driverAvatar : DEFAULT_BLANK_AVATAR,
+    rating: ride ? ride.driverRating : 4.9,
+    totalTrips: ride ? ride.driverTripsCount : 45,
+    memberSince: '2023',
+    city: ride ? ride.originCity : 'Nordeste',
+    bio: 'Motorista credenciado na Cooperativa de Viagens do Nordeste com histórico de viagens verificadas.',
+    vehicle: ride ? ride.vehicle : { brand: 'Toyota', model: 'Corolla', plate: 'BRA-2E19', year: 2023, hasAC: true, hasUSB: true },
+    badges: [
+      { name: 'Motorista Verificado', iconName: 'verified_user', desc: 'Identidade e CNH validadas' }
+    ],
+    reviews: [
+      { passenger: 'Passageiro Cooperativa', rating: 5, date: 'Recente', comment: 'Viagem muito pontual e segura!', tags: ['Pontualidade', 'Direção Segura'] }
+    ]
+  };
 }
+
+// ==========================================
+// 7. AUTOCOMPLETE ESTILO UBER (LUGARES DO NORDESTE)
+// ==========================================
+
+function handleLocationFocus(inputId, dropdownId, type) {
+  handleLocationInput(inputId, dropdownId, type);
+}
+
+function handleLocationInput(inputId, dropdownId, type) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  if (!input || !dropdown) return;
+
+  const query = (input.value || '').toLowerCase().trim();
+  let matches = [];
+
+  if (!query) {
+    matches = NORDESTE_LOCATIONS.slice(0, 6);
+  } else {
+    matches = NORDESTE_LOCATIONS.filter(loc => 
+      loc.city.toLowerCase().includes(query) || loc.spot.toLowerCase().includes(query)
+    ).slice(0, 8);
+  }
+
+  if (matches.length === 0) {
+    dropdown.innerHTML = `
+      <div class="p-3 text-center text-xs text-uber-iron font-medium">
+        Nenhum ponto ou cidade encontrado no Nordeste.
+      </div>
+    `;
+    dropdown.classList.remove('hidden');
+    return;
+  }
+
+  dropdown.innerHTML = matches.map(loc => `
+    <div
+      onclick="selectAutocompleteLocation('${inputId}', '${dropdownId}', '${loc.city}')"
+      class="flex items-center gap-3 p-3 hover:bg-uber-gray cursor-pointer transition-colors text-left group"
+    >
+      <div class="w-8 h-8 rounded-full bg-uber-gray group-hover:bg-uber-border flex items-center justify-center text-uber-black shrink-0 transition-colors">
+        ${icon('location_on', { size: 'sm', className: 'text-uber-black' })}
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-bold text-xs sm:text-sm text-uber-black truncate group-hover:text-black">${loc.spot}</p>
+        <p class="text-[11px] font-medium text-uber-iron truncate">${loc.city}</p>
+      </div>
+      <div class="text-uber-iron group-hover:text-uber-black shrink-0">
+        ${icon('north_west', { size: 'sm' })}
+      </div>
+    </div>
+  `).join('');
+
+  dropdown.classList.remove('hidden');
+}
+
+function selectAutocompleteLocation(inputId, dropdownId, text) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  if (input) {
+    input.value = text;
+  }
+  if (dropdown) {
+    dropdown.classList.add('hidden');
+  }
+}
+
+// Fechar autocomplete ao clicar fora
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#hero-search-form')) {
+    const d1 = document.getElementById('autocomplete-origin-dropdown');
+    const d2 = document.getElementById('autocomplete-dest-dropdown');
+    if (d1) d1.classList.add('hidden');
+    if (d2) d2.classList.add('hidden');
+  }
+});
 
 function renderHeroSearchBar() {
   const { origin, destination, date, seats } = store.state.searchParams;
   const todayStr = new Date().toISOString().split('T')[0];
 
   return `
-    ${renderDatalists()}
     <div class="w-full max-w-4xl mx-auto relative">
       <form id="hero-search-form" onsubmit="handleSearchSubmit(event)" class="bg-white border border-uber-border shadow-2xl rounded-2xl p-3 sm:p-4 flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
         
-        <!-- Origin Input Dropdown Box -->
-        <div class="flex-1 relative flex items-center gap-3 px-3.5 h-12 bg-uber-gray rounded-xl border border-uber-border hover:border-uber-iron focus-within:border-uber-black focus-within:bg-white transition-all">
-          <div class="w-2.5 h-2.5 rounded-full bg-uber-black shrink-0"></div>
-          <div class="flex-1 text-left min-w-0">
-            <input
-              id="search-origin"
-              type="text"
-              list="nordeste-cities-list"
-              value="${origin}"
-              placeholder="Origem no Nordeste (Ex: Fortaleza, CE)"
-              class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
-              required
-            />
+        <!-- Origin Input with Uber-Style Autocomplete Dropdown -->
+        <div class="flex-1 relative">
+          <div class="flex items-center gap-3 px-3.5 h-12 bg-uber-gray rounded-xl border border-uber-border hover:border-uber-iron focus-within:border-uber-black focus-within:bg-white transition-all">
+            <div class="w-2.5 h-2.5 rounded-full bg-uber-black shrink-0"></div>
+            <div class="flex-1 text-left min-w-0">
+              <input
+                id="search-origin"
+                type="text"
+                autocomplete="off"
+                value="${origin}"
+                placeholder="Origem (Ex: Fortaleza, CE)"
+                class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
+                onfocus="handleLocationFocus('search-origin', 'autocomplete-origin-dropdown', 'origin')"
+                oninput="handleLocationInput('search-origin', 'autocomplete-origin-dropdown', 'origin')"
+                required
+              />
+            </div>
           </div>
+          <div id="autocomplete-origin-dropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-uber-border rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-uber-gray"></div>
         </div>
 
         <!-- Swap Button -->
@@ -921,20 +1097,25 @@ function renderHeroSearchBar() {
           ${icon('swap_horiz', { size: 'sm' })}
         </button>
 
-        <!-- Destination Input Dropdown Box -->
-        <div class="flex-1 relative flex items-center gap-3 px-3.5 h-12 bg-uber-gray rounded-xl border border-uber-border hover:border-uber-iron focus-within:border-uber-black focus-within:bg-white transition-all">
-          <div class="w-2.5 h-2.5 bg-uber-black shrink-0"></div>
-          <div class="flex-1 text-left min-w-0">
-            <input
-              id="search-dest"
-              type="text"
-              list="nordeste-cities-list"
-              value="${destination}"
-              placeholder="Destino no Nordeste (Ex: Juazeiro, CE)"
-              class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
-              required
-            />
+        <!-- Destination Input with Uber-Style Autocomplete Dropdown -->
+        <div class="flex-1 relative">
+          <div class="flex items-center gap-3 px-3.5 h-12 bg-uber-gray rounded-xl border border-uber-border hover:border-uber-iron focus-within:border-uber-black focus-within:bg-white transition-all">
+            <div class="w-2.5 h-2.5 bg-uber-black shrink-0"></div>
+            <div class="flex-1 text-left min-w-0">
+              <input
+                id="search-dest"
+                type="text"
+                autocomplete="off"
+                value="${destination}"
+                placeholder="Destino (Ex: Juazeiro, CE)"
+                class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
+                onfocus="handleLocationFocus('search-dest', 'autocomplete-dest-dropdown', 'dest')"
+                oninput="handleLocationInput('search-dest', 'autocomplete-dest-dropdown', 'dest')"
+                required
+              />
+            </div>
           </div>
+          <div id="autocomplete-dest-dropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-uber-border rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-uber-gray"></div>
         </div>
 
         <!-- Date & Seats Row -->
@@ -1036,12 +1217,16 @@ function renderRideCard(ride) {
 
       </div>
 
-      <!-- Driver and Amenities Row -->
+      <!-- Driver and Amenities Row (Clickable Driver Profile) -->
       <div class="flex items-center justify-between pt-3 border-t border-uber-border">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <img src="${ride.driverAvatar}" alt="${ride.driverName}" class="w-7 h-7 rounded-full object-cover border border-uber-border shrink-0 bg-uber-gray" />
+        <div
+          onclick="event.stopPropagation(); window.location.hash = '#/motorista/${ride.driverId}';"
+          title="Ver perfil completo do motorista"
+          class="flex items-center gap-2.5 min-w-0 group hover:opacity-80 transition-opacity"
+        >
+          <img src="${ride.driverAvatar}" alt="${ride.driverName}" class="w-7 h-7 rounded-full object-cover border border-uber-border shrink-0 bg-uber-gray group-hover:scale-105 transition-transform" />
           <div class="flex items-center gap-1.5 truncate">
-            <span class="font-semibold text-xs text-uber-black truncate">${ride.driverName}</span>
+            <span class="font-semibold text-xs text-uber-black truncate group-hover:underline">${ride.driverName}</span>
             <span class="text-uber-border">•</span>
             <div class="flex items-center gap-0.5 text-xs text-uber-black font-semibold shrink-0">
               ${icon('star', { size: 'sm', fill: true, className: 'star-gold' })}
@@ -1386,13 +1571,16 @@ function viewRideDetails(rideId) {
           ` : ''}
         </div>
 
-        <!-- Driver Card -->
-        <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl">
+        <!-- Driver Card (Clickable to Driver Profile) -->
+        <div onclick="window.location.hash = '#/motorista/${ride.driverId}'" class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl cursor-pointer hover:border-uber-black hover:bg-uber-gray/20 transition-all group shadow-xs">
           <div class="flex items-center justify-between pb-3 border-b border-uber-border h-12">
             <div class="flex items-center gap-3">
-              <img src="${ride.driverAvatar}" alt="${ride.driverName}" class="w-10 h-10 rounded-full object-cover border border-uber-border bg-uber-gray" />
+              <img src="${ride.driverAvatar}" alt="${ride.driverName}" class="w-10 h-10 rounded-full object-cover border border-uber-border bg-uber-gray group-hover:scale-105 transition-transform" />
               <div>
-                <span class="text-sm font-bold text-uber-black block leading-tight">${ride.driverName}</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-sm font-bold text-uber-black block leading-tight group-hover:underline">${ride.driverName}</span>
+                  ${icon('verified', { size: 'sm', className: 'text-emerald-600' })}
+                </div>
                 <div class="flex items-center gap-1.5 text-xs text-uber-iron font-medium mt-0.5">
                   <span class="flex items-center gap-0.5 text-uber-black font-bold">
                     ${icon('star', { size: 'sm', fill: true, className: 'star-gold' })}
@@ -1405,8 +1593,10 @@ function viewRideDetails(rideId) {
             </div>
 
             <div class="flex items-center gap-2 text-uber-iron">
-              ${ride.vehicle.hasAC ? `<span title="Ar-condicionado" class="p-1.5 bg-uber-gray rounded-lg border border-uber-border">${icon('ac_unit', { size: 'sm', className: 'text-uber-black' })}</span>` : ''}
-              ${ride.vehicle.hasUSB ? `<span title="USB" class="p-1.5 bg-uber-gray rounded-lg border border-uber-border">${icon('usb', { size: 'sm', className: 'text-uber-black' })}</span>` : ''}
+              <span class="text-xs font-semibold text-uber-black bg-uber-gray px-2.5 py-1 rounded-lg border border-uber-border group-hover:bg-black group-hover:text-white transition-colors flex items-center gap-1">
+                <span>Ver Perfil</span>
+                ${icon('chevron_right', { size: 'sm' })}
+              </span>
             </div>
           </div>
 
@@ -2443,27 +2633,6 @@ function viewProfile() {
                 </div>
               </div>
             </div>
-
-            <!-- Social / Quick Actions -->
-            <div class="flex flex-wrap sm:flex-col gap-2 shrink-0">
-              <button
-                type="button"
-                onclick="store.connectGoogleAccount(); showToast('Conectado com Google! Foto e dados sincronizados.', 'success');"
-                class="h-9 px-3.5 bg-white border border-uber-border hover:bg-uber-gray text-uber-black font-semibold rounded-lg text-xs flex items-center gap-2 transition-all active:scale-95 shadow-xs"
-              >
-                ${icon('account_circle', { size: 'sm', className: 'text-uber-black' })}
-                <span>Puxar Foto do Google</span>
-              </button>
-
-              <button
-                type="button"
-                onclick="store.resetAvatarToDefault(); showToast('Foto restaurada para o padrão.', 'info');"
-                class="h-9 px-3.5 bg-uber-gray hover:bg-uber-border text-uber-iron font-medium rounded-lg text-xs flex items-center gap-1.5 transition-all active:scale-95"
-              >
-                ${icon('delete', { size: 'sm' })}
-                <span>Remover Foto</span>
-              </button>
-            </div>
           </div>
 
           <!-- Main Profile Edit Form -->
@@ -2868,6 +3037,180 @@ function closeModal() {
 }
 
 // ==========================================
+// 8.5. PERFIL PÚBLICO DO MOTORISTA
+// ==========================================
+
+function viewDriverProfile(driverId) {
+  const driver = getDriverProfile(driverId);
+  const driverRides = store.state.rides.filter(r => r.driverId === driverId);
+
+  return `
+    <div class="max-w-3xl mx-auto px-4 py-6 text-left pb-32 md:pb-16 animate-fade-in">
+      <button onclick="window.history.back()" class="flex items-center gap-1.5 text-xs font-bold text-uber-black hover:text-uber-iron mb-5 transition-colors">
+        ${icon('arrow_back', { size: 'sm' })}
+        <span>Voltar</span>
+      </button>
+
+      <div class="space-y-5">
+        
+        <!-- Header Card with Verification & Reputation -->
+        <div class="p-5 sm:p-6 border border-uber-border bg-white rounded-2xl shadow-sm">
+          <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 pb-5 border-b border-uber-border text-center sm:text-left">
+            <div class="relative">
+              <img src="${driver.avatar}" alt="${driver.name}" class="w-20 h-20 rounded-full object-cover border-2 border-uber-border bg-uber-gray shadow-xs" />
+              <div class="absolute bottom-0 right-0 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center border-2 border-white shadow-xs" title="Motorista Verificado">
+                ${icon('check', { size: 'sm' })}
+              </div>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <h1 class="text-xl sm:text-2xl font-extrabold text-uber-black">${driver.name}</h1>
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                  ${icon('verified', { size: 'sm', className: 'text-emerald-600' })}
+                  <span>Verificado</span>
+                </span>
+              </div>
+
+              <p class="text-xs text-uber-iron font-medium mt-1">
+                ${driver.city} • Membro desde ${driver.memberSince}
+              </p>
+
+              <div class="flex items-center justify-center sm:justify-start gap-2 text-xs font-semibold text-uber-black mt-2">
+                <div class="flex items-center gap-1">
+                  ${icon('star', { size: 'sm', fill: true, className: 'star-gold' })}
+                  <span class="font-bold">${driver.rating.toFixed(2)}</span>
+                </div>
+                <span class="text-uber-border">•</span>
+                <span class="text-uber-charcoal">${driver.totalTrips} viagens realizadas na cooperativa</span>
+              </div>
+            </div>
+          </div>
+
+          ${driver.bio ? `
+            <div class="pt-4 text-xs text-uber-charcoal leading-relaxed font-normal">
+              <span class="font-bold text-uber-black block mb-1">Apresentação:</span>
+              <p>${driver.bio}</p>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Trust Badges -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="p-3.5 bg-white border border-uber-border rounded-xl flex items-center gap-3 shadow-xs">
+            <div class="w-9 h-9 rounded-lg bg-uber-gray flex items-center justify-center text-uber-black shrink-0">
+              ${icon('badge', { size: 'sm' })}
+            </div>
+            <div>
+              <p class="font-bold text-xs text-uber-black">CNH & Identidade</p>
+              <p class="text-[11px] text-uber-iron font-normal">Documentos válidos e auditados</p>
+            </div>
+          </div>
+
+          <div class="p-3.5 bg-white border border-uber-border rounded-xl flex items-center gap-3 shadow-xs">
+            <div class="w-9 h-9 rounded-lg bg-uber-gray flex items-center justify-center text-uber-black shrink-0">
+              ${icon('security', { size: 'sm' })}
+            </div>
+            <div>
+              <p class="font-bold text-xs text-uber-black">Antecedentes Checados</p>
+              <p class="text-[11px] text-uber-iron font-normal">Sem registros ou incidentes</p>
+            </div>
+          </div>
+
+          <div class="p-3.5 bg-white border border-uber-border rounded-xl flex items-center gap-3 shadow-xs">
+            <div class="w-9 h-9 rounded-lg bg-uber-gray flex items-center justify-center text-uber-black shrink-0">
+              ${icon('thumb_up', { size: 'sm' })}
+            </div>
+            <div>
+              <p class="font-bold text-xs text-uber-black">Alta Reputação</p>
+              <p class="text-[11px] text-uber-iron font-normal">98%+ de avaliações 5 estrelas</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vehicle Details -->
+        <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl">
+          <div class="flex items-center gap-2 pb-3 border-b border-uber-border h-8">
+            ${icon('directions_car', { size: 'md', className: 'text-uber-black' })}
+            <h2 class="font-bold text-sm sm:text-base text-uber-black">Veículo de Viagem</h2>
+          </div>
+
+          <div class="pt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
+              <span class="font-semibold text-uber-iron block text-[11px]">Modelo</span>
+              <p class="font-bold text-uber-black mt-0.5">${driver.vehicle.brand} ${driver.vehicle.model}</p>
+            </div>
+            <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
+              <span class="font-semibold text-uber-iron block text-[11px]">Placa</span>
+              <p class="font-mono font-bold text-uber-black mt-0.5">${driver.vehicle.plate}</p>
+            </div>
+            <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
+              <span class="font-semibold text-uber-iron block text-[11px]">Ano</span>
+              <p class="font-bold text-uber-black mt-0.5">${driver.vehicle.year}</p>
+            </div>
+            <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
+              <span class="font-semibold text-uber-iron block text-[11px]">Conforto</span>
+              <p class="font-bold text-uber-black mt-0.5">${driver.vehicle.hasAC ? 'Ar-condicionado' : ''} ${driver.vehicle.hasUSB ? '• USB' : ''}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Passenger Reviews -->
+        <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl space-y-3">
+          <div class="flex items-center justify-between pb-3 border-b border-uber-border h-8">
+            <div class="flex items-center gap-2">
+              ${icon('reviews', { size: 'sm', className: 'text-uber-black' })}
+              <h2 class="font-bold text-sm sm:text-base text-uber-black">Avaliações dos Passageiros</h2>
+            </div>
+            <span class="text-xs font-bold text-amber-600 flex items-center gap-1">
+              ${icon('star', { size: 'sm', fill: true, className: 'star-gold' })}
+              ${driver.rating.toFixed(1)} / 5.0
+            </span>
+          </div>
+
+          <div class="space-y-3 pt-1">
+            ${driver.reviews && driver.reviews.length > 0 ? driver.reviews.map(rev => `
+              <div class="p-3.5 bg-uber-gray rounded-xl border border-uber-border space-y-1.5">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="font-bold text-uber-black">${rev.passenger}</span>
+                  <span class="text-[11px] text-uber-iron font-normal">${rev.date}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  ${[1, 2, 3, 4, 5].map(st => `
+                    ${icon('star', { size: 'sm', fill: st <= rev.rating, className: st <= rev.rating ? 'star-gold' : 'star-empty' })}
+                  `).join('')}
+                </div>
+                <p class="text-xs text-uber-charcoal font-normal leading-relaxed">${rev.comment}</p>
+                ${rev.tags && rev.tags.length > 0 ? `
+                  <div class="flex flex-wrap gap-1.5 pt-1">
+                    ${rev.tags.map(t => `
+                      <span class="text-[10px] font-semibold text-uber-black bg-white border border-uber-border px-2 py-0.5 rounded-full">${t}</span>
+                    `).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            `).join('') : `
+              <p class="text-xs text-uber-iron font-normal">Nenhuma avaliação detalhada ainda.</p>
+            `}
+          </div>
+        </div>
+
+        <!-- Available Rides from this Driver -->
+        ${driverRides.length > 0 ? `
+          <div class="pt-2">
+            <h3 class="font-bold text-sm sm:text-base text-uber-black mb-3">Próximas Viagens com ${driver.name.split(' ')[0]}:</h3>
+            <div class="flex flex-col gap-3">
+              ${driverRides.map(r => renderRideCard(r)).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+      </div>
+    </div>
+  `;
+}
+
+// ==========================================
 // 9. ROTEADOR SPA & CICLO DE VIDA
 // ==========================================
 
@@ -2882,6 +3225,9 @@ function renderApp() {
     appRoot.innerHTML = viewHome();
   } else if (path === '/buscar') {
     appRoot.innerHTML = viewSearchResults();
+  } else if (path.startsWith('/motorista/')) {
+    const driverId = path.replace('/motorista/', '');
+    appRoot.innerHTML = viewDriverProfile(driverId);
   } else if (path.startsWith('/viagem/')) {
     const id = path.replace('/viagem/', '');
     appRoot.innerHTML = viewRideDetails(id);
