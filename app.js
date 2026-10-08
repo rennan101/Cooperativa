@@ -830,35 +830,43 @@ function renderMobileNav() {
   const activeTab = tabs[activeIndex];
 
   mobileNavRoot.innerHTML = `
-    <div class="fluid-nav-bar relative w-full h-16 rounded-3xl flex items-center px-2">
-      <!-- Animated Fluid Notch & Raised Floating Button -->
+    <div class="relative w-full select-none">
+      <!-- Fluid Cutout Notch & Black Floating Bubble Indicator -->
       <div 
-        class="fluid-notch-indicator absolute -top-5 bottom-0 pointer-events-none flex flex-col items-center justify-start z-30"
+        class="fluid-cutout-indicator absolute -top-5 left-0 pointer-events-none flex flex-col items-center justify-start z-30"
         style="width: ${itemWidthPercent}%; transform: translateX(${translatePercent}%);"
       >
-        <!-- Floating Raised Circle -->
-        <div class="fluid-floating-circle shadow-2xl">
-          ${icon(activeTab.iconName, { size: 'lg', fill: true, className: 'text-black' })}
+        <!-- Top Arch Cutout Graphic -->
+        <div class="relative flex items-center justify-center">
+          <!-- SVG Notch Cutout Silhouette -->
+          <svg class="absolute -top-1 w-20 h-6 text-black fill-current pointer-events-none" viewBox="0 0 80 24" preserveAspectRatio="none">
+            <path d="M 0,24 C 18,24 22,0 40,0 C 58,0 62,24 80,24 Z" />
+          </svg>
+
+          <!-- Floating Black Bubble with White Icon -->
+          <div class="fluid-floating-bubble z-10">
+            ${icon(activeTab.iconName, { size: 'lg', fill: true, className: 'text-white' })}
+          </div>
         </div>
       </div>
 
-      <!-- Navigation Items -->
-      <div class="relative w-full h-full flex items-center justify-around z-20">
+      <!-- Main Full-Width Solid Black Bottom Bar -->
+      <div class="fluid-bottom-bar w-full flex items-center justify-around px-1 z-20">
         ${tabs.map((tab, idx) => {
           const isActive = idx === activeIndex;
           return `
             <a 
               href="${tab.href}" 
               onclick="if(typeof SoundEngine !== 'undefined') SoundEngine.play('info');"
-              class="mobile-nav-item flex-1 h-full flex flex-col items-center justify-center select-none"
+              class="mobile-nav-item flex-1 h-full flex flex-col items-center justify-center"
               style="width: ${itemWidthPercent}%;"
               aria-label="${tab.label}"
             >
-              <div class="flex flex-col items-center justify-center transition-all duration-200 ${isActive ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}">
-                <div class="text-white/80 hover:text-white">
-                  ${icon(tab.iconName, { size: 'md', fill: false, className: 'text-white/80' })}
+              <div class="flex flex-col items-center justify-center transition-all duration-300 ${isActive ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}">
+                <div class="text-white/70 hover:text-white">
+                  ${icon(tab.iconName, { size: 'md', fill: false, className: 'text-white/75' })}
                 </div>
-                <span class="text-[10px] text-white/70 font-medium leading-none mt-1 tracking-tight">${tab.label}</span>
+                <span class="text-[10px] text-white/70 font-medium leading-tight mt-1">${tab.label}</span>
               </div>
             </a>
           `;
@@ -867,6 +875,7 @@ function renderMobileNav() {
     </div>
   `;
 }
+
 
 
 
