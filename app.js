@@ -2,10 +2,106 @@
  * Cooperativa de Viagens Compartilhadas
  * Arquitetura Vanilla JavaScript ES6 Pura (Zero-Build)
  * Design System: Uber (Monochrome, Transit Kiosk, Tactile Microinteractions)
+ * Foco Regional: Nordeste Brasileiro (Cidades, Capitais e Polos Regionais)
  */
 
 // ==========================================
-// 1. ESTADO E DADOS INICIAIS (LOCAL STORAGE)
+// 1. DADOS GEOGRÁFICOS DO NORDESTE BRASIL
+// ==========================================
+
+const NORDESTE_LOCATIONS = [
+  // Ceará
+  { city: 'Fortaleza, CE', spot: 'Terminal Rodoviário Engenheiro João Thomé' },
+  { city: 'Fortaleza, CE', spot: 'Shopping Iguatemi Bosque' },
+  { city: 'Fortaleza, CE', spot: 'Aeroporto Pinto Martins' },
+  { city: 'Juazeiro do Norte, CE', spot: 'Cariri Garden Shopping' },
+  { city: 'Juazeiro do Norte, CE', spot: 'Praça Padre Cícero' },
+  { city: 'Sobral, CE', spot: 'Arco de Nossa Senhora de Fátima' },
+  { city: 'Sobral, CE', spot: 'Rodoviária de Sobral' },
+  { city: 'Quixadá, CE', spot: 'Praça José de Barros (Praça do Leão)' },
+  { city: 'Jericoacoara (Jijoca), CE', spot: 'Ponto dos Jardineiras / Vila' },
+  { city: 'Crateús, CE', spot: 'Rodoviária Municipal' },
+  { city: 'Iguatu, CE', spot: 'Praça da Matriz' },
+
+  // Pernambuco
+  { city: 'Recife, PE', spot: 'TIP - Terminal Integrado de Passageiros' },
+  { city: 'Recife, PE', spot: 'Shopping Recife (Boa Viagem)' },
+  { city: 'Recife, PE', spot: 'Praça do Derby' },
+  { city: 'Caruaru, PE', spot: 'Pátio de Eventos Luiz Gonzaga' },
+  { city: 'Caruaru, PE', spot: 'Caruaru Shopping' },
+  { city: 'Petrolina, PE', spot: 'Orla de Petrolina' },
+  { city: 'Petrolina, PE', spot: 'River Shopping Petrolina' },
+  { city: 'Garanhuns, PE', spot: 'Relógio das Flores' },
+  { city: 'Porto de Galinhas (Ipojuca), PE', spot: 'Praça das Piscinas Naturais' },
+
+  // Bahia
+  { city: 'Salvador, BA', spot: 'Rodoviária Central de Salvador' },
+  { city: 'Salvador, BA', spot: 'Shopping da Bahia (Iguatemi)' },
+  { city: 'Salvador, BA', spot: 'Aeroporto Internacional de Salvador' },
+  { city: 'Feira de Santana, BA', spot: 'Boulevard Shopping Feira' },
+  { city: 'Feira de Santana, BA', spot: 'Terminal Rodoviário' },
+  { city: 'Vitória da Conquista, BA', spot: 'Boulevard Shopping Conquista' },
+  { city: 'Ilhéus, BA', spot: 'Praça Castro Alves (Av. Soares Lopes)' },
+  { city: 'Itabuna, BA', spot: 'Shopping Jequitibá' },
+  { city: 'Porto Seguro, BA', spot: 'Passarela do Descobrimento' },
+  { city: 'Juazeiro, BA', spot: 'Orla 1 de Juazeiro' },
+
+  // Paraíba
+  { city: 'João Pessoa, PB', spot: 'Manaíra Shopping' },
+  { city: 'João Pessoa, PB', spot: 'Terminal Rodoviário Severino Camelo' },
+  { city: 'João Pessoa, PB', spot: 'Busto de Tamandaré (Tambaú)' },
+  { city: 'Campina Grande, PB', spot: 'Parque do Povo' },
+  { city: 'Campina Grande, PB', spot: 'Partage Shopping' },
+  { city: 'Patos, PB', spot: 'Praça Edvaldo Motta' },
+  { city: 'Sousa, PB', spot: 'Vale dos Dinossauros / Centro' },
+
+  // Rio Grande do Norte
+  { city: 'Natal, RN', spot: 'Midway Mall' },
+  { city: 'Natal, RN', spot: 'Rodoviária Nova de Natal' },
+  { city: 'Natal, RN', spot: 'Praia de Ponta Negra' },
+  { city: 'Mossoró, RN', spot: 'Partage Shopping Mossoró' },
+  { city: 'Mossoró, RN', spot: 'Estação das Artes Elizeu Ventania' },
+  { city: 'Pipa (Tibau do Sul), RN', spot: 'Avenida Baía dos Golfinhos' },
+  { city: 'Caicó, RN', spot: 'Ilha de Sant’Ana' },
+
+  // Alagoas
+  { city: 'Maceió, AL', spot: 'Parque Shopping Maceió (Cruz das Almas)' },
+  { city: 'Maceió, AL', spot: 'Terminal Rodoviário João Paulo II' },
+  { city: 'Maceió, AL', spot: 'Orla de Ponta Verde' },
+  { city: 'Arapiraca, AL', spot: 'Bosque das Arapiracas' },
+  { city: 'Arapiraca, AL', spot: 'Garden Shopping Arapiraca' },
+  { city: 'Maragogi, AL', spot: 'Praça Central da Orla' },
+
+  // Maranhão
+  { city: 'São Luís, MA', spot: 'São Luís Shopping' },
+  { city: 'São Luís, MA', spot: 'Terminal Rodoviário de São Luís' },
+  { city: 'São Luís, MA', spot: 'Avenida Litorânea' },
+  { city: 'Imperatriz, MA', spot: 'Imperial Shopping' },
+  { city: 'Imperatriz, MA', spot: 'Beira-Rio de Imperatriz' },
+  { city: 'Caxias, MA', spot: 'Praça do Pantheon' },
+  { city: 'Barreirinhas (Lençóis), MA', spot: 'Avenida Beira-Rio' },
+
+  // Piauí
+  { city: 'Teresina, PI', spot: 'Teresina Shopping' },
+  { city: 'Teresina, PI', spot: 'Terminal Rodoviário Lucídio Portela' },
+  { city: 'Teresina, PI', spot: 'Ponte Estaiada' },
+  { city: 'Parnaíba, PI', spot: 'Porto das Barcas' },
+  { city: 'Parnaíba, PI', spot: 'Parnaíba Shopping' },
+  { city: 'Picos, PI', spot: 'Picos Plaza Shopping' },
+
+  // Sergipe
+  { city: 'Aracaju, SE', spot: 'Shopping Jardins' },
+  { city: 'Aracaju, SE', spot: 'Terminal Rodoviário José Rollemberg Leite' },
+  { city: 'Aracaju, SE', spot: 'Orla de Atalaia (Arcos)' },
+  { city: 'Itabaiana, SE', spot: 'Shopping Peixoto' },
+  { city: 'Lagarto, SE', spot: 'Praça da Matriz Nossa Senhora da Piedade' }
+];
+
+// Lista única de cidades para datalists
+const NORDESTE_CITIES = Array.from(new Set(NORDESTE_LOCATIONS.map(l => l.city))).sort();
+
+// ==========================================
+// 2. ESTADO E DADOS INICIAIS (LOCAL STORAGE)
 // ==========================================
 
 const INITIAL_STATE = {
@@ -14,14 +110,14 @@ const INITIAL_STATE = {
     id: 'user-001',
     name: 'Carlos Oliveira',
     email: 'carlos.oliveira@empresa.com.br',
-    phone: '(11) 98765-4321',
+    phone: '(85) 98765-4321',
     pixKey: 'carlos.oliveira@empresa.com.br',
     rating: 4.9,
-    totalTrips: 24,
+    totalTrips: 28,
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     vehicle: {
       plate: 'BRA-2E19',
-      state: 'SP',
+      state: 'CE',
       brand: 'Toyota',
       model: 'Corolla Sedan 2.0',
       year: 2023,
@@ -30,8 +126,8 @@ const INITIAL_STATE = {
     }
   },
   searchParams: {
-    origin: 'São Paulo, SP',
-    destination: 'Campinas, SP',
+    origin: 'Fortaleza, CE',
+    destination: 'Juazeiro do Norte, CE',
     date: new Date().toISOString().split('T')[0],
     seats: 1,
   },
@@ -43,85 +139,85 @@ const INITIAL_STATE = {
       driverAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
       driverRating: 4.95,
       driverTripsCount: 142,
-      originCity: 'São Paulo, SP',
-      originSpot: 'Metrô Tietê (Saída B)',
-      destinationCity: 'Campinas, SP',
-      destinationSpot: 'Rodoviária de Campinas',
+      originCity: 'Fortaleza, CE',
+      originSpot: 'Shopping Iguatemi Bosque',
+      destinationCity: 'Juazeiro do Norte, CE',
+      destinationSpot: 'Cariri Garden Shopping',
       departureDate: new Date().toISOString().split('T')[0],
-      departureTime: '07:30',
-      estimatedDuration: '1h 15m',
-      estimatedArrivalTime: '08:45',
-      pricePerSeat: 35.00,
-      totalSeats: 3,
-      availableSeats: 2,
+      departureTime: '06:30',
+      estimatedDuration: '6h 30m',
+      estimatedArrivalTime: '13:00',
+      pricePerSeat: 75.00,
+      totalSeats: 4,
+      availableSeats: 3,
       vehicle: {
         brand: 'Toyota',
         model: 'Corolla 2.0',
-        plate: 'ABC-1234',
-        year: 2022,
+        plate: 'CE-FOR-2023',
+        year: 2023,
         hasAC: true,
         hasUSB: true,
       },
       status: 'PUBLISHED',
-      notes: 'Pontualidade britânica. Tolerância de 10 min.',
+      notes: 'Saída pontual. Parada para lanche em Quixadá.',
     },
     {
       id: 'ride-102',
       driverId: 'drv-02',
       driverName: 'Fernanda Costa',
       driverAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-      driverRating: 4.88,
-      driverTripsCount: 89,
-      originCity: 'São Paulo, SP',
-      originSpot: 'Metrô Barra Funda',
-      destinationCity: 'Campinas, SP',
-      destinationSpot: 'Shopping Dom Pedro',
+      driverRating: 4.92,
+      driverTripsCount: 98,
+      originCity: 'Recife, PE',
+      originSpot: 'Shopping Recife (Boa Viagem)',
+      destinationCity: 'Caruaru, PE',
+      destinationSpot: 'Pátio de Eventos Luiz Gonzaga',
       departureDate: new Date().toISOString().split('T')[0],
-      departureTime: '09:00',
-      estimatedDuration: '1h 20m',
-      estimatedArrivalTime: '10:20',
-      pricePerSeat: 40.00,
+      departureTime: '08:00',
+      estimatedDuration: '2h 00m',
+      estimatedArrivalTime: '10:00',
+      pricePerSeat: 35.00,
       totalSeats: 4,
-      availableSeats: 3,
+      availableSeats: 2,
       vehicle: {
         brand: 'Honda',
         model: 'Civic Touring',
-        plate: 'XYZ-9876',
+        plate: 'PE-REC-9988',
         year: 2023,
         hasAC: true,
         hasUSB: true,
       },
       status: 'PUBLISHED',
-      notes: 'Ar-condicionado e carregador disponíveis.',
+      notes: 'Carro espaçoso e ar-condicionado duplo.',
     },
     {
       id: 'ride-103',
       driverId: 'drv-03',
       driverName: 'Rafael Guimarães',
       driverAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-      driverRating: 4.92,
-      driverTripsCount: 63,
-      originCity: 'São Paulo, SP',
-      originSpot: 'Metrô Tatuapé',
-      destinationCity: 'São José dos Campos, SP',
-      destinationSpot: 'CenterVale Shopping',
+      driverRating: 4.88,
+      driverTripsCount: 65,
+      originCity: 'Salvador, BA',
+      originSpot: 'Shopping da Bahia (Iguatemi)',
+      destinationCity: 'Feira de Santana, BA',
+      destinationSpot: 'Boulevard Shopping Feira',
       departureDate: new Date().toISOString().split('T')[0],
-      departureTime: '18:00',
-      estimatedDuration: '1h 10m',
-      estimatedArrivalTime: '19:10',
-      pricePerSeat: 38.00,
-      totalSeats: 3,
-      availableSeats: 1,
+      departureTime: '17:30',
+      estimatedDuration: '1h 30m',
+      estimatedArrivalTime: '19:00',
+      pricePerSeat: 30.00,
+      totalSeats: 4,
+      availableSeats: 4,
       vehicle: {
         brand: 'Volkswagen',
         model: 'T-Cross',
-        plate: 'KLE-4411',
-        year: 2021,
+        plate: 'BA-SSA-4411',
+        year: 2022,
         hasAC: true,
         hasUSB: true,
       },
       status: 'PUBLISHED',
-      notes: 'Viagem tranquila direto pela via Dutra.',
+      notes: 'Direto pela BR-324, sem desvios.',
     },
     {
       id: 'ride-104',
@@ -129,28 +225,144 @@ const INITIAL_STATE = {
       driverName: 'Juliana Mendes',
       driverAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
       driverRating: 5.0,
-      driverTripsCount: 31,
-      originCity: 'Belo Horizonte, MG',
-      originSpot: 'Praça da Liberdade',
-      destinationCity: 'Ouro Preto, MG',
-      destinationSpot: 'Praça Tiradentes',
+      driverTripsCount: 42,
+      originCity: 'João Pessoa, PB',
+      originSpot: 'Manaíra Shopping',
+      destinationCity: 'Campina Grande, PB',
+      destinationSpot: 'Parque do Povo',
       departureDate: new Date().toISOString().split('T')[0],
-      departureTime: '08:00',
+      departureTime: '07:30',
       estimatedDuration: '1h 45m',
-      estimatedArrivalTime: '09:45',
-      pricePerSeat: 45.00,
+      estimatedArrivalTime: '09:15',
+      pricePerSeat: 32.00,
       totalSeats: 3,
       availableSeats: 2,
       vehicle: {
         brand: 'Jeep',
         model: 'Renegade Longitude',
-        plate: 'MGO-3322',
+        plate: 'PB-JPA-5522',
+        year: 2023,
+        hasAC: true,
+        hasUSB: true,
+      },
+      status: 'PUBLISHED',
+      notes: 'Porta-malas livre para bagagens médias.',
+    },
+    {
+      id: 'ride-105',
+      driverId: 'drv-05',
+      driverName: 'Lucas Albuquerque',
+      driverAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
+      driverRating: 4.96,
+      driverTripsCount: 110,
+      originCity: 'Natal, RN',
+      originSpot: 'Midway Mall',
+      destinationCity: 'Mossoró, RN',
+      destinationSpot: 'Partage Shopping Mossoró',
+      departureDate: new Date().toISOString().split('T')[0],
+      departureTime: '14:00',
+      estimatedDuration: '3h 45m',
+      estimatedArrivalTime: '17:45',
+      pricePerSeat: 55.00,
+      totalSeats: 6,
+      availableSeats: 5,
+      vehicle: {
+        brand: 'Chevrolet',
+        model: 'Spin 7 Lugares',
+        plate: 'RN-NAT-7700',
+        year: 2024,
+        hasAC: true,
+        hasUSB: true,
+      },
+      status: 'PUBLISHED',
+      notes: 'Veículo com 7 lugares, muito confortável.',
+    },
+    {
+      id: 'ride-106',
+      driverId: 'drv-06',
+      driverName: 'Camila Vasconcelos',
+      driverAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
+      driverRating: 4.98,
+      driverTripsCount: 76,
+      originCity: 'Maceió, AL',
+      originSpot: 'Parque Shopping Maceió',
+      destinationCity: 'Arapiraca, AL',
+      destinationSpot: 'Garden Shopping Arapiraca',
+      departureDate: new Date().toISOString().split('T')[0],
+      departureTime: '09:00',
+      estimatedDuration: '2h 15m',
+      estimatedArrivalTime: '11:15',
+      pricePerSeat: 35.00,
+      totalSeats: 4,
+      availableSeats: 3,
+      vehicle: {
+        brand: 'Hyundai',
+        model: 'Creta Ultimate',
+        plate: 'AL-MCZ-1234',
+        year: 2023,
+        hasAC: true,
+        hasUSB: true,
+      },
+      status: 'PUBLISHED',
+      notes: 'Viagem executiva com pontualidade.',
+    },
+    {
+      id: 'ride-107',
+      driverId: 'drv-07',
+      driverName: 'André Nascimento',
+      driverAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80',
+      driverRating: 4.91,
+      driverTripsCount: 52,
+      originCity: 'Teresina, PI',
+      originSpot: 'Teresina Shopping',
+      destinationCity: 'Parnaíba, PI',
+      destinationSpot: 'Porto das Barcas',
+      departureDate: new Date().toISOString().split('T')[0],
+      departureTime: '06:00',
+      estimatedDuration: '5h 00m',
+      estimatedArrivalTime: '11:00',
+      pricePerSeat: 65.00,
+      totalSeats: 4,
+      availableSeats: 2,
+      vehicle: {
+        brand: 'Toyota',
+        model: 'Yaris Sedan',
+        plate: 'PI-THE-3344',
         year: 2022,
         hasAC: true,
         hasUSB: true,
       },
       status: 'PUBLISHED',
-      notes: 'Carro confortável e porta-malas espaçoso.',
+      notes: 'Ida para o litoral piauiense.',
+    },
+    {
+      id: 'ride-108',
+      driverId: 'drv-08',
+      driverName: 'Renata Lins',
+      driverAvatar: 'https://images.unsplash.com/photo-1534751516642-a171edd25218?w=150&auto=format&fit=crop&q=80',
+      driverRating: 4.94,
+      driverTripsCount: 88,
+      originCity: 'Aracaju, SE',
+      originSpot: 'Shopping Jardins',
+      destinationCity: 'Itabaiana, SE',
+      destinationSpot: 'Shopping Peixoto',
+      departureDate: new Date().toISOString().split('T')[0],
+      departureTime: '16:00',
+      estimatedDuration: '1h 00m',
+      estimatedArrivalTime: '17:00',
+      pricePerSeat: 25.00,
+      totalSeats: 4,
+      availableSeats: 3,
+      vehicle: {
+        brand: 'Nissan',
+        model: 'Kicks Exclusive',
+        plate: 'SE-AJU-6655',
+        year: 2023,
+        hasAC: true,
+        hasUSB: true,
+      },
+      status: 'PUBLISHED',
+      notes: 'Carona rápida pela BR-235.',
     }
   ],
   bookings: [
@@ -159,13 +371,13 @@ const INITIAL_STATE = {
       rideId: 'ride-101',
       passengerId: 'user-001',
       passengerName: 'Carlos Oliveira',
-      passengerPhone: '(11) 98765-4321',
+      passengerPhone: '(85) 98765-4321',
       seatsBooked: 1,
-      totalAmount: 35.00,
-      amountPaidSignal: 17.50,
-      amountDueFinal: 17.50,
+      totalAmount: 75.00,
+      amountPaidSignal: 37.50,
+      amountDueFinal: 37.50,
       status: 'SIGNAL_CONFIRMED',
-      pixCopyPasteCode: '00020126580014br.gov.bcb.pix0136cooperativa-viagens-custodia-bk8941520400005303986540517.505802BR5925COOPERATIVA VIAGENS LTDA6009SAO PAULO62070503***6304D1A9',
+      pixCopyPasteCode: '00020126580014br.gov.bcb.pix0136cooperativa-viagens-custodia-bk8941520400005303986540537.505802BR5925COOPERATIVA VIAGENS LTDA6009FORTALEZA62070503***6304D1A9',
       createdAt: new Date(Date.now() - 3600000).toISOString(),
     }
   ],
@@ -176,8 +388,8 @@ const INITIAL_STATE = {
       senderId: 'drv-01',
       senderName: 'Marcos Silva',
       senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-      text: 'Olá Carlos! Estarei na saída B do Metrô Tietê às 07:25 em um Corolla prata.',
-      createdAt: '07:15',
+      text: 'Olá Carlos! Estarei no estacionamento do Shopping Iguatemi às 06:25 em um Corolla prata.',
+      createdAt: '06:10',
     }
   ],
   driverRequests: [
@@ -186,7 +398,7 @@ const INITIAL_STATE = {
       userId: 'usr-99',
       userName: 'Luciano Prado',
       userEmail: 'luciano.prado@eng.com.br',
-      userPhone: '(11) 97711-2233',
+      userPhone: '(85) 97711-2233',
       cnhNumber: '04981273910',
       vehicle: {
         brand: 'Chevrolet',
@@ -209,21 +421,21 @@ class AppStore {
   }
 
   loadState() {
-    const saved = localStorage.getItem('cooperativa_state');
+    const saved = localStorage.getItem('cooperativa_state_v2');
     if (saved) {
       try {
         this.state = JSON.parse(saved);
       } catch (e) {
-        this.state = { ...INITIAL_STATE };
+        this.state = JSON.parse(JSON.stringify(INITIAL_STATE));
       }
     } else {
-      this.state = { ...INITIAL_STATE };
+      this.state = JSON.parse(JSON.stringify(INITIAL_STATE));
       this.saveState();
     }
   }
 
   saveState() {
-    localStorage.setItem('cooperativa_state', JSON.stringify(this.state));
+    localStorage.setItem('cooperativa_state_v2', JSON.stringify(this.state));
   }
 
   setRole(newRole) {
@@ -264,7 +476,7 @@ class AppStore {
       amountPaidSignal: signal,
       amountDueFinal: finalVal,
       status: 'SIGNAL_CONFIRMED',
-      pixCopyPasteCode: `00020126580014br.gov.bcb.pix0136cooperativa-viagens-custodia-${bookingId.toLowerCase()}5204000053039865405${signal.toFixed(2)}5802BR5925COOPERATIVA VIAGENS LTDA6009SAO PAULO62070503***6304C9E2`,
+      pixCopyPasteCode: `00020126580014br.gov.bcb.pix0136cooperativa-viagens-custodia-${bookingId.toLowerCase()}5204000053039865405${signal.toFixed(2)}5802BR5925COOPERATIVA VIAGENS LTDA6009RECIFE62070503***6304C9E2`,
       createdAt: new Date().toISOString(),
     };
 
@@ -370,7 +582,7 @@ class AppStore {
 const store = new AppStore();
 
 // ==========================================
-// 2. HELPER DE ÍCONES E TOASTS
+// 3. HELPER DE ÍCONES E TOASTS
 // ==========================================
 
 function icon(name, { size = 'md', fill = false, className = '' } = {}) {
@@ -414,7 +626,7 @@ function showToast(message, type = 'info') {
 }
 
 // ==========================================
-// 3. LAYOUT FIXO: HEADER, NAV, FOOTER
+// 4. LAYOUT FIXO: HEADER, NAV, FOOTER
 // ==========================================
 
 function renderHeader() {
@@ -432,7 +644,7 @@ function renderHeader() {
         </div>
         <div class="flex flex-col text-left">
           <span class="font-extrabold text-lg tracking-tight text-white leading-none">Cooperativa</span>
-          <span class="text-[10px] font-semibold text-uber-iron uppercase tracking-wider">Viagens</span>
+          <span class="text-[10px] font-semibold text-uber-iron uppercase tracking-wider">Nordeste</span>
         </div>
       </a>
 
@@ -547,7 +759,7 @@ function renderFooter() {
           <span class="font-extrabold text-lg text-white">Cooperativa</span>
         </div>
         <p class="text-uber-slate text-xs leading-relaxed font-normal">
-          Plataforma de viagens compartilhadas para profissionais. Segurança, economia e transparência para motoristas e passageiros.
+          Plataforma de viagens compartilhadas para o Nordeste brasileiro. Conectando capitais e cidades polo com economia e segurança.
         </p>
       </div>
 
@@ -588,7 +800,7 @@ function renderFooter() {
     </div>
 
     <div class="max-w-4xl mx-auto px-4 pt-6 mt-6 border-t border-uber-charcoal text-center text-xs text-uber-iron font-normal">
-      Cooperativa de Viagens. Todos os direitos reservados.
+      Cooperativa de Viagens do Nordeste. Todos os direitos reservados.
     </div>
   `;
 }
@@ -601,14 +813,23 @@ function toggleRole() {
 }
 
 // ==========================================
-// 4. COMPONENTES REUTILIZÁVEIS
+// 5. COMPONENTES REUTILIZÁVEIS
 // ==========================================
+
+function renderDatalists() {
+  return `
+    <datalist id="nordeste-cities-list">
+      ${NORDESTE_CITIES.map(c => `<option value="${c}">`).join('')}
+    </datalist>
+  `;
+}
 
 function renderHeroSearchBar() {
   const { origin, destination, date, seats } = store.state.searchParams;
   const todayStr = new Date().toISOString().split('T')[0];
 
   return `
+    ${renderDatalists()}
     <div class="w-full max-w-4xl mx-auto relative">
       <form id="hero-search-form" onsubmit="handleSearchSubmit(event)" class="bg-white border border-uber-border shadow-lg rounded-xl p-2.5 sm:p-3 flex flex-col md:flex-row items-stretch md:items-center gap-2">
         
@@ -619,8 +840,9 @@ function renderHeroSearchBar() {
             <input
               id="search-origin"
               type="text"
+              list="nordeste-cities-list"
               value="${origin}"
-              placeholder="Ponto de partida"
+              placeholder="Origem no Nordeste (Ex: Fortaleza, CE)"
               class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
               required
             />
@@ -639,38 +861,42 @@ function renderHeroSearchBar() {
             <input
               id="search-dest"
               type="text"
+              list="nordeste-cities-list"
               value="${destination}"
-              placeholder="Para onde vamos?"
+              placeholder="Destino no Nordeste (Ex: Juazeiro, CE)"
               class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
               required
             />
           </div>
         </div>
 
-        <!-- Date & Seats -->
+        <!-- Date & Seats Row (Mobile Optimized with 4-digit Year & Up to 7 Seats) -->
         <div class="flex items-center gap-2 flex-initial">
-          <div class="flex-1 md:flex-initial flex items-center gap-2 px-3 h-12 bg-uber-gray rounded-lg border border-transparent focus-within:border-uber-black focus-within:bg-white min-w-[135px] transition-all">
+          <div class="flex-1 md:flex-initial flex items-center gap-2 px-3 h-12 bg-uber-gray rounded-lg border border-transparent focus-within:border-uber-black focus-within:bg-white min-w-[155px] transition-all">
             ${icon('calendar_today', { size: 'sm', className: 'text-uber-iron shrink-0' })}
             <input
               id="search-date"
               type="date"
               min="${todayStr}"
               value="${date}"
-              class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-xs cursor-pointer"
+              class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-xs sm:text-sm cursor-pointer"
               required
             />
           </div>
 
-          <div class="flex-1 md:flex-initial flex items-center gap-2 px-3 h-12 bg-uber-gray rounded-lg border border-transparent focus-within:border-uber-black focus-within:bg-white min-w-[100px] transition-all">
+          <div class="flex-1 md:flex-initial flex items-center gap-2 px-3 h-12 bg-uber-gray rounded-lg border border-transparent focus-within:border-uber-black focus-within:bg-white min-w-[115px] transition-all">
             ${icon('group', { size: 'sm', className: 'text-uber-iron shrink-0' })}
             <select
               id="search-seats"
-              class="w-full bg-transparent font-bold text-uber-black focus:outline-none text-xs cursor-pointer"
+              class="w-full bg-transparent font-bold text-uber-black focus:outline-none text-xs sm:text-sm cursor-pointer"
             >
               <option value="1" ${seats === 1 ? 'selected' : ''}>1 lugar</option>
               <option value="2" ${seats === 2 ? 'selected' : ''}>2 lugares</option>
               <option value="3" ${seats === 3 ? 'selected' : ''}>3 lugares</option>
               <option value="4" ${seats === 4 ? 'selected' : ''}>4 lugares</option>
+              <option value="5" ${seats === 5 ? 'selected' : ''}>5 lugares</option>
+              <option value="6" ${seats === 6 ? 'selected' : ''}>6 lugares</option>
+              <option value="7" ${seats === 7 ? 'selected' : ''}>7 lugares</option>
             </select>
           </div>
         </div>
@@ -771,7 +997,7 @@ function renderRideCard(ride) {
 }
 
 // ==========================================
-// 5. TELAS E VIEWS (SPA ROUTER)
+// 6. TELAS E VIEWS (SPA ROUTER)
 // ==========================================
 
 function handleSearchSubmit(e) {
@@ -812,118 +1038,68 @@ function viewHome() {
   return `
     <div class="flex flex-col gap-10 md:gap-14 pb-12 text-left animate-fade-in">
       
-      <!-- Hero Section -->
-      <section class="relative bg-uber-black text-white pt-10 pb-20 px-4">
+      <!-- Hero Section (Sem badges e sem cards de 3 passos conforme solicitado) -->
+      <section class="relative bg-uber-black text-white pt-12 pb-16 px-4">
         <div class="max-w-4xl mx-auto text-center flex flex-col items-center gap-4">
           
-          <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-uber-slate">
-            ${icon('verified_user', { size: 'sm', className: 'text-white' })}
-            <span>Cooperativa Oficial</span>
-          </div>
-
           <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight max-w-2xl leading-tight text-white">
-            Viaje a trabalho com economia, segurança e conforto.
+            Viagens Compartilhadas pelo Nordeste
           </h1>
 
           <p class="text-uber-slate text-sm sm:text-base max-w-xl font-normal">
-            Pague 50% no PIX para garantir o lugar e 50% na chegada.
+            Encontre motoristas verificados, garanta sua vaga com 50% no PIX e pague o restante na chegada.
           </p>
 
-          <div class="w-full mt-3">
+          <div class="w-full mt-4">
             ${renderHeroSearchBar()}
           </div>
         </div>
       </section>
 
-      <!-- 3 Steps -->
-      <section class="max-w-4xl mx-auto px-4 w-full -mt-20 z-10">
-        <div class="bg-white border border-uber-border rounded-xl shadow-md p-4 sm:p-6">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-            
-            <div class="flex items-center md:flex-col md:items-start gap-3 p-4 bg-uber-gray rounded-lg border border-transparent h-20 md:h-36">
-              <div class="w-9 h-9 rounded-lg bg-uber-black text-white flex items-center justify-center shrink-0">
-                ${icon('search', { size: 'md' })}
-              </div>
-              <div class="flex-1 min-w-0">
-                <h3 class="font-bold text-sm sm:text-base text-uber-black leading-tight">1. Escolha a viagem</h3>
-                <p class="text-uber-iron text-xs font-normal leading-tight mt-1 hidden md:block">
-                  Selecione origem, destino e motorista verificado.
-                </p>
-              </div>
-            </div>
-
-            <div class="flex items-center md:flex-col md:items-start gap-3 p-4 bg-uber-gray rounded-lg border border-transparent h-20 md:h-36">
-              <div class="w-9 h-9 rounded-lg bg-uber-black text-white flex items-center justify-center shrink-0">
-                ${icon('payments', { size: 'md' })}
-              </div>
-              <div class="flex-1 min-w-0">
-                <h3 class="font-bold text-sm sm:text-base text-uber-black leading-tight">2. Sinal de 50% PIX</h3>
-                <p class="text-uber-iron text-xs font-normal leading-tight mt-1 hidden md:block">
-                  Garantia de vaga com custódia segura.
-                </p>
-              </div>
-            </div>
-
-            <div class="flex items-center md:flex-col md:items-start gap-3 p-4 bg-uber-gray rounded-lg border border-transparent h-20 md:h-36">
-              <div class="w-9 h-9 rounded-lg bg-uber-black text-white flex items-center justify-center shrink-0">
-                ${icon('directions_car', { size: 'md' })}
-              </div>
-              <div class="flex-1 min-w-0">
-                <h3 class="font-bold text-sm sm:text-base text-uber-black leading-tight">3. Embarque e viaje</h3>
-                <p class="text-uber-iron text-xs font-normal leading-tight mt-1 hidden md:block">
-                  Encontro pontual e recibo digital no final.
-                </p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      <!-- Popular Routes -->
+      <!-- Popular Routes (Nordeste) -->
       <section class="max-w-4xl mx-auto px-4 w-full">
         <div class="flex items-center justify-between mb-4 h-8">
           <h2 class="text-lg sm:text-xl font-bold text-uber-black flex items-center gap-2">
             ${icon('trending_up', { size: 'sm', className: 'text-uber-black' })}
-            <span>Rotas Mais Procuradas</span>
+            <span>Rotas Mais Procuradas no Nordeste</span>
           </h2>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div onclick="selectPopularRoute('São Paulo, SP', 'Campinas, SP')" class="p-4 flex items-center justify-between border border-uber-border hover:border-uber-black rounded-xl h-20 bg-white cursor-pointer transition-all active:scale-95">
+          <div onclick="selectPopularRoute('Fortaleza, CE', 'Juazeiro do Norte, CE')" class="p-4 flex items-center justify-between border border-uber-border hover:border-uber-black rounded-xl h-20 bg-white cursor-pointer transition-all active:scale-95">
             <div class="flex items-center gap-3 min-w-0">
               <div class="p-2 bg-uber-gray text-uber-black rounded-lg shrink-0">
                 ${icon('commute', { size: 'sm' })}
               </div>
               <div class="truncate">
-                <p class="font-bold text-xs sm:text-sm text-uber-black truncate">São Paulo ➔ Campinas</p>
+                <p class="font-bold text-xs sm:text-sm text-uber-black truncate">Fortaleza ➔ Juazeiro do Norte</p>
+                <p class="text-[11px] font-semibold text-uber-charcoal">A partir de R$ 75,00</p>
+              </div>
+            </div>
+            ${icon('chevron_right', { size: 'sm', className: 'text-uber-iron shrink-0' })}
+          </div>
+
+          <div onclick="selectPopularRoute('Recife, PE', 'Caruaru, PE')" class="p-4 flex items-center justify-between border border-uber-border hover:border-uber-black rounded-xl h-20 bg-white cursor-pointer transition-all active:scale-95">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="p-2 bg-uber-gray text-uber-black rounded-lg shrink-0">
+                ${icon('commute', { size: 'sm' })}
+              </div>
+              <div class="truncate">
+                <p class="font-bold text-xs sm:text-sm text-uber-black truncate">Recife ➔ Caruaru</p>
                 <p class="text-[11px] font-semibold text-uber-charcoal">A partir de R$ 35,00</p>
               </div>
             </div>
             ${icon('chevron_right', { size: 'sm', className: 'text-uber-iron shrink-0' })}
           </div>
 
-          <div onclick="selectPopularRoute('São Paulo, SP', 'São José dos Campos, SP')" class="p-4 flex items-center justify-between border border-uber-border hover:border-uber-black rounded-xl h-20 bg-white cursor-pointer transition-all active:scale-95">
+          <div onclick="selectPopularRoute('Salvador, BA', 'Feira de Santana, BA')" class="p-4 flex items-center justify-between border border-uber-border hover:border-uber-black rounded-xl h-20 bg-white cursor-pointer transition-all active:scale-95">
             <div class="flex items-center gap-3 min-w-0">
               <div class="p-2 bg-uber-gray text-uber-black rounded-lg shrink-0">
                 ${icon('commute', { size: 'sm' })}
               </div>
               <div class="truncate">
-                <p class="font-bold text-xs sm:text-sm text-uber-black truncate">São Paulo ➔ S. José dos Campos</p>
-                <p class="text-[11px] font-semibold text-uber-charcoal">A partir de R$ 40,00</p>
-              </div>
-            </div>
-            ${icon('chevron_right', { size: 'sm', className: 'text-uber-iron shrink-0' })}
-          </div>
-
-          <div onclick="selectPopularRoute('Belo Horizonte, MG', 'Ouro Preto, MG')" class="p-4 flex items-center justify-between border border-uber-border hover:border-uber-black rounded-xl h-20 bg-white cursor-pointer transition-all active:scale-95">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="p-2 bg-uber-gray text-uber-black rounded-lg shrink-0">
-                ${icon('commute', { size: 'sm' })}
-              </div>
-              <div class="truncate">
-                <p class="font-bold text-xs sm:text-sm text-uber-black truncate">Belo Horizonte ➔ Ouro Preto</p>
-                <p class="text-[11px] font-semibold text-uber-charcoal">A partir de R$ 45,00</p>
+                <p class="font-bold text-xs sm:text-sm text-uber-black truncate">Salvador ➔ Feira de Santana</p>
+                <p class="text-[11px] font-semibold text-uber-charcoal">A partir de R$ 30,00</p>
               </div>
             </div>
             ${icon('chevron_right', { size: 'sm', className: 'text-uber-iron shrink-0' })}
@@ -936,7 +1112,7 @@ function viewHome() {
         <section class="max-w-4xl mx-auto px-4 w-full">
           <div class="bg-uber-black text-white rounded-xl p-5 sm:p-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-uber-charcoal">
             <div class="max-w-lg">
-              <h2 class="text-lg sm:text-xl font-bold mb-1 text-white">Vai viajar? Ofereça seus lugares livres.</h2>
+              <h2 class="text-lg sm:text-xl font-bold mb-1 text-white">Vai viajar pelo Nordeste? Ofereça seus lugares livres.</h2>
               <p class="text-uber-slate text-xs sm:text-sm leading-relaxed font-normal">
                 Publique com pelo menos 2h de antecedência e receba resgate via PIX em até 72h.
               </p>
@@ -970,11 +1146,18 @@ function handleSortChange(val) {
 function viewSearchResults() {
   const { rides, searchParams } = store.state;
 
+  const originQuery = (searchParams.origin || '').toLowerCase().split(',')[0].trim();
+  const destQuery = (searchParams.destination || '').toLowerCase().split(',')[0].trim();
+
   const filtered = rides.filter(ride => {
-    const matchOrigin = !searchParams.origin || 
-      ride.originCity.toLowerCase().includes(searchParams.origin.toLowerCase().split(',')[0].trim());
-    const matchDest = !searchParams.destination || 
-      ride.destinationCity.toLowerCase().includes(searchParams.destination.toLowerCase().split(',')[0].trim());
+    const matchOrigin = !originQuery || 
+      ride.originCity.toLowerCase().includes(originQuery) ||
+      ride.originSpot.toLowerCase().includes(originQuery);
+
+    const matchDest = !destQuery || 
+      ride.destinationCity.toLowerCase().includes(destQuery) ||
+      ride.destinationSpot.toLowerCase().includes(destQuery);
+
     const matchSeats = ride.availableSeats >= (searchParams.seats || 1);
     const matchAC = !searchFilterAC || ride.vehicle.hasAC;
 
@@ -1018,7 +1201,7 @@ function viewSearchResults() {
       <!-- Header -->
       <div class="flex items-center justify-between mb-3.5 px-1">
         <span class="text-sm font-bold text-uber-black">
-          ${filtered.length} ${filtered.length === 1 ? 'viagem encontrada' : 'viagens encontradas'}
+          ${filtered.length} ${filtered.length === 1 ? 'viagem encontrada no Nordeste' : 'viagens encontradas no Nordeste'}
         </span>
         <span class="text-xs font-normal text-uber-iron">
           Data: ${new Date(searchParams.date + 'T00:00:00').toLocaleDateString('pt-BR')}
@@ -1033,14 +1216,14 @@ function viewSearchResults() {
               ${icon('search_off', { size: 'md' })}
             </div>
             <div>
-              <h3 class="text-base font-bold text-uber-black">Nenhuma viagem disponível</h3>
-              <p class="text-uber-iron text-xs font-normal mt-1">Tente limpar os filtros ou selecionar outra data.</p>
+              <h3 class="text-base font-bold text-uber-black">Nenhuma viagem disponível nesta rota</h3>
+              <p class="text-uber-iron text-xs font-normal mt-1">Tente buscar por cidades como Fortaleza, Recife, Salvador, João Pessoa, Natal, Maceió, Teresina ou Aracaju.</p>
             </div>
             <button
-              onclick="searchFilterAC = false; renderApp();"
+              onclick="searchFilterAC = false; store.setSearchParams({ origin: '', destination: '' }); renderApp();"
               class="mt-2 h-9 px-4 bg-uber-gray text-uber-black font-semibold rounded-lg hover:bg-uber-border text-xs"
             >
-              Limpar Filtros
+              Ver Todas as Viagens
             </button>
           </div>
         `}
@@ -1067,7 +1250,8 @@ function viewRideDetails(rideId) {
     `;
   }
 
-  const totalAmount = ride.pricePerSeat * selectedSeatsDetail;
+  const effectiveSeats = Math.min(selectedSeatsDetail, ride.availableSeats || 1);
+  const totalAmount = ride.pricePerSeat * effectiveSeats;
   const signalAmount = totalAmount * 0.5;
   const finalAmount = totalAmount * 0.5;
 
@@ -1172,8 +1356,8 @@ function viewRideDetails(rideId) {
                 onchange="selectedSeatsDetail = Number(this.value); renderApp();"
                 class="h-10 bg-uber-gray border border-uber-border rounded-lg px-3 font-semibold text-uber-black focus:outline-none focus:border-uber-black text-sm cursor-pointer"
               >
-                ${Array.from({ length: ride.availableSeats }, (_, i) => i + 1).map(num => `
-                  <option value="${num}" ${selectedSeatsDetail === num ? 'selected' : ''}>
+                ${Array.from({ length: Math.min(ride.availableSeats, 7) }, (_, i) => i + 1).map(num => `
+                  <option value="${num}" ${effectiveSeats === num ? 'selected' : ''}>
                     ${num} ${num === 1 ? 'lugar' : 'lugares'} (R$ ${(ride.pricePerSeat * num).toFixed(2).replace('.', ',')})
                   </option>
                 `).join('')}
@@ -1423,6 +1607,7 @@ function viewPublishRide() {
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
   return `
+    ${renderDatalists()}
     <div class="max-w-2xl mx-auto px-4 py-6 text-left pb-24 md:pb-12 animate-fade-in">
       <div class="mb-6">
         <button onclick="window.history.back()" class="flex items-center gap-1.5 text-xs font-bold text-uber-black hover:text-uber-iron mb-3 transition-colors">
@@ -1431,7 +1616,7 @@ function viewPublishRide() {
         </button>
         <h1 class="text-2xl sm:text-3xl font-bold text-uber-black">Nova Viagem</h1>
         <p class="text-uber-iron text-xs sm:text-sm font-normal mt-0.5">
-          Cadastre uma nova rota e receba passageiros verificados.
+          Cadastre uma nova rota no Nordeste e receba passageiros verificados.
         </p>
       </div>
 
@@ -1446,22 +1631,22 @@ function viewPublishRide() {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Cidade de Partida</label>
-              <input id="pub-origin-city" type="text" placeholder="Ex: São Paulo, SP" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
+              <input id="pub-origin-city" type="text" list="nordeste-cities-list" placeholder="Ex: Fortaleza, CE" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
             </div>
             <div>
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Ponto de Encontro</label>
-              <input id="pub-origin-spot" type="text" placeholder="Ex: Metrô Tietê" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
+              <input id="pub-origin-spot" type="text" placeholder="Ex: Shopping Iguatemi / Rodoviária" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Cidade de Destino</label>
-              <input id="pub-dest-city" type="text" placeholder="Ex: Campinas, SP" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
+              <input id="pub-dest-city" type="text" list="nordeste-cities-list" placeholder="Ex: Juazeiro do Norte, CE" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
             </div>
             <div>
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Ponto de Chegada</label>
-              <input id="pub-dest-spot" type="text" placeholder="Ex: Rodoviária / Shopping" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
+              <input id="pub-dest-spot" type="text" placeholder="Ex: Cariri Garden Shopping / Praça Central" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
             </div>
           </div>
         </div>
@@ -1480,7 +1665,7 @@ function viewPublishRide() {
             </div>
             <div>
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Horário de Saída</label>
-              <input id="pub-time" type="time" value="10:00" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none cursor-pointer" />
+              <input id="pub-time" type="time" value="08:00" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none cursor-pointer" />
             </div>
           </div>
 
@@ -1490,7 +1675,7 @@ function viewPublishRide() {
           </div>
         </div>
 
-        <!-- Step 3: Vagas e Valor -->
+        <!-- Step 3: Vagas e Valor (Até 7 Lugares) -->
         <div class="p-4 sm:p-5 border border-uber-border rounded-xl flex flex-col gap-3 bg-white">
           <div class="flex items-center gap-2 pb-3 border-b border-uber-border h-8">
             ${icon('payments', { size: 'sm', className: 'text-uber-black' })}
@@ -1503,13 +1688,16 @@ function viewPublishRide() {
               <select id="pub-seats" class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-uber-black rounded-lg h-[48px] px-3 font-semibold text-sm cursor-pointer transition-all focus:outline-none">
                 <option value="1">1 passageiro</option>
                 <option value="2">2 passageiros</option>
-                <option value="3" selected>3 passageiros</option>
-                <option value="4">4 passageiros</option>
+                <option value="3">3 passageiros</option>
+                <option value="4" selected>4 passageiros</option>
+                <option value="5">5 passageiros</option>
+                <option value="6">6 passageiros</option>
+                <option value="7">7 passageiros</option>
               </select>
             </div>
             <div>
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Valor por Pessoa (R$)</label>
-              <input id="pub-price" type="number" step="0.50" value="35.00" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
+              <input id="pub-price" type="number" step="0.50" value="45.00" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
             </div>
           </div>
 
@@ -1537,7 +1725,7 @@ function handlePublishSubmit(e) {
   const departureDate = document.getElementById('pub-date').value;
   const departureTime = document.getElementById('pub-time').value;
   const totalSeats = Number(document.getElementById('pub-seats').value);
-  const pricePerSeat = parseFloat(document.getElementById('pub-price').value) || 30.0;
+  const pricePerSeat = parseFloat(document.getElementById('pub-price').value) || 35.0;
   const notes = document.getElementById('pub-notes').value;
 
   // Validation: 2 hours advance
@@ -1550,8 +1738,8 @@ function handlePublishSubmit(e) {
   }
 
   const vehicle = store.state.currentUser.vehicle || {
-    plate: 'ABC-1234',
-    state: 'SP',
+    plate: 'CE-FOR-2023',
+    state: 'CE',
     brand: 'Toyota',
     model: 'Corolla 2.0',
     year: 2023,
@@ -1566,8 +1754,8 @@ function handlePublishSubmit(e) {
     destinationSpot,
     departureDate,
     departureTime,
-    estimatedDuration: '1h 30m',
-    estimatedArrivalTime: '11:30',
+    estimatedDuration: '2h 30m',
+    estimatedArrivalTime: '10:30',
     pricePerSeat,
     totalSeats,
     availableSeats: totalSeats,
@@ -1798,154 +1986,154 @@ function viewAdmin() {
       <!-- KPI Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <div class="p-4 border border-uber-border bg-white rounded-xl">
-          <span class="text-xs font-semibold text-uber-iron block uppercase tracking-wider text-[11px]">Volume Transacionado</span>
-          <p class="text-2xl font-extrabold text-uber-black mt-1">R$ ${totalVolume.toFixed(2).replace('.', ',')}</p>
-          <span class="text-[11px] font-semibold text-uber-black flex items-center gap-1 mt-1">
-            ${icon('trending_up', { size: 'sm' })}
-            +14% este mês
-          </span>
+          <div class="flex items-center justify-between pb-2 text-uber-iron text-xs font-semibold">
+            <span>Volume Transacionado</span>
+            ${icon('payments', { size: 'sm', className: 'text-uber-black' })}
+          </div>
+          <p class="text-2xl font-extrabold text-uber-black">R$ ${totalVolume.toFixed(2).replace('.', ',')}</p>
+          <span class="text-[11px] text-uber-iron font-normal">Sinais e valores totais</span>
         </div>
 
         <div class="p-4 border border-uber-border bg-white rounded-xl">
-          <span class="text-xs font-semibold text-uber-iron block uppercase tracking-wider text-[11px]">Saldo em Custódia</span>
-          <p class="text-2xl font-extrabold text-uber-black mt-1">R$ ${custodyBalance.toFixed(2).replace('.', ',')}</p>
-          <span class="text-[11px] font-normal text-uber-iron flex items-center gap-1 mt-1">
-            ${icon('lock', { size: 'sm' })}
-            Garantia de viagens ativas
-          </span>
+          <div class="flex items-center justify-between pb-2 text-uber-iron text-xs font-semibold">
+            <span>Saldo em Custódia</span>
+            ${icon('lock', { size: 'sm', className: 'text-uber-black' })}
+          </div>
+          <p class="text-2xl font-extrabold text-uber-black">R$ ${custodyBalance.toFixed(2).replace('.', ',')}</p>
+          <span class="text-[11px] text-uber-iron font-normal">Garantia ativa até o fim da viagem</span>
         </div>
 
         <div class="p-4 border border-uber-border bg-white rounded-xl">
-          <span class="text-xs font-semibold text-uber-iron block uppercase tracking-wider text-[11px]">Fila de Motoristas</span>
-          <p class="text-2xl font-extrabold text-uber-black mt-1">${pendingRequests.length} pendentes</p>
-          <span class="text-[11px] font-normal text-uber-iron flex items-center gap-1 mt-1">
-            ${icon('pending_actions', { size: 'sm' })}
-            Fila de moderação
-          </span>
+          <div class="flex items-center justify-between pb-2 text-uber-iron text-xs font-semibold">
+            <span>Solicitações Pendentes</span>
+            ${icon('person_add', { size: 'sm', className: 'text-uber-black' })}
+          </div>
+          <p class="text-2xl font-extrabold text-uber-black">${pendingRequests.length}</p>
+          <span class="text-[11px] text-uber-iron font-normal">Motoristas aguardando análise</span>
         </div>
       </div>
 
       <!-- Tabs -->
-      <div class="flex border-b border-uber-border mb-6 gap-2">
-        <button onclick="adminTab = 'REQUESTS'; renderApp();" class="pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${adminTab === 'REQUESTS' ? 'text-uber-black border-uber-black' : 'text-uber-iron border-transparent hover:text-uber-black'}">
-          ${icon('how_to_reg', { size: 'sm' })}
-          <span>Fila de Motoristas (${pendingRequests.length})</span>
+      <div class="flex border-b border-uber-border mb-6">
+        <button
+          onclick="adminTab = 'REQUESTS'; renderApp();"
+          class="py-2.5 px-4 text-xs font-bold border-b-2 transition-colors ${adminTab === 'REQUESTS' ? 'border-uber-black text-uber-black' : 'border-transparent text-uber-iron hover:text-uber-black'}"
+        >
+          Credenciamento de Motoristas
         </button>
-
-        <button onclick="adminTab = 'FINANCES'; renderApp();" class="pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${adminTab === 'FINANCES' ? 'text-uber-black border-uber-black' : 'text-uber-iron border-transparent hover:text-uber-black'}">
-          ${icon('account_balance_wallet', { size: 'sm' })}
-          <span>Financeiro & Custódia</span>
-        </button>
-
-        <button onclick="adminTab = 'SETTINGS'; renderApp();" class="pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${adminTab === 'SETTINGS' ? 'text-uber-black border-uber-black' : 'text-uber-iron border-transparent hover:text-uber-black'}">
-          ${icon('settings', { size: 'sm' })}
-          <span>Parâmetros</span>
+        <button
+          onclick="adminTab = 'FINANCE'; renderApp();"
+          class="py-2.5 px-4 text-xs font-bold border-b-2 transition-colors ${adminTab === 'FINANCE' ? 'border-uber-black text-uber-black' : 'border-transparent text-uber-iron hover:text-uber-black'}"
+        >
+          Custódia Financeira (PIX 50%)
         </button>
       </div>
 
-      <!-- Tab Content -->
       ${adminTab === 'REQUESTS' ? `
-        <div class="flex flex-col gap-4">
-          <div class="flex items-center gap-2 overflow-x-auto pb-1">
-            ${['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map(f => `
-              <button
-                onclick="adminReqFilter = '${f}'; renderApp();"
-                class="px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${adminReqFilter === f ? 'bg-uber-black text-white border-uber-black' : 'bg-white text-uber-black border-uber-border hover:bg-uber-gray'}"
-              >
-                ${f === 'ALL' ? 'Todos' : f === 'PENDING' ? 'Pendentes' : f === 'APPROVED' ? 'Aprovados' : 'Recusados'}
-              </button>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-uber-black uppercase tracking-wider">Filtrar Solicitações:</span>
+            <div class="flex gap-1.5">
+              ${['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map(st => `
+                <button
+                  onclick="adminReqFilter = '${st}'; renderApp();"
+                  class="px-3 py-1 rounded-full text-xs font-semibold border transition-all ${adminReqFilter === st ? 'bg-uber-black text-white border-uber-black' : 'bg-white text-uber-black border-uber-border hover:bg-uber-gray'}"
+                >
+                  ${st === 'ALL' ? 'Todas' : st === 'PENDING' ? 'Pendentes' : st === 'APPROVED' ? 'Aprovadas' : 'Recusadas'}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            ${filteredRequests.length > 0 ? filteredRequests.map(req => `
+              <div class="p-4 border border-uber-border bg-white rounded-xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-uber-border">
+                  <div>
+                    <h3 class="font-bold text-sm text-uber-black">${req.userName}</h3>
+                    <p class="text-xs text-uber-iron font-normal">${req.userEmail} • ${req.userPhone}</p>
+                  </div>
+                  <span class="inline-flex items-center gap-1 font-bold text-xs px-2.5 py-1 rounded-full ${req.status === 'PENDING' ? 'bg-amber-100 text-amber-900' : req.status === 'APPROVED' ? 'bg-green-100 text-green-900' : 'bg-red-100 text-red-900'}">
+                    ${req.status === 'PENDING' ? 'Pendente' : req.status === 'APPROVED' ? 'Aprovado' : 'Recusado'}
+                  </span>
+                </div>
+
+                <div class="py-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <div>
+                    <span class="text-uber-iron font-normal block text-[11px]">CNH:</span>
+                    <span class="font-mono font-bold text-uber-black">${req.cnhNumber}</span>
+                  </div>
+                  <div>
+                    <span class="text-uber-iron font-normal block text-[11px]">Veículo:</span>
+                    <span class="font-bold text-uber-black">${req.vehicle.brand} ${req.vehicle.model}</span>
+                  </div>
+                  <div>
+                    <span class="text-uber-iron font-normal block text-[11px]">Placa:</span>
+                    <span class="font-mono font-bold text-uber-black">${req.vehicle.plate}</span>
+                  </div>
+                  <div>
+                    <span class="text-uber-iron font-normal block text-[11px]">Ano:</span>
+                    <span class="font-bold text-uber-black">${req.vehicle.year}</span>
+                  </div>
+                </div>
+
+                ${req.status === 'PENDING' ? `
+                  <div class="pt-3 border-t border-uber-border flex justify-end gap-2 text-xs">
+                    <button onclick="handleRejectDriver('${req.id}')" class="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-bold transition-colors">
+                      Recusar
+                    </button>
+                    <button onclick="handleApproveDriver('${req.id}')" class="px-4 py-2 bg-black text-white hover:bg-neutral-900 rounded-lg font-bold transition-transform active:scale-95">
+                      Aprovar Motorista
+                    </button>
+                  </div>
+                ` : ''}
+              </div>
+            `).join('') : `
+              <div class="bg-white border border-uber-border rounded-xl p-8 text-center text-xs text-uber-iron font-normal">
+                Nenhuma solicitação encontrada neste filtro.
+              </div>
+            `}
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-4">
+          <p class="text-xs text-uber-iron font-normal">Gestão e liberação de resgates para motoristas após a conclusão das viagens.</p>
+          <div class="space-y-3">
+            ${bookings.map(b => `
+              <div class="p-4 border border-uber-border bg-white rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div>
+                  <span class="font-mono font-medium text-uber-iron block text-[11px]">${b.id} • Passageiro: ${b.passengerName}</span>
+                  <p class="font-bold text-sm text-uber-black mt-0.5">Sinal em Custódia: R$ ${b.amountPaidSignal.toFixed(2).replace('.', ',')}</p>
+                  <span class="text-uber-iron font-normal text-[11px]">Total da Viagem: R$ ${b.totalAmount.toFixed(2).replace('.', ',')}</span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  ${b.status === 'SIGNAL_CONFIRMED' ? `
+                    <button onclick="handleReleaseCustodyAdmin('${b.id}', ${b.amountPaidSignal})" class="px-3.5 py-2 bg-black text-white hover:bg-neutral-900 rounded-lg font-bold text-xs transition-transform active:scale-95">
+                      Liberar Resgate (PIX)
+                    </button>
+                  ` : b.status === 'FULLY_PAID' ? `
+                    <span class="font-bold text-green-700 bg-green-50 px-3 py-1.5 rounded-full text-xs">
+                      Repasse Concluído
+                    </span>
+                  ` : `
+                    <span class="font-bold text-red-700 bg-red-50 px-3 py-1.5 rounded-full text-xs">
+                      Reserva Cancelada
+                    </span>
+                  `}
+                </div>
+              </div>
             `).join('')}
           </div>
-
-          ${filteredRequests.length > 0 ? filteredRequests.map(req => `
-            <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl">
-              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-uber-border">
-                <div>
-                  <h3 class="text-base font-bold text-uber-black">${req.userName}</h3>
-                  <p class="text-xs text-uber-iron font-normal">${req.userEmail} • ${req.userPhone}</p>
-                </div>
-                <div>
-                  ${req.status === 'PENDING' ? `<span class="text-[11px] font-bold text-amber-900 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">Pendente</span>` : ''}
-                  ${req.status === 'APPROVED' ? `<span class="text-[11px] font-bold text-uber-black bg-uber-gray px-2.5 py-1 rounded-full border border-uber-border">Aprovado</span>` : ''}
-                  ${req.status === 'REJECTED' ? `<span class="text-[11px] font-bold text-red-700 bg-red-50 px-2.5 py-1 rounded-full border border-red-200">Recusado</span>` : ''}
-                </div>
-              </div>
-
-              <div class="py-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
-                  <span class="font-semibold text-uber-iron block text-[11px]">Documento CNH</span>
-                  <p class="font-mono font-bold text-sm text-uber-black mt-0.5">${req.cnhNumber}</p>
-                </div>
-                <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
-                  <span class="font-semibold text-uber-iron block text-[11px]">Veículo Declarado</span>
-                  <p class="font-bold text-uber-black mt-0.5">${req.vehicle.brand} ${req.vehicle.model} (${req.vehicle.year})</p>
-                  <p class="text-uber-iron mt-0.5">Placa: ${req.vehicle.plate} • ${req.vehicle.hasAC ? 'Com Ar' : 'Sem Ar'}</p>
-                </div>
-              </div>
-
-              ${req.status === 'PENDING' ? `
-                <div class="pt-3 border-t border-uber-border flex justify-end gap-2">
-                  <button onclick="handleRejectDriver('${req.id}')" class="h-9 px-3 text-xs font-bold text-red-600 hover:bg-red-50 border border-red-200 rounded-lg">Recusar</button>
-                  <button onclick="handleApproveDriver('${req.id}', '${req.userName}')" class="h-9 px-4 text-xs font-bold bg-black text-white hover:bg-neutral-900 rounded-lg">Aprovar Motorista</button>
-                </div>
-              ` : ''}
-            </div>
-          `).join('') : `
-            <div class="bg-white border border-uber-border rounded-xl p-8 text-center text-uber-iron text-xs font-normal">
-              Nenhuma solicitação encontrada nesta categoria.
-            </div>
-          `}
         </div>
-      ` : ''}
-
-      ${adminTab === 'FINANCES' ? `
-        <div class="p-5 border border-uber-border rounded-xl bg-white space-y-3">
-          <h3 class="font-bold text-base text-uber-black mb-3">Transações em Custódia Aberta</h3>
-          ${bookings.filter(b => b.status === 'SIGNAL_CONFIRMED').map(b => `
-            <div class="p-3.5 bg-uber-gray border border-uber-border rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
-              <div>
-                <span class="font-mono font-medium text-uber-iron block">${b.id}</span>
-                <p class="font-bold text-uber-black text-sm">Passageiro: ${b.passengerName}</p>
-                <p class="text-uber-charcoal mt-0.5">Sinal Retido: <strong>R$ ${b.amountPaidSignal.toFixed(2).replace('.', ',')}</strong></p>
-              </div>
-              <button onclick="handleReleaseCustodyAdmin('${b.id}', ${b.amountPaidSignal})" class="h-9 px-3.5 text-xs font-bold bg-black text-white rounded-lg hover:bg-neutral-900">
-                Liberar Repasse (72h)
-              </button>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
-
-      ${adminTab === 'SETTINGS' ? `
-        <div class="p-5 border border-uber-border rounded-xl bg-white space-y-4 text-xs">
-          <h3 class="font-bold text-base text-uber-black">Parâmetros Operacionais da Plataforma</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
-              <span class="font-semibold text-uber-iron block text-[11px]">Divisão Padrão do PIX:</span>
-              <p class="font-bold text-uber-black text-sm mt-0.5">50% Sinal / 50% Chegada</p>
-            </div>
-            <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
-              <span class="font-semibold text-uber-iron block text-[11px]">Prazo de Resgate ao Motorista:</span>
-              <p class="font-bold text-uber-black text-sm mt-0.5">Até 72 horas pós-viagem</p>
-            </div>
-            <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
-              <span class="font-semibold text-uber-iron block text-[11px]">Antecedência Mínima para Publicação:</span>
-              <p class="font-bold text-uber-black text-sm mt-0.5">2 horas (RN-06)</p>
-            </div>
-            <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
-              <span class="font-semibold text-uber-iron block text-[11px]">Taxa de Estorno (>1h):</span>
-              <p class="font-bold text-uber-black text-sm mt-0.5">70% devolvido ao passageiro</p>
-            </div>
-          </div>
-        </div>
-      ` : ''}
+      `}
     </div>
   `;
 }
 
-function handleApproveDriver(id, name) {
+function handleApproveDriver(id) {
   store.approveDriverRequest(id);
-  showToast(`Motorista ${name} aprovado com sucesso!`, 'success');
+  showToast('Motorista aprovado com sucesso!', 'success');
   renderApp();
 }
 
@@ -2053,7 +2241,7 @@ function handleSavePixKey(e) {
 }
 
 // ==========================================
-// 6. MODAIS (PIX, COMPROVANTE, CANCELAMENTO)
+// 7. MODAIS (PIX, COMPROVANTE, CANCELAMENTO)
 // ==========================================
 
 function openPixModal(booking) {
@@ -2162,7 +2350,7 @@ function openReceiptModalById(bookingId) {
             </div>
             <div>
               <h3 class="font-bold text-lg text-uber-black leading-tight">Comprovante Digital</h3>
-              <p class="text-[11px] font-normal text-uber-iron">Cooperativa de Viagens Compartilhadas</p>
+              <p class="text-[11px] font-normal text-uber-iron">Cooperativa de Viagens do Nordeste</p>
             </div>
           </div>
           <button onclick="closeModal()" class="text-uber-iron hover:text-uber-black p-1.5 rounded-lg hover:bg-uber-gray transition-colors">
@@ -2325,7 +2513,7 @@ function closeModal() {
 }
 
 // ==========================================
-// 7. ROTEADOR SPA & CICLO DE VIDA
+// 8. ROTEADOR SPA & CICLO DE VIDA
 // ==========================================
 
 function renderApp() {
