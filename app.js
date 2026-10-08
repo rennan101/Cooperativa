@@ -808,7 +808,7 @@ function renderMobileNav() {
     {
       id: 'viagens',
       label: 'Viagens',
-      iconName: 'history',
+      iconName: 'directions_car',
       href: '#/minhas-viagens',
       isActive: currentPath === '/minhas-viagens'
     },
@@ -827,15 +827,19 @@ function renderMobileNav() {
   const totalTabs = tabs.length;
   const itemWidthPercent = 100 / totalTabs;
   const translatePercent = activeIndex * 100;
+  const activeTab = tabs[activeIndex];
 
   mobileNavRoot.innerHTML = `
-    <div class="mobile-nav-dock relative w-full h-16 rounded-2xl flex items-center px-1">
-      <!-- Animated Circular Highlight Pill/Bubble -->
+    <div class="fluid-nav-bar relative w-full h-16 rounded-3xl flex items-center px-2">
+      <!-- Animated Fluid Notch & Raised Floating Button -->
       <div 
-        class="mobile-nav-indicator absolute top-2 bottom-2 pointer-events-none flex items-center justify-center z-10"
+        class="fluid-notch-indicator absolute -top-5 bottom-0 pointer-events-none flex flex-col items-center justify-start z-30"
         style="width: ${itemWidthPercent}%; transform: translateX(${translatePercent}%);"
       >
-        <div class="w-12 h-12 rounded-full bg-white text-black shadow-lg flex items-center justify-center transition-transform duration-200"></div>
+        <!-- Floating Raised Circle -->
+        <div class="fluid-floating-circle shadow-2xl">
+          ${icon(activeTab.iconName, { size: 'lg', fill: true, className: 'text-black' })}
+        </div>
       </div>
 
       <!-- Navigation Items -->
@@ -846,12 +850,15 @@ function renderMobileNav() {
             <a 
               href="${tab.href}" 
               onclick="if(typeof SoundEngine !== 'undefined') SoundEngine.play('info');"
-              class="mobile-nav-item flex-1 h-full flex flex-col items-center justify-center select-none ${isActive ? 'text-black font-bold' : 'text-white/70 hover:text-white font-medium'}"
+              class="mobile-nav-item flex-1 h-full flex flex-col items-center justify-center select-none"
               style="width: ${itemWidthPercent}%;"
               aria-label="${tab.label}"
             >
-              <div class="flex items-center justify-center transition-transform duration-200 ${isActive ? 'scale-110' : ''}">
-                ${icon(tab.iconName, { size: 'md', fill: isActive, className: isActive ? 'text-black' : 'text-white/80' })}
+              <div class="flex flex-col items-center justify-center transition-all duration-200 ${isActive ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}">
+                <div class="text-white/80 hover:text-white">
+                  ${icon(tab.iconName, { size: 'md', fill: false, className: 'text-white/80' })}
+                </div>
+                <span class="text-[10px] text-white/70 font-medium leading-none mt-1 tracking-tight">${tab.label}</span>
               </div>
             </a>
           `;
@@ -860,6 +867,7 @@ function renderMobileNav() {
     </div>
   `;
 }
+
 
 
 function renderFooter() {
