@@ -821,60 +821,32 @@ function renderMobileNav() {
     }
   );
 
-  let activeIndex = tabs.findIndex(t => t.isActive);
-  if (activeIndex === -1) activeIndex = 0;
-
-  const totalTabs = tabs.length;
-  const itemWidthPercent = 100 / totalTabs;
-  const translatePercent = activeIndex * 100;
-  const activeTab = tabs[activeIndex];
-
   mobileNavRoot.innerHTML = `
-    <div class="relative w-full select-none">
-      <!-- Fluid Cutout Notch & Black Floating Bubble Indicator (Subtle Elevation) -->
-      <div 
-        class="fluid-cutout-indicator absolute -top-3 left-0 pointer-events-none flex flex-col items-center justify-start z-30"
-        style="width: ${itemWidthPercent}%; transform: translateX(${translatePercent}%);"
-      >
-        <!-- Top Arch Cutout Graphic -->
-        <div class="relative flex items-center justify-center">
-          <!-- SVG Notch Cutout Silhouette matching white bar background -->
-          <svg class="absolute -top-1 w-16 h-4 text-white fill-current pointer-events-none drop-shadow-sm" viewBox="0 0 80 20" preserveAspectRatio="none">
-            <path d="M 0,20 C 20,20 25,0 40,0 C 55,0 60,20 80,20 Z" />
-          </svg>
-
-          <!-- Floating Black Bubble with White Icon -->
-          <div class="fluid-floating-bubble z-10">
-            ${icon(activeTab.iconName, { size: 'md', fill: true, className: 'text-white' })}
-          </div>
-        </div>
-      </div>
-
-      <!-- Main Full-Width Solid White Bottom Bar with Black Icons -->
-      <div class="fluid-bottom-bar w-full flex items-center justify-around px-1 z-20">
-        ${tabs.map((tab, idx) => {
-          const isActive = idx === activeIndex;
-          return `
-            <a 
-              href="${tab.href}" 
-              onclick="if(typeof SoundEngine !== 'undefined') SoundEngine.play('info');"
-              class="mobile-nav-item flex-1 h-full flex flex-col items-center justify-center"
-              style="width: ${itemWidthPercent}%;"
-              aria-label="${tab.label}"
-            >
-              <div class="flex flex-col items-center justify-center transition-all duration-300 ${isActive ? 'opacity-0 translate-y-1' : 'opacity-100 translate-y-0'}">
-                <div class="text-uber-charcoal hover:text-uber-black">
-                  ${icon(tab.iconName, { size: 'md', fill: false, className: 'text-uber-charcoal' })}
-                </div>
-                <span class="text-[10px] text-uber-iron font-semibold leading-tight mt-0.5">${tab.label}</span>
-              </div>
-            </a>
-          `;
-        }).join('')}
-      </div>
+    <div class="mobile-bottom-bar w-full flex items-center justify-around px-2 bg-white border-t border-uber-border shadow-xs select-none">
+      ${tabs.map(tab => {
+        const isActive = tab.isActive;
+        return `
+          <a 
+            href="${tab.href}" 
+            onclick="if(typeof SoundEngine !== 'undefined') SoundEngine.play('info');"
+            class="flex-1 h-full flex flex-col items-center justify-center transition-colors duration-150 ${isActive ? 'text-uber-black font-bold' : 'text-uber-iron hover:text-uber-black font-medium'}"
+            aria-label="${tab.label}"
+          >
+            <div class="flex items-center justify-center transition-transform duration-150 active:scale-90">
+              ${icon(tab.iconName, { 
+                size: 'md', 
+                fill: isActive, 
+                className: isActive ? 'text-uber-black font-bold' : 'text-uber-iron hover:text-uber-black' 
+              })}
+            </div>
+            <span class="text-[11px] leading-tight mt-0.5 tracking-tight ${isActive ? 'font-bold text-uber-black' : 'font-medium text-uber-iron'}">${tab.label}</span>
+          </a>
+        `;
+      }).join('')}
     </div>
   `;
 }
+
 
 
 
@@ -1148,8 +1120,9 @@ function renderHeroSearchBar() {
   const todayStr = new Date().toISOString().split('T')[0];
 
   return `
-    <div class="w-full max-w-5xl xl:max-w-6xl mx-auto relative">
+    <div class="w-full max-w-6xl xl:max-w-7xl mx-auto relative">
       <form id="hero-search-form" onsubmit="handleSearchSubmit(event)" class="bg-white border border-uber-border shadow-2xl rounded-2xl p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+
 
         
         <!-- Origin Input with Uber-Style Autocomplete Dropdown -->
@@ -1392,13 +1365,13 @@ function viewHome() {
         <div class="absolute inset-0 hero-glass-overlay z-10"></div>
 
         <!-- Hero Content Layer -->
-        <div class="relative z-20 max-w-4xl mx-auto text-center flex flex-col items-center gap-4 w-full">
+        <div class="relative z-20 max-w-6xl xl:max-w-7xl mx-auto text-center flex flex-col items-center gap-4 w-full">
           
-          <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight max-w-2xl leading-tight text-white drop-shadow-md">
+          <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight max-w-3xl leading-tight text-white drop-shadow-md">
             Viagens Compartilhadas pelo Nordeste
           </h1>
 
-          <p class="text-white/90 text-sm sm:text-base max-w-xl font-medium drop-shadow-md">
+          <p class="text-white/90 text-sm sm:text-base max-w-2xl font-medium drop-shadow-md">
             Encontre motoristas verificados, garanta sua vaga com 50% no PIX e pague o restante na chegada.
           </p>
 
@@ -1409,7 +1382,7 @@ function viewHome() {
       </section>
 
       <!-- Popular Routes with Location Photos (Nordeste) -->
-      <section class="max-w-4xl mx-auto px-4 w-full">
+      <section class="max-w-6xl xl:max-w-7xl mx-auto px-4 w-full">
         <div class="flex items-center justify-between mb-4 h-8">
           <h2 class="text-lg sm:text-xl font-bold text-uber-black flex items-center gap-2">
             ${icon('trending_up', { size: 'sm', className: 'text-uber-black' })}
@@ -1444,7 +1417,7 @@ function viewHome() {
 
       <!-- Driver CTA -->
       ${role === 'DRIVER' ? `
-        <section class="max-w-4xl mx-auto px-4 w-full">
+        <section class="max-w-6xl xl:max-w-7xl mx-auto px-4 w-full">
           <div class="bg-uber-black text-white rounded-xl p-5 sm:p-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-uber-charcoal">
             <div class="max-w-lg">
               <h2 class="text-lg sm:text-xl font-bold mb-1 text-white">Vai viajar pelo Nordeste? Ofereça seus lugares livres.</h2>
@@ -1503,10 +1476,11 @@ function viewSearchResults() {
   });
 
   return `
-    <div class="max-w-4xl mx-auto px-4 py-6 text-left animate-fade-in">
+    <div class="max-w-6xl xl:max-w-7xl mx-auto px-4 py-6 text-left animate-fade-in">
       <div class="mb-6">
         ${renderHeroSearchBar()}
       </div>
+
 
       <!-- Filter Bar -->
       <div class="flex flex-wrap items-center justify-between gap-2.5 bg-white p-3 rounded-xl border border-uber-border shadow-xs mb-5 h-auto sm:h-14">
@@ -3176,41 +3150,9 @@ function viewDriverProfile(driverId) {
           ` : ''}
         </div>
 
-        <!-- Trust Badges -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div class="p-3.5 bg-white border border-uber-border rounded-xl flex items-center gap-3 shadow-xs">
-            <div class="w-9 h-9 rounded-lg bg-uber-gray flex items-center justify-center text-uber-black shrink-0">
-              ${icon('badge', { size: 'sm' })}
-            </div>
-            <div>
-              <p class="font-bold text-xs text-uber-black">CNH & Identidade</p>
-              <p class="text-[11px] text-uber-iron font-normal">Documentos válidos e auditados</p>
-            </div>
-          </div>
-
-          <div class="p-3.5 bg-white border border-uber-border rounded-xl flex items-center gap-3 shadow-xs">
-            <div class="w-9 h-9 rounded-lg bg-uber-gray flex items-center justify-center text-uber-black shrink-0">
-              ${icon('security', { size: 'sm' })}
-            </div>
-            <div>
-              <p class="font-bold text-xs text-uber-black">Antecedentes Checados</p>
-              <p class="text-[11px] text-uber-iron font-normal">Sem registros ou incidentes</p>
-            </div>
-          </div>
-
-          <div class="p-3.5 bg-white border border-uber-border rounded-xl flex items-center gap-3 shadow-xs">
-            <div class="w-9 h-9 rounded-lg bg-uber-gray flex items-center justify-center text-uber-black shrink-0">
-              ${icon('thumb_up', { size: 'sm' })}
-            </div>
-            <div>
-              <p class="font-bold text-xs text-uber-black">Alta Reputação</p>
-              <p class="text-[11px] text-uber-iron font-normal">98%+ de avaliações 5 estrelas</p>
-            </div>
-          </div>
-        </div>
-
         <!-- Vehicle Details -->
         <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl">
+
           <div class="flex items-center gap-2 pb-3 border-b border-uber-border h-8">
             ${icon('directions_car', { size: 'md', className: 'text-uber-black' })}
             <h2 class="font-bold text-sm sm:text-base text-uber-black">Veículo de Viagem</h2>
