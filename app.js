@@ -768,51 +768,99 @@ function renderHeader() {
 
 function renderMobileNav() {
   const mobileNavRoot = document.getElementById('mobile-nav-root');
+  if (!mobileNavRoot) return;
+
   const role = store.state.role;
   const currentPath = window.location.hash.slice(1) || '/';
-  const isSearchActive = currentPath === '/' || currentPath === '/buscar';
+
+  // Configuração das abas disponíveis de acordo com o papel do usuário
+  const tabs = [
+    {
+      id: 'buscar',
+      label: 'Buscar',
+      iconName: 'search',
+      href: '#/buscar',
+      isActive: currentPath === '/' || currentPath === '/buscar' || currentPath.startsWith('/viagem/')
+    }
+  ];
+
+  if (role === 'DRIVER') {
+    tabs.push({
+      id: 'publicar',
+      label: 'Publicar',
+      iconName: 'add_circle',
+      href: '#/publicar',
+      isActive: currentPath === '/publicar'
+    });
+  }
+
+  if (role === 'ADMIN' || role === 'MANAGER') {
+    tabs.push({
+      id: 'admin',
+      label: 'Painel',
+      iconName: 'admin_panel_settings',
+      href: '#/admin',
+      isActive: currentPath === '/admin'
+    });
+  }
+
+  tabs.push(
+    {
+      id: 'viagens',
+      label: 'Viagens',
+      iconName: 'history',
+      href: '#/minhas-viagens',
+      isActive: currentPath === '/minhas-viagens'
+    },
+    {
+      id: 'perfil',
+      label: 'Perfil',
+      iconName: 'account_circle',
+      href: '#/perfil',
+      isActive: currentPath === '/perfil' || currentPath.startsWith('/motorista/')
+    }
+  );
+
+  let activeIndex = tabs.findIndex(t => t.isActive);
+  if (activeIndex === -1) activeIndex = 0;
+
+  const totalTabs = tabs.length;
+  const itemWidthPercent = 100 / totalTabs;
+  const translatePercent = activeIndex * 100;
 
   mobileNavRoot.innerHTML = `
-    <a href="#/buscar" class="flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-150 active:scale-95 ${isSearchActive ? 'text-uber-black font-bold' : 'text-uber-iron hover:text-uber-black font-medium'}">
-      <div class="flex items-center justify-center">
-        ${icon('search', { size: 'md', fill: isSearchActive })}
+    <div class="mobile-nav-dock relative w-full h-16 rounded-2xl flex items-center px-1">
+      <!-- Animated Circular Highlight Pill/Bubble -->
+      <div 
+        class="mobile-nav-indicator absolute top-2 bottom-2 pointer-events-none flex items-center justify-center z-10"
+        style="width: ${itemWidthPercent}%; transform: translateX(${translatePercent}%);"
+      >
+        <div class="w-12 h-12 rounded-full bg-white text-black shadow-lg flex items-center justify-center transition-transform duration-200"></div>
       </div>
-      <span class="text-[11px] leading-tight mt-0.5">Buscar</span>
-    </a>
 
-    ${role === 'DRIVER' ? `
-      <a href="#/publicar" class="flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-150 active:scale-95 ${currentPath === '/publicar' ? 'text-uber-black font-bold' : 'text-uber-iron hover:text-uber-black font-medium'}">
-        <div class="bg-uber-black text-white w-7 h-7 rounded-lg flex items-center justify-center transition-transform active:scale-90">
-          ${icon('add', { size: 'sm' })}
-        </div>
-        <span class="text-[11px] leading-tight font-bold text-uber-black mt-0.5">Nova Viagem</span>
-      </a>
-    ` : ''}
-
-    ${(role === 'ADMIN' || role === 'MANAGER') ? `
-      <a href="#/admin" class="flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-150 active:scale-95 ${currentPath === '/admin' ? 'text-uber-black font-bold' : 'text-uber-iron hover:text-uber-black font-medium'}">
-        <div class="flex items-center justify-center">
-          ${icon('admin_panel_settings', { size: 'md', fill: currentPath === '/admin' })}
-        </div>
-        <span class="text-[11px] leading-tight mt-0.5">Painel</span>
-      </a>
-    ` : ''}
-
-    <a href="#/minhas-viagens" class="flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-150 active:scale-95 ${currentPath === '/minhas-viagens' ? 'text-uber-black font-bold' : 'text-uber-iron hover:text-uber-black font-medium'}">
-      <div class="flex items-center justify-center">
-        ${icon('history', { size: 'md', fill: currentPath === '/minhas-viagens' })}
+      <!-- Navigation Items -->
+      <div class="relative w-full h-full flex items-center justify-around z-20">
+        ${tabs.map((tab, idx) => {
+          const isActive = idx === activeIndex;
+          return `
+            <a 
+              href="${tab.href}" 
+              onclick="if(typeof SoundEngine !== 'undefined') SoundEngine.play('info');"
+              class="mobile-nav-item flex-1 h-full flex flex-col items-center justify-center select-none ${isActive ? 'text-black font-bold' : 'text-white/70 hover:text-white font-medium'}"
+              style="width: ${itemWidthPercent}%;"
+              aria-label="${tab.label}"
+            >
+              <div class="flex items-center justify-center transition-transform duration-200 ${isActive ? 'scale-110' : ''}">
+                ${icon(tab.iconName, { size: 'md', fill: isActive, className: isActive ? 'text-black' : 'text-white/80' })}
+              </div>
+            </a>
+          `;
+        }).join('')}
       </div>
-      <span class="text-[11px] leading-tight mt-0.5">Viagens</span>
-    </a>
-
-    <a href="#/perfil" class="flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-150 active:scale-95 ${currentPath === '/perfil' ? 'text-uber-black font-bold' : 'text-uber-iron hover:text-uber-black font-medium'}">
-      <div class="flex items-center justify-center">
-        ${icon('account_circle', { size: 'md', fill: currentPath === '/perfil' })}
-      </div>
-      <span class="text-[11px] leading-tight mt-0.5">Perfil</span>
-    </a>
+    </div>
   `;
 }
+
 
 function renderFooter() {
   const footerRoot = document.getElementById('footer-root');
