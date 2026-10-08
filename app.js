@@ -440,11 +440,12 @@ class AppStore {
       passengerId: this.state.currentUser.id,
       passengerName: this.state.currentUser.name,
       passengerPhone: this.state.currentUser.phone,
+      passengerAvatar: this.state.currentUser.avatarUrl || DEFAULT_BLANK_AVATAR,
       seatsBooked: seats,
       totalAmount,
       amountPaidSignal: signal,
       amountDueFinal: finalVal,
-      status: 'SIGNAL_CONFIRMED',
+      status: 'AWAITING_DRIVER', // Inicial: Aguardando motorista aceitar a viagem
       rated: false,
       pixCopyPasteCode: `00020126580014br.gov.bcb.pix0136cooperativa-viagens-custodia-${bookingId.toLowerCase()}5204000053039865405${signal.toFixed(2)}5802BR5925COOPERATIVA VIAGENS LTDA6009RECIFE62070503***6304C9E2`,
       createdAt: new Date().toISOString(),
@@ -454,6 +455,28 @@ class AppStore {
     this.state.bookings.unshift(newBooking);
     this.saveState();
     return newBooking;
+  }
+
+  acceptBooking(bookingId) {
+    const booking = this.state.bookings.find(b => b.id === bookingId);
+    if (booking) {
+      booking.status = 'ACCEPTED';
+      this.saveState();
+      renderApp();
+    }
+  }
+
+  rejectBooking(bookingId) {
+    const booking = this.state.bookings.find(b => b.id === bookingId);
+    if (!booking) return;
+
+    booking.status = 'REJECTED_BY_DRIVER';
+    const ride = this.state.rides.find(r => r.id === booking.rideId);
+    if (ride) {
+      ride.availableSeats += booking.seatsBooked;
+    }
+    this.saveState();
+    renderApp();
   }
 
   cancelBooking(bookingId) {
@@ -498,6 +521,7 @@ class AppStore {
     };
     this.state.messages.push(newMsg);
     this.saveState();
+    SoundEngine.play('message');
   }
 
   addSimulatedReply(rideId, text, name, avatar) {
@@ -512,6 +536,7 @@ class AppStore {
     };
     this.state.messages.push(newMsg);
     this.saveState();
+    SoundEngine.play('message');
     renderApp();
   }
 
@@ -552,8 +577,81 @@ class AppStore {
 const store = new AppStore();
 
 // ==========================================
-// 4. HELPER DE ÍCONES E TOASTS
+// 4. MOTOR DE ÁUDIO NATIVO (WEB AUDIO API) & TOASTS
 // ==========================================
+
+const SoundEngine = {
+  ctx: null,
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  },
+  play(type = 'info') {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      if (type === 'success') {
+        // Acorde maior brilhante e cristalino (C5 - E5 - G5)
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.setValueAtTime(659.25, now + 0.07);
+        osc.frequency.setValueAtTime(783.99, now + 0.14);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+        osc.start(now);
+        osc.stop(now + 0.42);
+      } else if (type === 'message') {
+        // Pop duplo sutil de conversa / chat
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(840, now);
+        osc.frequency.setValueAtTime(1180, now + 0.05);
+        gain.gain.setValueAtTime(0.16, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } else if (type === 'warning') {
+        // Tom descendente suave de cautela/aviso
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.setValueAtTime(440, now + 0.1);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+        osc.start(now);
+        osc.stop(now + 0.32);
+      } else if (type === 'error') {
+        // Tom de alerta suave grave
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.setValueAtTime(170, now + 0.09);
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+        osc.start(now);
+        osc.stop(now + 0.28);
+      } else {
+        // Pop limpo para informações e ações gerais
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(620, now);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      }
+    } catch (e) {
+      // Ignora silenciosamente se o áudio não estiver inicializado
+    }
+  }
+};
 
 function icon(name, { size = 'md', fill = false, className = '' } = {}) {
   const sizeClasses = {
@@ -568,6 +666,7 @@ function icon(name, { size = 'md', fill = false, className = '' } = {}) {
 }
 
 function showToast(message, type = 'info') {
+  SoundEngine.play(type);
   const toastRoot = document.getElementById('toast-root');
   if (!toastRoot) return;
 
@@ -675,9 +774,8 @@ function renderMobileNav() {
 
   mobileNavRoot.innerHTML = `
     <a href="#/buscar" class="flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-150 active:scale-95 ${isSearchActive ? 'text-uber-black font-bold' : 'text-uber-iron hover:text-uber-black font-medium'}">
-      <div class="relative flex items-center justify-center">
+      <div class="flex items-center justify-center">
         ${icon('search', { size: 'md', fill: isSearchActive })}
-        ${isSearchActive ? '<span class="absolute -bottom-1 w-1.5 h-1.5 bg-uber-black rounded-full"></span>' : ''}
       </div>
       <span class="text-[11px] leading-tight mt-0.5">Buscar</span>
     </a>
@@ -693,26 +791,23 @@ function renderMobileNav() {
 
     ${(role === 'ADMIN' || role === 'MANAGER') ? `
       <a href="#/admin" class="flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-150 active:scale-95 ${currentPath === '/admin' ? 'text-uber-black font-bold' : 'text-uber-iron hover:text-uber-black font-medium'}">
-        <div class="relative flex items-center justify-center">
+        <div class="flex items-center justify-center">
           ${icon('admin_panel_settings', { size: 'md', fill: currentPath === '/admin' })}
-          ${currentPath === '/admin' ? '<span class="absolute -bottom-1 w-1.5 h-1.5 bg-uber-black rounded-full"></span>' : ''}
         </div>
         <span class="text-[11px] leading-tight mt-0.5">Painel</span>
       </a>
     ` : ''}
 
     <a href="#/minhas-viagens" class="flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-150 active:scale-95 ${currentPath === '/minhas-viagens' ? 'text-uber-black font-bold' : 'text-uber-iron hover:text-uber-black font-medium'}">
-      <div class="relative flex items-center justify-center">
+      <div class="flex items-center justify-center">
         ${icon('history', { size: 'md', fill: currentPath === '/minhas-viagens' })}
-        ${currentPath === '/minhas-viagens' ? '<span class="absolute -bottom-1 w-1.5 h-1.5 bg-uber-black rounded-full"></span>' : ''}
       </div>
       <span class="text-[11px] leading-tight mt-0.5">Viagens</span>
     </a>
 
     <a href="#/perfil" class="flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all duration-150 active:scale-95 ${currentPath === '/perfil' ? 'text-uber-black font-bold' : 'text-uber-iron hover:text-uber-black font-medium'}">
-      <div class="relative flex items-center justify-center">
+      <div class="flex items-center justify-center">
         ${icon('account_circle', { size: 'md', fill: currentPath === '/perfil' })}
-        ${currentPath === '/perfil' ? '<span class="absolute -bottom-1 w-1.5 h-1.5 bg-uber-black rounded-full"></span>' : ''}
       </div>
       <span class="text-[11px] leading-tight mt-0.5">Perfil</span>
     </a>
@@ -1425,24 +1520,27 @@ function viewMyTrips() {
         <div class="space-y-3">
           ${bookings.length > 0 ? bookings.map(b => {
             const ride = rides.find(r => r.id === b.rideId);
+            const isAccepted = b.status === 'ACCEPTED' || b.status === 'SIGNAL_CONFIRMED' || b.status === 'FULLY_PAID';
+            const isAwaiting = b.status === 'AWAITING_DRIVER';
+
             return `
               <div class="p-4 border border-uber-border bg-white rounded-xl">
                 <div class="flex justify-between items-center pb-3 border-b border-uber-border text-xs">
                   <span class="font-mono font-medium text-uber-iron">${b.id}</span>
-                  ${b.status === 'SIGNAL_CONFIRMED' ? `
+                  ${isAwaiting ? `
+                    <span class="flex items-center gap-1.5 font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full text-[11px] border border-amber-200">
+                      ${icon('hourglass_top', { size: 'sm', className: 'text-amber-700' })}
+                      <span>Aguardando Motorista</span>
+                    </span>
+                  ` : isAccepted ? `
                     <span class="flex items-center gap-1.5 font-bold text-uber-black bg-uber-gray px-2.5 py-1 rounded-full text-[11px]">
                       ${icon('check_circle', { size: 'sm', className: 'text-uber-black' })}
-                      <span>Sinal 50% Pago</span>
-                    </span>
-                  ` : b.status === 'FULLY_PAID' ? `
-                    <span class="flex items-center gap-1.5 font-bold text-uber-black bg-uber-gray px-2.5 py-1 rounded-full text-[11px]">
-                      ${icon('verified', { size: 'sm', className: 'text-uber-black' })}
-                      <span>100% Concluído</span>
+                      <span>Viagem Confirmada</span>
                     </span>
                   ` : `
                     <span class="flex items-center gap-1.5 font-bold text-red-700 bg-red-50 px-2.5 py-1 rounded-full text-[11px]">
                       ${icon('cancel', { size: 'sm', className: 'text-red-600' })}
-                      <span>Cancelada</span>
+                      <span>${b.status === 'REJECTED_BY_DRIVER' ? 'Recusada pelo Motorista' : 'Cancelada'}</span>
                     </span>
                   `}
                 </div>
@@ -1465,13 +1563,20 @@ function viewMyTrips() {
                   </div>
                 ` : ''}
 
-                ${b.status !== 'CANCELLED' ? `
+                ${b.status !== 'CANCELLED' && b.status !== 'REJECTED_BY_DRIVER' ? `
                   <div class="pt-3 border-t border-uber-border flex flex-wrap justify-end gap-2 text-xs">
                     ${ride ? `
-                      <a href="#/chat/${ride.id}" class="font-semibold text-uber-black hover:bg-uber-border flex items-center gap-1.5 px-3 py-1.5 bg-uber-gray rounded-lg transition-colors active:scale-95">
-                        ${icon('chat', { size: 'sm' })}
-                        <span>Conversar</span>
-                      </a>
+                      ${isAccepted ? `
+                        <a href="#/chat/${ride.id}" class="font-bold text-white bg-black hover:bg-neutral-900 flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-colors active:scale-95 shadow-xs">
+                          ${icon('chat', { size: 'sm' })}
+                          <span>Conversar</span>
+                        </a>
+                      ` : `
+                        <button disabled class="font-semibold text-uber-iron bg-uber-gray px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-not-allowed opacity-75 select-none" title="Aguardando motorista aceitar a viagem para liberar o chat">
+                          ${icon('chat', { size: 'sm' })}
+                          <span>Aguardando Aceite</span>
+                        </button>
+                      `}
                       
                       ${b.rated ? `
                         <button disabled class="font-semibold text-uber-iron bg-uber-gray px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-default opacity-80 select-none">
@@ -1508,34 +1613,75 @@ function viewMyTrips() {
 
       <!-- Driver Section -->
       ${role === 'DRIVER' ? `
-        <div class="space-y-3">
-          ${myPublished.length > 0 ? myPublished.map(ride => `
-            <div class="p-4 border border-uber-border bg-white rounded-xl">
-              <div class="flex justify-between items-center pb-3 border-b border-uber-border text-xs">
-                <span class="font-bold text-sm sm:text-base text-uber-black">${ride.originCity} ➔ ${ride.destinationCity}</span>
-                <span class="flex items-center gap-1.5 font-bold text-uber-black bg-uber-gray px-2.5 py-1 rounded-full text-[11px]">
-                  ${icon('airline_seat_recline_normal', { size: 'sm', className: 'text-uber-black' })}
-                  <span>${ride.availableSeats}/${ride.totalSeats} lugares</span>
-                </span>
-              </div>
+        <div class="space-y-4">
+          ${myPublished.length > 0 ? myPublished.map(ride => {
+            const rideBookings = bookings.filter(b => b.rideId === ride.id && b.status !== 'CANCELLED');
 
-              <div class="py-3 flex justify-between items-center text-xs">
-                <span class="text-uber-iron font-normal">${ride.departureDate} às ${ride.departureTime}</span>
-                <span class="font-bold text-uber-black text-sm">R$ ${ride.pricePerSeat.toFixed(2).replace('.', ',')} / lugar</span>
-              </div>
+            return `
+              <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl flex flex-col gap-3">
+                <div class="flex justify-between items-center pb-3 border-b border-uber-border text-xs">
+                  <span class="font-bold text-sm sm:text-base text-uber-black">${ride.originCity} ➔ ${ride.destinationCity}</span>
+                  <span class="flex items-center gap-1.5 font-bold text-uber-black bg-uber-gray px-2.5 py-1 rounded-full text-[11px]">
+                    ${icon('airline_seat_recline_normal', { size: 'sm', className: 'text-uber-black' })}
+                    <span>${ride.availableSeats}/${ride.totalSeats} lugares livres</span>
+                  </span>
+                </div>
 
-              <div class="pt-3 border-t border-uber-border flex justify-end gap-2 text-xs">
-                <a href="#/chat/${ride.id}" class="font-semibold text-uber-black hover:bg-uber-border flex items-center gap-1.5 px-3 py-1.5 bg-uber-gray rounded-lg transition-colors active:scale-95">
-                  ${icon('chat', { size: 'sm' })}
-                  <span>Mensagens</span>
-                </a>
-                <a href="#/viagem/${ride.id}" class="font-bold text-uber-black hover:underline flex items-center gap-1.5 px-3 py-1.5">
-                  ${icon('visibility', { size: 'sm' })}
-                  <span>Ver Detalhes</span>
-                </a>
+                <div class="py-1 flex justify-between items-center text-xs">
+                  <span class="text-uber-iron font-normal">${ride.departureDate} às ${ride.departureTime}</span>
+                  <span class="font-bold text-uber-black text-sm">R$ ${ride.pricePerSeat.toFixed(2).replace('.', ',')} / lugar</span>
+                </div>
+
+                <!-- Passageiros e Solicitações de Reserva -->
+                <div class="border-t border-uber-border pt-3 space-y-2">
+                  <span class="text-xs font-bold text-uber-black uppercase tracking-wider block">Passageiros & Reservas:</span>
+                  ${rideBookings.length > 0 ? rideBookings.map(bk => `
+                    <div class="p-3 bg-uber-gray rounded-lg border border-uber-border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                      <div class="flex items-center gap-2.5">
+                        <img src="${bk.passengerAvatar || DEFAULT_BLANK_AVATAR}" class="w-7 h-7 rounded-full object-cover bg-white border border-uber-border shrink-0" />
+                        <div>
+                          <p class="font-bold text-uber-black">${bk.passengerName} <span class="font-normal text-uber-iron">(${bk.seatsBooked} lugar${bk.seatsBooked > 1 ? 'es' : ''})</span></p>
+                          <p class="text-[11px] text-uber-charcoal">Sinal PIX 50%: R$ ${bk.amountPaidSignal.toFixed(2).replace('.', ',')}</p>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center gap-2">
+                        ${bk.status === 'AWAITING_DRIVER' ? `
+                          <button onclick="handleDriverRejectBooking('${bk.id}')" class="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-bold text-xs transition-colors">
+                            Recusar
+                          </button>
+                          <button onclick="handleDriverAcceptBooking('${bk.id}')" class="px-3 py-1.5 bg-black text-white hover:bg-neutral-900 rounded-lg font-bold text-xs transition-transform active:scale-95 shadow-xs">
+                            Aceitar Viagem
+                          </button>
+                        ` : bk.status === 'ACCEPTED' || bk.status === 'SIGNAL_CONFIRMED' ? `
+                          <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">Aceito</span>
+                          <a href="#/chat/${ride.id}" class="font-bold text-uber-black bg-white hover:bg-neutral-100 border border-uber-border flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs">
+                            ${icon('chat', { size: 'sm' })}
+                            <span>Conversar</span>
+                          </a>
+                        ` : `
+                          <span class="text-xs text-red-600 font-semibold">Cancelado</span>
+                        `}
+                      </div>
+                    </div>
+                  `).join('') : `
+                    <p class="text-xs text-uber-iron font-normal">Nenhuma reserva solicitada para esta viagem ainda.</p>
+                  `}
+                </div>
+
+                <div class="pt-2 border-t border-uber-border flex justify-end gap-2 text-xs">
+                  <a href="#/chat/${ride.id}" class="font-semibold text-uber-black hover:bg-uber-border flex items-center gap-1.5 px-3 py-1.5 bg-uber-gray rounded-lg transition-colors active:scale-95">
+                    ${icon('chat', { size: 'sm' })}
+                    <span>Abrir Chat</span>
+                  </a>
+                  <a href="#/viagem/${ride.id}" class="font-bold text-uber-black hover:underline flex items-center gap-1.5 px-3 py-1.5">
+                    ${icon('visibility', { size: 'sm' })}
+                    <span>Ver Detalhes</span>
+                  </a>
+                </div>
               </div>
-            </div>
-          `).join('') : `
+            `;
+          }).join('') : `
             <div class="bg-white border border-uber-border rounded-xl p-8 text-center text-uber-iron text-xs font-normal">
               Você ainda não cadastrou nenhuma viagem como motorista.
             </div>
@@ -1564,6 +1710,16 @@ function viewMyTrips() {
 
     </div>
   `;
+}
+
+function handleDriverAcceptBooking(bookingId) {
+  store.acceptBooking(bookingId);
+  showToast('Reserva aceita com sucesso! O chat foi liberado para o passageiro.', 'success');
+}
+
+function handleDriverRejectBooking(bookingId) {
+  store.rejectBooking(bookingId);
+  showToast('Reserva recusada.', 'warning');
 }
 
 // View: Publish Ride (Driver only)
@@ -1751,56 +1907,111 @@ function handlePublishSubmit(e) {
   window.location.hash = '#/minhas-viagens';
 }
 
-// View: Chat
+// View: Chat em Tela Cheia (Fullscreen)
 function viewChat(rideId) {
   const ride = store.state.rides.find(r => r.id === rideId);
   const rideMessages = store.state.messages.filter(m => m.rideId === rideId);
   const myId = store.state.currentUser.id;
+  const isDriver = store.state.role === 'DRIVER';
+  const myBooking = store.state.bookings.find(b => b.rideId === rideId && b.passengerId === myId);
+
+  // Se for passageiro e a reserva ainda não foi aceita pelo motorista
+  if (!isDriver && myBooking && myBooking.status === 'AWAITING_DRIVER') {
+    return `
+      <div class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+        <div class="w-16 h-16 bg-amber-50 text-amber-700 rounded-2xl flex items-center justify-center mb-4 border border-amber-200">
+          ${icon('hourglass_top', { size: 'lg' })}
+        </div>
+        <h2 class="text-xl font-bold text-uber-black">Aguardando Confirmação do Motorista</h2>
+        <p class="text-uber-iron text-xs sm:text-sm font-normal mt-1.5 max-w-sm">
+          O chat em tela cheia com o motorista será liberado assim que o motorista aceitar sua solicitação de reserva.
+        </p>
+        <div class="mt-6 flex flex-col sm:flex-row gap-2 w-full max-w-xs">
+          <button onclick="window.history.back()" class="w-full h-11 bg-uber-gray text-uber-black font-semibold rounded-xl text-sm">
+            Voltar
+          </button>
+          <a href="#/minhas-viagens" class="w-full h-11 bg-black text-white font-bold rounded-xl text-sm flex items-center justify-center">
+            Minhas Reservas
+          </a>
+        </div>
+      </div>
+    `;
+  }
 
   return `
-    <div class="max-w-2xl mx-auto px-4 py-6 text-left pb-24 md:pb-12 flex flex-col h-[85vh] animate-fade-in">
-      <div class="flex items-center justify-between pb-3 border-b border-uber-border mb-3 shrink-0">
-        <button onclick="window.history.back()" class="flex items-center gap-1 text-xs font-bold text-uber-black hover:text-uber-iron transition-colors">
-          ${icon('arrow_back', { size: 'sm' })}
-          <span>Voltar</span>
-        </button>
-        <div class="text-center">
-          <h1 class="text-sm font-bold text-uber-black">${ride ? `${ride.originCity} ➔ ${ride.destinationCity}` : 'Chat da Viagem'}</h1>
-          <p class="text-[11px] font-normal text-uber-iron">Comunicação direta com o motorista e passageiros</p>
+    <div class="fixed inset-0 z-50 bg-white flex flex-col h-screen w-full animate-fade-in overflow-hidden">
+      
+      <!-- Fullscreen Top Bar -->
+      <div class="bg-white border-b border-uber-border px-4 py-3 flex items-center justify-between shrink-0 shadow-xs">
+        <div class="flex items-center gap-3 min-w-0">
+          <button onclick="window.history.back()" class="p-2 hover:bg-uber-gray rounded-xl transition-colors text-uber-black shrink-0" aria-label="Voltar">
+            ${icon('arrow_back', { size: 'md' })}
+          </button>
+          <img src="${ride ? ride.driverAvatar : DEFAULT_BLANK_AVATAR}" alt="${ride ? ride.driverName : 'Motorista'}" class="w-10 h-10 rounded-full object-cover border border-uber-border bg-uber-gray shrink-0" />
+          <div class="text-left min-w-0">
+            <div class="flex items-center gap-1.5">
+              <h1 class="text-sm font-bold text-uber-black leading-tight truncate">${ride ? ride.driverName : 'Motorista'}</h1>
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Online"></span>
+            </div>
+            <p class="text-[11px] font-medium text-uber-iron truncate">
+              ${ride ? `${ride.originCity} ➔ ${ride.destinationCity}` : 'Chat Direto'}
+            </p>
+          </div>
         </div>
-        <div class="w-12"></div>
+
+        <div class="flex items-center gap-1 shrink-0">
+          <a href="#/viagem/${rideId}" class="p-2 hover:bg-uber-gray rounded-xl text-uber-black transition-colors" title="Ver Detalhes da Viagem">
+            ${icon('info', { size: 'md' })}
+          </a>
+        </div>
       </div>
 
-      <!-- Messages Box -->
-      <div id="chat-box" class="flex-1 p-4 border border-uber-border bg-white rounded-xl flex flex-col gap-3 overflow-y-auto">
+      <!-- Fullscreen Messages Stream -->
+      <div id="chat-box" class="flex-1 p-4 bg-uber-gray/40 overflow-y-auto flex flex-col gap-3">
         ${rideMessages.length > 0 ? rideMessages.map(msg => {
           const isMe = msg.senderId === myId;
           return `
-            <div class="flex gap-2.5 max-w-[85%] ${isMe ? 'self-end flex-row-reverse' : 'self-start'} animate-fade-in">
-              <img src="${msg.senderAvatar}" alt="${msg.senderName}" class="w-7 h-7 rounded-full object-cover border border-uber-border shrink-0 mt-1 bg-uber-gray" />
-              <div class="p-3 rounded-xl text-xs ${isMe ? 'bg-uber-black text-white text-left' : 'bg-uber-gray text-uber-black text-left'}">
+            <div class="flex gap-2.5 max-w-[85%] sm:max-w-[70%] ${isMe ? 'self-end flex-row-reverse' : 'self-start'} animate-fade-in">
+              <img src="${msg.senderAvatar || DEFAULT_BLANK_AVATAR}" alt="${msg.senderName}" class="w-7 h-7 rounded-full object-cover border border-uber-border shrink-0 mt-1 bg-uber-gray" />
+              <div class="p-3 rounded-2xl text-xs shadow-xs ${isMe ? 'bg-uber-black text-white text-left' : 'bg-white text-uber-black text-left border border-uber-border'}">
                 <p class="font-bold text-[11px] mb-0.5 ${isMe ? 'text-uber-slate' : 'text-uber-black'}">${msg.senderName}</p>
                 <p class="leading-relaxed font-normal">${msg.text}</p>
-                <span class="text-[10px] block text-right mt-1 font-medium text-uber-iron">${msg.createdAt}</span>
+                <span class="text-[10px] block text-right mt-1 font-medium ${isMe ? 'text-uber-iron' : 'text-uber-slate'}">${msg.createdAt}</span>
               </div>
             </div>
           `;
         }).join('') : `
-          <div class="m-auto text-center text-uber-iron text-xs font-normal">
-            ${icon('chat', { size: 'lg', className: 'text-uber-border mb-1' })}
-            <p>Nenhuma mensagem ainda. Inicie a conversa sobre pontos de encontro ou horários.</p>
+          <div class="m-auto text-center text-uber-iron text-xs font-normal p-6 bg-white border border-uber-border rounded-2xl max-w-sm shadow-xs">
+            <div class="w-12 h-12 rounded-full bg-uber-gray flex items-center justify-center mx-auto mb-2 text-uber-black">
+              ${icon('chat', { size: 'md' })}
+            </div>
+            <p class="font-semibold text-uber-black text-sm">Inicie a conversa!</p>
+            <p class="mt-1 text-uber-iron leading-relaxed">Combine ponto de encontro, bagagens e horários diretamente com o motorista.</p>
           </div>
         `}
       </div>
 
-      <!-- Input Form -->
-      <form onsubmit="handleSendChat(event, '${rideId}')" class="mt-3 flex gap-2 shrink-0">
-        <input id="chat-input" type="text" placeholder="Digite sua mensagem..." required class="flex-1 h-12 bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-uber-black font-medium px-4 rounded-xl focus:outline-none text-xs sm:text-sm transition-all" />
-        <button type="submit" class="h-12 px-5 font-bold bg-black text-white hover:bg-neutral-900 rounded-xl flex items-center justify-center gap-1.5 transition-transform active:scale-95">
-          ${icon('send', { size: 'sm' })}
-          <span>Enviar</span>
-        </button>
-      </form>
+      <!-- Sticky Input Form (Icon only for submit, NO 'Enviar' text) -->
+      <div class="p-3 bg-white border-t border-uber-border shrink-0">
+        <form onsubmit="handleSendChat(event, '${rideId}')" class="max-w-3xl mx-auto flex items-center gap-2">
+          <input
+            id="chat-input"
+            type="text"
+            placeholder="Digite sua mensagem para o motorista..."
+            required
+            autocomplete="off"
+            class="flex-1 h-12 bg-uber-gray border border-uber-border focus:border-uber-black focus:bg-white text-uber-black font-medium px-4 rounded-xl focus:outline-none text-xs sm:text-sm transition-all"
+          />
+          <button
+            type="submit"
+            aria-label="Enviar Mensagem"
+            title="Enviar"
+            class="w-12 h-12 shrink-0 font-bold bg-black text-white hover:bg-neutral-900 rounded-xl flex items-center justify-center transition-transform active:scale-90 shadow-md"
+          >
+            ${icon('send', { size: 'sm' })}
+          </button>
+        </form>
+      </div>
     </div>
   `;
 }
@@ -2271,16 +2482,16 @@ function viewProfile() {
                 />
               </div>
 
-              <!-- CPF -->
+              <!-- CPF (Não editável / Desabilitado) -->
               <div>
-                <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">CPF</label>
+                <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">CPF (Não editável)</label>
                 <input
                   id="profile-cpf"
                   type="text"
                   value="${currentUser.cpf || '123.456.789-00'}"
-                  placeholder="000.000.000-00"
-                  required
-                  class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none transition-all font-mono"
+                  disabled
+                  readonly
+                  class="w-full bg-neutral-100 text-neutral-500 border border-neutral-200 rounded-xl h-12 px-4 font-mono text-sm cursor-not-allowed select-none"
                 />
               </div>
             </div>
@@ -2372,11 +2583,10 @@ function viewProfile() {
 function handleSaveFullProfile(e) {
   e.preventDefault();
   const name = document.getElementById('profile-name').value;
-  const cpf = document.getElementById('profile-cpf').value;
   const pixKey = document.getElementById('profile-pix-key').value;
   const pass = document.getElementById('profile-password').value;
 
-  store.updateUserProfile({ name, cpf, pixKey });
+  store.updateUserProfile({ name, pixKey });
   if (pass) {
     showToast('Perfil e nova senha atualizados com sucesso!', 'success');
   } else {
