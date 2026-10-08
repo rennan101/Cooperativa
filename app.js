@@ -1025,6 +1025,14 @@ function getDriverProfile(driverId) {
   };
 }
 
+function renderDatalists() {
+  return `
+    <datalist id="nordeste-cities-list">
+      ${NORDESTE_CITIES.map(c => `<option value="${c}"></option>`).join('')}
+    </datalist>
+  `;
+}
+
 // ==========================================
 // 7. AUTOCOMPLETE ESTILO UBER (LUGARES DO NORDESTE)
 // ==========================================
@@ -1042,16 +1050,16 @@ function handleLocationInput(inputId, dropdownId, type) {
   let matches = [];
 
   if (!query) {
-    matches = NORDESTE_LOCATIONS.slice(0, 6);
+    matches = NORDESTE_LOCATIONS.slice(0, 10);
   } else {
     matches = NORDESTE_LOCATIONS.filter(loc => 
       loc.city.toLowerCase().includes(query) || loc.spot.toLowerCase().includes(query)
-    ).slice(0, 8);
+    ).slice(0, 12);
   }
 
   if (matches.length === 0) {
     dropdown.innerHTML = `
-      <div class="p-3 text-center text-xs text-uber-iron font-medium">
+      <div class="p-3.5 text-center text-xs text-uber-iron font-medium">
         Nenhum ponto ou cidade encontrado no Nordeste.
       </div>
     `;
@@ -1060,12 +1068,13 @@ function handleLocationInput(inputId, dropdownId, type) {
   }
 
   dropdown.innerHTML = matches.map((loc, idx) => {
-    const fullLocationText = `${loc.city} (${loc.spot})`;
-    // Escapar aspas simples para segurança no atributo inline
-    const safeText = loc.city.replace(/'/g, "\\'");
+    const fullLocationText = `${loc.spot} - ${loc.city}`;
+    const safeDisplay = fullLocationText.replace(/'/g, "\\'");
+    const safeCity = loc.city.replace(/'/g, "\\'");
+    const safeSpot = loc.spot.replace(/'/g, "\\'");
     return `
       <div
-        onmousedown="selectAutocompleteLocation('${inputId}', '${dropdownId}', '${safeText}')"
+        onmousedown="selectAutocompleteLocation('${inputId}', '${dropdownId}', '${safeDisplay}', '${safeCity}', '${safeSpot}')"
         class="flex items-center gap-3 p-3 hover:bg-uber-gray cursor-pointer transition-colors text-left group select-none"
       >
         <div class="w-8 h-8 rounded-full bg-uber-gray group-hover:bg-uber-border flex items-center justify-center text-uber-black shrink-0 transition-colors">
@@ -1085,16 +1094,16 @@ function handleLocationInput(inputId, dropdownId, type) {
   dropdown.classList.remove('hidden');
 }
 
-function selectAutocompleteLocation(inputId, dropdownId, text) {
+function selectAutocompleteLocation(inputId, dropdownId, displayText, city, spot) {
   const input = document.getElementById(inputId);
   const dropdown = document.getElementById(dropdownId);
   if (input) {
-    input.value = text;
-    // Sincronizar com o store state para persistência
+    input.value = displayText;
+    // Sincronizar com o store state para persistência rica
     if (inputId === 'search-origin') {
-      store.state.searchParams.origin = text;
+      store.state.searchParams.origin = displayText;
     } else if (inputId === 'search-dest') {
-      store.state.searchParams.destination = text;
+      store.state.searchParams.destination = displayText;
     }
     // Disparar evento de input/change para qualquer listener ativo
     input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1104,6 +1113,7 @@ function selectAutocompleteLocation(inputId, dropdownId, text) {
     dropdown.classList.add('hidden');
   }
 }
+
 
 // Fechar autocomplete ao clicar fora
 document.addEventListener('click', (e) => {
@@ -1120,13 +1130,11 @@ function renderHeroSearchBar() {
   const todayStr = new Date().toISOString().split('T')[0];
 
   return `
-    <div class="w-full max-w-6xl xl:max-w-7xl mx-auto relative">
-      <form id="hero-search-form" onsubmit="handleSearchSubmit(event)" class="bg-white border border-uber-border shadow-2xl rounded-2xl p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
-
-
+    <div class="w-full max-w-6xl xl:max-w-7xl mx-auto relative overflow-visible">
+      <form id="hero-search-form" onsubmit="handleSearchSubmit(event)" class="bg-white border border-uber-border shadow-2xl rounded-2xl p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center gap-3 overflow-visible relative z-30">
         
         <!-- Origin Input with Uber-Style Autocomplete Dropdown -->
-        <div class="flex-1 relative">
+        <div class="flex-1 relative overflow-visible">
           <div class="flex items-center gap-3 px-3.5 h-12 bg-uber-gray rounded-xl border border-uber-border hover:border-uber-iron focus-within:border-uber-black focus-within:bg-white transition-all">
             <div class="w-2.5 h-2.5 rounded-full bg-uber-black shrink-0"></div>
             <div class="flex-1 text-left min-w-0">
@@ -1143,7 +1151,7 @@ function renderHeroSearchBar() {
               />
             </div>
           </div>
-          <div id="autocomplete-origin-dropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-uber-border rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-uber-gray"></div>
+          <div id="autocomplete-origin-dropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-white border border-uber-border rounded-xl shadow-2xl z-[100] max-h-72 overflow-y-auto divide-y divide-uber-gray"></div>
         </div>
 
         <!-- Swap Button -->
@@ -1152,7 +1160,7 @@ function renderHeroSearchBar() {
         </button>
 
         <!-- Destination Input with Uber-Style Autocomplete Dropdown -->
-        <div class="flex-1 relative">
+        <div class="flex-1 relative overflow-visible">
           <div class="flex items-center gap-3 px-3.5 h-12 bg-uber-gray rounded-xl border border-uber-border hover:border-uber-iron focus-within:border-uber-black focus-within:bg-white transition-all">
             <div class="w-2.5 h-2.5 bg-uber-black shrink-0"></div>
             <div class="flex-1 text-left min-w-0">
@@ -1169,8 +1177,9 @@ function renderHeroSearchBar() {
               />
             </div>
           </div>
-          <div id="autocomplete-dest-dropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-uber-border rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-uber-gray"></div>
+          <div id="autocomplete-dest-dropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-white border border-uber-border rounded-xl shadow-2xl z-[100] max-h-72 overflow-y-auto divide-y divide-uber-gray"></div>
         </div>
+
 
         <!-- Date & Seats Row -->
         <div class="flex items-center gap-2 flex-initial">
@@ -1454,17 +1463,26 @@ function handleSortChange(val) {
 function viewSearchResults() {
   const { rides, searchParams } = store.state;
 
-  const originQuery = (searchParams.origin || '').toLowerCase().split(',')[0].trim();
-  const destQuery = (searchParams.destination || '').toLowerCase().split(',')[0].trim();
+  const rawOrigin = (searchParams.origin || '').toLowerCase().trim();
+  const rawDest = (searchParams.destination || '').toLowerCase().trim();
+
+  // Dividir termos por traço, vírgula ou parênteses para busca flexível por cidade ou ponto
+  const originTerms = rawOrigin.split(/[-–,()]+/).map(t => t.trim()).filter(Boolean);
+  const destTerms = rawDest.split(/[-–,()]+/).map(t => t.trim()).filter(Boolean);
 
   const filtered = rides.filter(ride => {
-    const matchOrigin = !originQuery || 
-      ride.originCity.toLowerCase().includes(originQuery) ||
-      ride.originSpot.toLowerCase().includes(originQuery);
+    const rideOriginCity = ride.originCity.toLowerCase();
+    const rideOriginSpot = ride.originSpot.toLowerCase();
+    const rideDestCity = ride.destinationCity.toLowerCase();
+    const rideDestSpot = ride.destinationSpot.toLowerCase();
 
-    const matchDest = !destQuery || 
-      ride.destinationCity.toLowerCase().includes(destQuery) ||
-      ride.destinationSpot.toLowerCase().includes(destQuery);
+    const matchOrigin = originTerms.length === 0 || originTerms.some(term => 
+      rideOriginCity.includes(term) || rideOriginSpot.includes(term)
+    );
+
+    const matchDest = destTerms.length === 0 || destTerms.some(term => 
+      rideDestCity.includes(term) || rideDestSpot.includes(term)
+    );
 
     const matchSeats = ride.availableSeats >= (searchParams.seats || 1);
     const matchAC = !searchFilterAC || ride.vehicle.hasAC;
@@ -1474,6 +1492,7 @@ function viewSearchResults() {
     if (searchSortBy === 'CHEAPEST') return a.pricePerSeat - b.pricePerSeat;
     return a.departureTime.localeCompare(b.departureTime);
   });
+
 
   return `
     <div class="max-w-6xl xl:max-w-7xl mx-auto px-4 py-6 text-left animate-fade-in">
@@ -3347,20 +3366,33 @@ function setupSwipeNavigation() {
     if (activeIdx === -1) return; // se estiver em subpáginas de detalhe, não dispara swipe acidental
 
     if (diffX < 0) {
-      // Swipe para a esquerda -> Próxima aba
+      // Swipe para a esquerda -> Próxima aba (tela surge da direita)
       if (activeIdx < tabs.length - 1) {
         if (typeof SoundEngine !== 'undefined') SoundEngine.play('info');
+        const appRoot = document.getElementById('app-root');
+        if (appRoot) {
+          appRoot.classList.remove('animate-slide-left', 'animate-slide-right', 'animate-fade-in');
+          void appRoot.offsetWidth; // trigger reflow
+          appRoot.classList.add('animate-slide-left');
+        }
         window.location.hash = tabs[activeIdx + 1].href;
       }
     } else {
-      // Swipe para a direita -> Aba anterior
+      // Swipe para a direita -> Aba anterior (tela surge da esquerda)
       if (activeIdx > 0) {
         if (typeof SoundEngine !== 'undefined') SoundEngine.play('info');
+        const appRoot = document.getElementById('app-root');
+        if (appRoot) {
+          appRoot.classList.remove('animate-slide-left', 'animate-slide-right', 'animate-fade-in');
+          void appRoot.offsetWidth; // trigger reflow
+          appRoot.classList.add('animate-slide-right');
+        }
         window.location.hash = tabs[activeIdx - 1].href;
       }
     }
   }
 }
+
 
 window.addEventListener('hashchange', renderApp);
 window.addEventListener('DOMContentLoaded', () => {
