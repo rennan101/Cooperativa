@@ -1087,23 +1087,28 @@ function handleLocationInput(inputId, dropdownId, type) {
     return;
   }
 
-  dropdown.innerHTML = matches.map(loc => `
-    <div
-      onclick="selectAutocompleteLocation('${inputId}', '${dropdownId}', '${loc.city}')"
-      class="flex items-center gap-3 p-3 hover:bg-uber-gray cursor-pointer transition-colors text-left group"
-    >
-      <div class="w-8 h-8 rounded-full bg-uber-gray group-hover:bg-uber-border flex items-center justify-center text-uber-black shrink-0 transition-colors">
-        ${icon('location_on', { size: 'sm', className: 'text-uber-black' })}
+  dropdown.innerHTML = matches.map((loc, idx) => {
+    const fullLocationText = `${loc.city} (${loc.spot})`;
+    // Escapar aspas simples para segurança no atributo inline
+    const safeText = loc.city.replace(/'/g, "\\'");
+    return `
+      <div
+        onmousedown="selectAutocompleteLocation('${inputId}', '${dropdownId}', '${safeText}')"
+        class="flex items-center gap-3 p-3 hover:bg-uber-gray cursor-pointer transition-colors text-left group select-none"
+      >
+        <div class="w-8 h-8 rounded-full bg-uber-gray group-hover:bg-uber-border flex items-center justify-center text-uber-black shrink-0 transition-colors">
+          ${icon('location_on', { size: 'sm', className: 'text-uber-black' })}
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="font-bold text-xs sm:text-sm text-uber-black truncate group-hover:text-black">${loc.spot}</p>
+          <p class="text-[11px] font-medium text-uber-iron truncate">${loc.city}</p>
+        </div>
+        <div class="text-uber-iron group-hover:text-uber-black shrink-0">
+          ${icon('north_west', { size: 'sm' })}
+        </div>
       </div>
-      <div class="min-w-0 flex-1">
-        <p class="font-bold text-xs sm:text-sm text-uber-black truncate group-hover:text-black">${loc.spot}</p>
-        <p class="text-[11px] font-medium text-uber-iron truncate">${loc.city}</p>
-      </div>
-      <div class="text-uber-iron group-hover:text-uber-black shrink-0">
-        ${icon('north_west', { size: 'sm' })}
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   dropdown.classList.remove('hidden');
 }
@@ -1113,6 +1118,15 @@ function selectAutocompleteLocation(inputId, dropdownId, text) {
   const dropdown = document.getElementById(dropdownId);
   if (input) {
     input.value = text;
+    // Sincronizar com o store state para persistência
+    if (inputId === 'search-origin') {
+      store.state.searchParams.origin = text;
+    } else if (inputId === 'search-dest') {
+      store.state.searchParams.destination = text;
+    }
+    // Disparar evento de input/change para qualquer listener ativo
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
   }
   if (dropdown) {
     dropdown.classList.add('hidden');
@@ -1134,8 +1148,9 @@ function renderHeroSearchBar() {
   const todayStr = new Date().toISOString().split('T')[0];
 
   return `
-    <div class="w-full max-w-4xl mx-auto relative">
-      <form id="hero-search-form" onsubmit="handleSearchSubmit(event)" class="bg-white border border-uber-border shadow-2xl rounded-2xl p-3 sm:p-4 flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
+    <div class="w-full max-w-5xl xl:max-w-6xl mx-auto relative">
+      <form id="hero-search-form" onsubmit="handleSearchSubmit(event)" class="bg-white border border-uber-border shadow-2xl rounded-2xl p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+
         
         <!-- Origin Input with Uber-Style Autocomplete Dropdown -->
         <div class="flex-1 relative">
