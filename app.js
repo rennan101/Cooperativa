@@ -831,26 +831,26 @@ function renderMobileNav() {
 
   mobileNavRoot.innerHTML = `
     <div class="relative w-full select-none">
-      <!-- Fluid Cutout Notch & Black Floating Bubble Indicator -->
+      <!-- Fluid Cutout Notch & Black Floating Bubble Indicator (Subtle Elevation) -->
       <div 
-        class="fluid-cutout-indicator absolute -top-5 left-0 pointer-events-none flex flex-col items-center justify-start z-30"
+        class="fluid-cutout-indicator absolute -top-3 left-0 pointer-events-none flex flex-col items-center justify-start z-30"
         style="width: ${itemWidthPercent}%; transform: translateX(${translatePercent}%);"
       >
         <!-- Top Arch Cutout Graphic -->
         <div class="relative flex items-center justify-center">
-          <!-- SVG Notch Cutout Silhouette -->
-          <svg class="absolute -top-1 w-20 h-6 text-black fill-current pointer-events-none" viewBox="0 0 80 24" preserveAspectRatio="none">
-            <path d="M 0,24 C 18,24 22,0 40,0 C 58,0 62,24 80,24 Z" />
+          <!-- SVG Notch Cutout Silhouette matching white bar background -->
+          <svg class="absolute -top-1 w-16 h-4 text-white fill-current pointer-events-none drop-shadow-sm" viewBox="0 0 80 20" preserveAspectRatio="none">
+            <path d="M 0,20 C 20,20 25,0 40,0 C 55,0 60,20 80,20 Z" />
           </svg>
 
           <!-- Floating Black Bubble with White Icon -->
           <div class="fluid-floating-bubble z-10">
-            ${icon(activeTab.iconName, { size: 'lg', fill: true, className: 'text-white' })}
+            ${icon(activeTab.iconName, { size: 'md', fill: true, className: 'text-white' })}
           </div>
         </div>
       </div>
 
-      <!-- Main Full-Width Solid Black Bottom Bar -->
+      <!-- Main Full-Width Solid White Bottom Bar with Black Icons -->
       <div class="fluid-bottom-bar w-full flex items-center justify-around px-1 z-20">
         ${tabs.map((tab, idx) => {
           const isActive = idx === activeIndex;
@@ -862,11 +862,11 @@ function renderMobileNav() {
               style="width: ${itemWidthPercent}%;"
               aria-label="${tab.label}"
             >
-              <div class="flex flex-col items-center justify-center transition-all duration-300 ${isActive ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}">
-                <div class="text-white/70 hover:text-white">
-                  ${icon(tab.iconName, { size: 'md', fill: false, className: 'text-white/75' })}
+              <div class="flex flex-col items-center justify-center transition-all duration-300 ${isActive ? 'opacity-0 translate-y-1' : 'opacity-100 translate-y-0'}">
+                <div class="text-uber-charcoal hover:text-uber-black">
+                  ${icon(tab.iconName, { size: 'md', fill: false, className: 'text-uber-charcoal' })}
                 </div>
-                <span class="text-[10px] text-white/70 font-medium leading-tight mt-1">${tab.label}</span>
+                <span class="text-[10px] text-uber-iron font-semibold leading-tight mt-0.5">${tab.label}</span>
               </div>
             </a>
           `;
@@ -875,6 +875,7 @@ function renderMobileNav() {
     </div>
   `;
 }
+
 
 
 

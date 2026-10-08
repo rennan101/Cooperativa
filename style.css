@@ -91,16 +91,17 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   color: #D1D5DB !important;
 }
 
-/* Animated Mobile Bottom Navigation (Full Width with Fluid Cutout Notch & Black Floating Bubble) */
+/* Animated Mobile Bottom Navigation (White Bar, Black Icons & Floating Black Bubble with Reduced Elevation) */
 .mobile-nav-container {
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: transparent;
 }
 
 .fluid-bottom-bar {
-  background-color: #000000;
-  height: 64px;
-  box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.4);
+  background-color: #ffffff;
+  height: 60px;
+  box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.08);
+  border-top: 1px solid #e5e7eb;
   position: relative;
 }
 
@@ -110,21 +111,20 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   will-change: transform;
 }
 
-/* Floating Raised Black Bubble with White Icon (No white border ring) */
+/* Floating Raised Black Bubble with White Icon (Reduced subtle elevation) */
 .fluid-floating-bubble {
-  width: 52px;
-  height: 52px;
+  width: 46px;
+  height: 46px;
   border-radius: 9999px;
   background-color: #000000;
   color: #ffffff;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 3px 10px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
 }
-
 
 .mobile-nav-item {
   transition: color 0.3s ease, opacity 0.3s ease, transform 0.2s ease;
@@ -133,6 +133,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .mobile-nav-item:active {
   transform: scale(0.92);
 }
+
 
 
 
