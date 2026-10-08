@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" width="100%" height="100%">
+  <defs>
+    <radialGradient id="shadowGradSUV" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#000000" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bodyGradSUV" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#2d3748"/>
+      <stop offset="45%" stop-color="#1a202c"/>
+      <stop offset="85%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="glassGradSUV" x1="10%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#bae6fd" stop-opacity="0.75"/>
+      <stop offset="40%" stop-color="#0369a1" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#082f49" stop-opacity="0.95"/>
+    </linearGradient>
+    <linearGradient id="wheelGradSUV" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#333333"/>
+      <stop offset="100%" stop-color="#09090b"/>
+    </linearGradient>
+    <linearGradient id="rimGradSUV" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ground Contact Shadow -->
+  <ellipse cx="160" cy="140" rx="138" ry="13" fill="url(#shadowGradSUV)"/>
+
+  <!-- Roof Rack Bars -->
+  <rect x="100" y="32" width="130" height="3.5" rx="1.5" fill="#334155"/>
+  <rect x="110" y="35" width="6" height="4" fill="#1e293b"/>
+  <rect x="215" y="35" width="6" height="4" fill="#1e293b"/>
+
+  <!-- Car Body Main Hull (SUV - Tall ground clearance, robust body) -->
+  <path d="M 32 104 
+           C 30 88, 42 70, 68 64 
+           L 105 38 
+           C 138 34, 185 34, 222 36 
+           C 246 38, 268 50, 280 68 
+           L 296 78 
+           C 310 84, 314 96, 310 108 
+           C 306 116, 292 120, 274 120 
+           L 264 120 
+           C 256 102, 240 90, 222 90 
+           C 204 90, 188 102, 180 120 
+           L 112 120 
+           C 104 102, 88 90, 70 90 
+           C 52 90, 36 102, 28 120 
+           L 24 120 
+           C 20 116, 26 110, 32 104 Z" 
+        fill="url(#bodyGradSUV)"/>
+
+  <!-- Black Cladding Protectors (SUV lower trim) -->
+  <path d="M 24 120 L 28 116 C 36 100, 52 90, 70 90 C 88 90, 104 100, 112 116 L 180 116 C 188 100, 204 90, 222 90 C 240 90, 256 100, 264 116 L 276 120 Z" fill="#09090b"/>
+
+  <!-- Greenhouse Glass (Windows) -->
+  <path d="M 72 64 L 105 42 L 138 40 L 138 66 Z" fill="url(#glassGradSUV)"/>
+  <path d="M 143 40 L 202 38 L 200 66 L 143 66 Z" fill="url(#glassGradSUV)"/>
+  <path d="M 206 38 C 228 39, 248 48, 262 64 L 204 66 Z" fill="url(#glassGradSUV)"/>
+
+  <!-- Pillars -->
+  <line x1="140" y1="40" x2="140" y2="66" stroke="#0f172a" stroke-width="3.5"/>
+  <line x1="203" y1="38" x2="201" y2="66" stroke="#0f172a" stroke-width="3.5"/>
+
+  <!-- Dynamic Character Creases -->
+  <path d="M 40 82 Q 160 76 290 78" stroke="#64748b" stroke-width="1.2" fill="none" opacity="0.6"/>
+  <path d="M 45 98 Q 160 92 284 95" stroke="#475569" stroke-width="1" fill="none" opacity="0.4"/>
+
+  <!-- Front Headlight (Aggressive SUV LED) -->
+  <polygon points="284,72 308,78 302,88 280,82" fill="#38bdf8"/>
+  <polygon points="290,75 306,79 300,84 286,81" fill="#ffffff"/>
+
+  <!-- Rear Taillight -->
+  <path d="M 32 86 C 30 78, 38 72, 48 70 L 52 82 L 36 88 Z" fill="#ef4444"/>
+
+  <!-- Front Wheel (Large SUV Wheel) -->
+  <ellipse cx="222" cy="116" rx="27" ry="27" fill="url(#wheelGradSUV)"/>
+  <ellipse cx="222" cy="116" rx="17" ry="17" fill="url(#rimGradSUV)"/>
+  <ellipse cx="222" cy="116" rx="13" ry="13" fill="#0f172a"/>
+  <!-- Rugged SUV Spokes -->
+  <line x1="222" y1="102" x2="222" y2="130" stroke="#f8fafc" stroke-width="2.5"/>
+  <line x1="208" y1="116" x2="236" y2="116" stroke="#f8fafc" stroke-width="2.5"/>
+  <line x1="212" y1="106" x2="232" y2="126" stroke="#f8fafc" stroke-width="2.5"/>
+  <line x1="212" y1="126" x2="232" y2="106" stroke="#f8fafc" stroke-width="2.5"/>
+  <circle cx="222" cy="116" r="4.5" fill="#38bdf8"/>
+
+  <!-- Rear Wheel -->
+  <ellipse cx="70" cy="116" rx="27" ry="27" fill="url(#wheelGradSUV)"/>
+  <ellipse cx="70" cy="116" rx="17" ry="17" fill="url(#rimGradSUV)"/>
+  <ellipse cx="70" cy="116" rx="13" ry="13" fill="#0f172a"/>
+  <!-- Spokes -->
+  <line x1="70" y1="102" x2="70" y2="130" stroke="#f8fafc" stroke-width="2.5"/>
+  <line x1="56" y1="116" x2="84" y2="116" stroke="#f8fafc" stroke-width="2.5"/>
+  <line x1="60" y1="106" x2="80" y2="126" stroke="#f8fafc" stroke-width="2.5"/>
+  <line x1="60" y1="126" x2="80" y2="106" stroke="#f8fafc" stroke-width="2.5"/>
+  <circle cx="70" cy="116" r="4.5" fill="#38bdf8"/>
+
+  <!-- SUV Side Mirror -->
+  <path d="M 216 60 C 224 59, 230 62, 230 67 L 216 68 Z" fill="#1e293b"/>
+  <!-- Handles -->
+  <rect x="135" y="74" width="13" height="3" rx="1" fill="#475569"/>
+  <rect x="188" y="74" width="13" height="3" rx="1" fill="#475569"/>
+</svg>

@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" width="100%" height="100%">
+  <defs>
+    <radialGradient id="shadowGradPickup" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.38"/>
+      <stop offset="60%" stop-color="#000000" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bodyGradPickup" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="45%" stop-color="#1e293b"/>
+      <stop offset="85%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="glassGradPickup" x1="10%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#93c5fd" stop-opacity="0.75"/>
+      <stop offset="40%" stop-color="#1e40af" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.95"/>
+    </linearGradient>
+  </defs>
+
+  <ellipse cx="160" cy="142" rx="142" ry="13" fill="url(#shadowGradPickup)"/>
+
+  <!-- Pickup Cargo Bed & Double Cab Body -->
+  <!-- Roll bar / Santo Antonio -->
+  <path d="M 120 40 L 126 40 L 115 72 L 108 72 Z" fill="#475569"/>
+
+  <path d="M 18 106 
+           L 18 78 
+           L 118 78 
+           L 132 42 
+           C 152 38, 192 38, 222 40 
+           C 246 42, 268 54, 280 72 
+           L 302 80 
+           C 314 86, 316 98, 312 110 
+           C 308 118, 294 122, 276 122 
+           L 264 122 
+           C 256 102, 240 88, 220 88 
+           C 200 88, 184 102, 178 122 
+           L 116 122 
+           C 108 102, 92 88, 72 88 
+           C 52 88, 36 102, 28 122 
+           L 22 122 Z" 
+        fill="url(#bodyGradPickup)"/>
+
+  <!-- Cargo Bed Inner Line -->
+  <line x1="20" y1="80" x2="116" y2="80" stroke="#0f172a" stroke-width="3"/>
+  <rect x="22" y="82" width="92" height="6" fill="#020617"/>
+
+  <!-- Glass (Double Cab) -->
+  <path d="M 126 74 L 138 46 L 168 44 L 166 74 Z" fill="url(#glassGradPickup)"/>
+  <path d="M 172 44 L 210 42 L 208 74 L 172 74 Z" fill="url(#glassGradPickup)"/>
+  <path d="M 214 42 C 232 44, 248 52, 262 68 L 212 74 Z" fill="url(#glassGradPickup)"/>
+
+  <!-- Front Headlight -->
+  <polygon points="286,75 312,82 306,94 282,88" fill="#38bdf8"/>
+  <polygon points="292,78 308,83 304,90 288,86" fill="#ffffff"/>
+
+  <!-- Taillight Vertical -->
+  <rect x="18" y="80" width="6" height="24" rx="2" fill="#ef4444"/>
+
+  <!-- Massive Heavy-Duty Wheels -->
+  <!-- Front -->
+  <ellipse cx="220" cy="116" rx="28" ry="28" fill="#18181b"/>
+  <ellipse cx="220" cy="116" rx="17" ry="17" fill="#64748b"/>
+  <ellipse cx="220" cy="116" rx="12" ry="12" fill="#0f172a"/>
+  <circle cx="220" cy="116" r="4.5" fill="#f8fafc"/>
+  <line x1="220" y1="102" x2="220" y2="130" stroke="#e2e8f0" stroke-width="2.5"/>
+  <line x1="206" y1="116" x2="234" y2="116" stroke="#e2e8f0" stroke-width="2.5"/>
+
+  <!-- Rear -->
+  <ellipse cx="72" cy="116" rx="28" ry="28" fill="#18181b"/>
+  <ellipse cx="72" cy="116" rx="17" ry="17" fill="#64748b"/>
+  <ellipse cx="72" cy="116" rx="12" ry="12" fill="#0f172a"/>
+  <circle cx="72" cy="116" r="4.5" fill="#f8fafc"/>
+  <line x1="72" y1="102" x2="72" y2="130" stroke="#e2e8f0" stroke-width="2.5"/>
+  <line x1="58" y1="116" x2="86" y2="116" stroke="#e2e8f0" stroke-width="2.5"/>
+
+  <!-- Handles & Details -->
+  <rect x="145" y="82" width="12" height="3" rx="1" fill="#475569"/>
+  <rect x="188" y="82" width="12" height="3" rx="1" fill="#475569"/>
+</svg>

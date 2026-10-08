@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" width="100%" height="100%">
+  <defs>
+    <radialGradient id="shadowGradMinivan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#000000" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bodyGradMinivan" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="45%" stop-color="#1e293b"/>
+      <stop offset="85%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="glassGradMinivan" x1="10%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#bae6fd" stop-opacity="0.75"/>
+      <stop offset="40%" stop-color="#0284c7" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#0369a1" stop-opacity="0.95"/>
+    </linearGradient>
+  </defs>
+
+  <ellipse cx="160" cy="140" rx="138" ry="12" fill="url(#shadowGradMinivan)"/>
+
+  <!-- Minivan / Multi-passenger Body (High roof, 7-seater profile) -->
+  <path d="M 28 106 
+           C 26 88, 38 66, 64 60 
+           L 108 34 
+           C 142 32, 198 32, 230 36 
+           C 254 40, 272 54, 284 72 
+           L 298 84 
+           C 310 90, 312 102, 306 112 
+           C 302 118, 288 120, 270 120 
+           L 260 120 
+           C 254 104, 238 94, 220 94 
+           C 202 94, 186 104, 180 120 
+           L 112 120 
+           C 106 104, 90 94, 72 94 
+           C 54 94, 38 104, 32 120 
+           L 24 120 Z" 
+        fill="url(#bodyGradMinivan)"/>
+
+  <!-- Minivan Windows (Large 3-row windows) -->
+  <path d="M 68 60 L 108 38 L 138 36 L 138 66 L 72 68 Z" fill="url(#glassGradMinivan)"/>
+  <path d="M 142 36 L 195 35 L 193 66 L 142 66 Z" fill="url(#glassGradMinivan)"/>
+  <path d="M 198 35 C 224 36, 246 46, 262 64 L 196 66 Z" fill="url(#glassGradMinivan)"/>
+
+  <!-- Pillars -->
+  <line x1="140" y1="36" x2="140" y2="66" stroke="#0f172a" stroke-width="3"/>
+  <line x1="195" y1="35" x2="194" y2="66" stroke="#0f172a" stroke-width="3"/>
+
+  <!-- Front Headlight -->
+  <polygon points="282,78 306,84 300,94 278,88" fill="#38bdf8"/>
+
+  <!-- Sliding Door Rail -->
+  <line x1="85" y1="78" x2="185" y2="78" stroke="#475569" stroke-width="1.5"/>
+
+  <!-- Wheels -->
+  <ellipse cx="220" cy="118" rx="24" ry="24" fill="#09090b"/>
+  <ellipse cx="220" cy="118" rx="15" ry="15" fill="#cbd5e1"/>
+  <circle cx="220" cy="118" r="4" fill="#0f172a"/>
+
+  <ellipse cx="72" cy="118" rx="24" ry="24" fill="#09090b"/>
+  <ellipse cx="72" cy="118" rx="15" ry="15" fill="#cbd5e1"/>
+  <circle cx="72" cy="118" r="4" fill="#0f172a"/>
+</svg>

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" width="100%" height="100%">
+  <defs>
+    <radialGradient id="shadowGradEV" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#000000" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bodyGradEV" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="45%" stop-color="#0f172a"/>
+      <stop offset="85%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="glassGradEV" x1="10%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#0284c7" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#0369a1" stop-opacity="0.95"/>
+    </linearGradient>
+    <linearGradient id="aerowheel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+
+  <ellipse cx="160" cy="138" rx="130" ry="12" fill="url(#shadowGradEV)"/>
+
+  <!-- Futuristic Aerodynamic Body -->
+  <path d="M 36 108 
+           C 34 92, 46 76, 70 70 
+           L 125 44 
+           C 155 38, 200 38, 228 44 
+           C 252 50, 274 62, 286 78 
+           L 298 86 
+           C 310 92, 312 102, 306 112 
+           C 300 118, 288 120, 270 120 
+           L 260 120 
+           C 254 104, 238 94, 220 94 
+           C 202 94, 186 104, 180 120 
+           L 112 120 
+           C 106 104, 90 94, 72 94 
+           C 54 94, 38 104, 32 120 
+           L 28 120 Z" 
+        fill="url(#bodyGradEV)"/>
+
+  <!-- Continuous Panoramic Glass -->
+  <path d="M 75 68 L 122 46 L 160 42 L 160 70 L 78 72 Z" fill="url(#glassGradEV)"/>
+  <path d="M 164 42 L 222 45 L 220 70 L 164 70 Z" fill="url(#glassGradEV)"/>
+  <path d="M 224 45 C 244 48, 264 56, 276 72 L 222 72 Z" fill="url(#glassGradEV)"/>
+
+  <!-- EV Cyan Accent Light Bar (Front Full-Width LED) -->
+  <path d="M 276 80 L 302 87 L 298 94 L 272 88 Z" fill="#38bdf8"/>
+  <path d="M 280 82 L 300 88" stroke="#ffffff" stroke-width="2"/>
+
+  <!-- Rear Connected Lightbar -->
+  <path d="M 35 94 C 34 88, 40 82, 50 80 L 54 90 L 38 95 Z" fill="#38bdf8"/>
+
+  <!-- Flush Door Handles (EV Aero) -->
+  <rect x="135" y="82" width="10" height="2" rx="1" fill="#38bdf8" opacity="0.8"/>
+  <rect x="185" y="82" width="10" height="2" rx="1" fill="#38bdf8" opacity="0.8"/>
+
+  <!-- Aero Wheels (Turbine EV Rims) -->
+  <!-- Front -->
+  <ellipse cx="220" cy="118" rx="24" ry="24" fill="#09090b"/>
+  <ellipse cx="220" cy="118" rx="16" ry="16" fill="url(#aerowheel)"/>
+  <ellipse cx="220" cy="118" rx="10" ry="10" fill="#020617"/>
+  <circle cx="220" cy="118" r="4" fill="#38bdf8"/>
+
+  <!-- Rear -->
+  <ellipse cx="72" cy="118" rx="24" ry="24" fill="#09090b"/>
+  <ellipse cx="72" cy="118" rx="16" ry="16" fill="url(#aerowheel)"/>
+  <ellipse cx="72" cy="118" rx="10" ry="10" fill="#020617"/>
+  <circle cx="72" cy="118" r="4" fill="#38bdf8"/>
+</svg>

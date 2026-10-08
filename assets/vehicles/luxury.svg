@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" width="100%" height="100%">
+  <defs>
+    <radialGradient id="shadowGradLux" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.4"/>
+      <stop offset="60%" stop-color="#000000" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bodyGradLux" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#1c1917"/>
+      <stop offset="45%" stop-color="#0c0a09"/>
+      <stop offset="85%" stop-color="#000000"/>
+    </linearGradient>
+    <linearGradient id="glassGradLux" x1="10%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8"/>
+      <stop offset="40%" stop-color="#0369a1" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#0c0a09" stop-opacity="0.98"/>
+    </linearGradient>
+    <linearGradient id="goldAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+  </defs>
+
+  <ellipse cx="160" cy="138" rx="138" ry="12" fill="url(#shadowGradLux)"/>
+
+  <!-- Premium Executive Sedan Body (Long wheelbase, elegant low roof) -->
+  <path d="M 18 108 
+           C 20 94, 35 84, 55 82 
+           L 98 78 
+           C 125 48, 165 38, 220 38 
+           C 248 38, 268 48, 282 70 
+           L 300 78 
+           C 314 84, 318 94, 312 108 
+           C 308 116, 294 120, 274 120 
+           L 264 120 
+           C 256 104, 240 94, 222 94 
+           C 204 94, 188 104, 182 120 
+           L 112 120 
+           C 106 104, 90 94, 72 94 
+           C 54 94, 38 104, 32 120 
+           L 22 120 Z" 
+        fill="url(#bodyGradLux)"/>
+
+  <!-- Chrome Trim around windows -->
+  <path d="M 102 76 C 128 48, 165 40, 218 40 C 245 40, 262 48, 276 68 L 218 70 L 142 72 Z" fill="none" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- Windows -->
+  <path d="M 106 75 L 140 52 L 152 72 L 110 74 Z" fill="url(#glassGradLux)"/>
+  <path d="M 144 50 L 198 44 L 196 71 L 144 72 Z" fill="url(#glassGradLux)"/>
+  <path d="M 202 44 C 226 44, 246 50, 264 67 L 202 70 Z" fill="url(#glassGradLux)"/>
+
+  <!-- LED Matrix Headlight -->
+  <polygon points="288,80 310,86 304,96 284,90" fill="#ffffff"/>
+  <path d="M 292 82 L 308 86" stroke="#38bdf8" stroke-width="2"/>
+
+  <!-- Chrome Sill Strip -->
+  <path d="M 116 118 L 180 118" stroke="#cbd5e1" stroke-width="2"/>
+
+  <!-- Multi-Spoke Luxury Alloy Wheels -->
+  <!-- Front -->
+  <ellipse cx="222" cy="118" rx="25" ry="25" fill="#09090b"/>
+  <ellipse cx="222" cy="118" rx="16" ry="16" fill="#475569"/>
+  <circle cx="222" cy="118" r="4" fill="#ffffff"/>
+  <line x1="222" y1="104" x2="222" y2="132" stroke="#f8fafc" stroke-width="1.8"/>
+  <line x1="208" y1="118" x2="236" y2="118" stroke="#f8fafc" stroke-width="1.8"/>
+  <line x1="212" y1="108" x2="232" y2="128" stroke="#f8fafc" stroke-width="1.8"/>
+  <line x1="212" y1="128" x2="232" y2="108" stroke="#f8fafc" stroke-width="1.8"/>
+
+  <!-- Rear -->
+  <ellipse cx="72" cy="118" rx="25" ry="25" fill="#09090b"/>
+  <ellipse cx="72" cy="118" rx="16" ry="16" fill="#475569"/>
+  <circle cx="72" cy="118" r="4" fill="#ffffff"/>
+  <line x1="72" y1="104" x2="72" y2="132" stroke="#f8fafc" stroke-width="1.8"/>
+  <line x1="58" y1="118" x2="86" y2="118" stroke="#f8fafc" stroke-width="1.8"/>
+  <line x1="62" y1="108" x2="82" y2="128" stroke="#f8fafc" stroke-width="1.8"/>
+  <line x1="62" y1="128" x2="82" y2="108" stroke="#f8fafc" stroke-width="1.8"/>
+</svg>

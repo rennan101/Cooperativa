@@ -154,6 +154,297 @@ const POPULAR_ROUTES = [
 ];
 
 // ==========================================
+// 2.1 BASE COMPLETA DE VEÍCULOS NO BRASIL
+// ==========================================
+
+const BRAZIL_VEHICLES_DATABASE = [
+  // CHEVROLET
+  { brand: 'Chevrolet', model: 'Onix' },
+  { brand: 'Chevrolet', model: 'Onix Plus' },
+  { brand: 'Chevrolet', model: 'Tracker' },
+  { brand: 'Chevrolet', model: 'Spin' },
+  { brand: 'Chevrolet', model: 'Montana' },
+  { brand: 'Chevrolet', model: 'S10' },
+  { brand: 'Chevrolet', model: 'Cruze' },
+  { brand: 'Chevrolet', model: 'Cruze Sport6' },
+  { brand: 'Chevrolet', model: 'Prisma' },
+  { brand: 'Chevrolet', model: 'Cobalt' },
+  { brand: 'Chevrolet', model: 'Celta' },
+  { brand: 'Chevrolet', model: 'Corsa' },
+  { brand: 'Chevrolet', model: 'Astra' },
+  { brand: 'Chevrolet', model: 'Vectra' },
+  { brand: 'Chevrolet', model: 'Zafira' },
+  { brand: 'Chevrolet', model: 'Meriva' },
+  { brand: 'Chevrolet', model: 'Trailblazer' },
+  { brand: 'Chevrolet', model: 'Equinox' },
+
+  // FIAT
+  { brand: 'Fiat', model: 'Argo' },
+  { brand: 'Fiat', model: 'Mobi' },
+  { brand: 'Fiat', model: 'Cronos' },
+  { brand: 'Fiat', model: 'Pulse' },
+  { brand: 'Fiat', model: 'Fastback' },
+  { brand: 'Fiat', model: 'Strada' },
+  { brand: 'Fiat', model: 'Toro' },
+  { brand: 'Fiat', model: 'Titano' },
+  { brand: 'Fiat', model: 'Uno' },
+  { brand: 'Fiat', model: 'Palio' },
+  { brand: 'Fiat', model: 'Palio Weekend' },
+  { brand: 'Fiat', model: 'Siena' },
+  { brand: 'Fiat', model: 'Grand Siena' },
+  { brand: 'Fiat', model: 'Punto' },
+  { brand: 'Fiat', model: 'Linea' },
+  { brand: 'Fiat', model: 'Doblo' },
+  { brand: 'Fiat', model: 'Idea' },
+  { brand: 'Fiat', model: 'Bravo' },
+  { brand: 'Fiat', model: 'Fiorino' },
+
+  // VOLKSWAGEN
+  { brand: 'Volkswagen', model: 'Gol' },
+  { brand: 'Volkswagen', model: 'Polo' },
+  { brand: 'Volkswagen', model: 'Polo Track' },
+  { brand: 'Volkswagen', model: 'Virtus' },
+  { brand: 'Volkswagen', model: 'Nivus' },
+  { brand: 'Volkswagen', model: 'T-Cross' },
+  { brand: 'Volkswagen', model: 'Taos' },
+  { brand: 'Volkswagen', model: 'Saveiro' },
+  { brand: 'Volkswagen', model: 'Amarok' },
+  { brand: 'Volkswagen', model: 'Fox' },
+  { brand: 'Volkswagen', model: 'CrossFox' },
+  { brand: 'Volkswagen', model: 'SpaceFox' },
+  { brand: 'Volkswagen', model: 'Voyage' },
+  { brand: 'Volkswagen', model: 'Jetta' },
+  { brand: 'Volkswagen', model: 'Up!' },
+  { brand: 'Volkswagen', model: 'Tiguan' },
+  { brand: 'Volkswagen', model: 'Passat' },
+  { brand: 'Volkswagen', model: 'Golf' },
+  { brand: 'Volkswagen', model: 'Bora' },
+
+  // TOYOTA
+  { brand: 'Toyota', model: 'Corolla' },
+  { brand: 'Toyota', model: 'Corolla Sedan 2.0' },
+  { brand: 'Toyota', model: 'Corolla Hybrid' },
+  { brand: 'Toyota', model: 'Corolla Cross' },
+  { brand: 'Toyota', model: 'Yaris Hatch' },
+  { brand: 'Toyota', model: 'Yaris Sedan' },
+  { brand: 'Toyota', model: 'Etios Hatch' },
+  { brand: 'Toyota', model: 'Etios Sedan' },
+  { brand: 'Toyota', model: 'Hilux' },
+  { brand: 'Toyota', model: 'SW4' },
+  { brand: 'Toyota', model: 'RAV4' },
+  { brand: 'Toyota', model: 'Camry' },
+
+  // HYUNDAI
+  { brand: 'Hyundai', model: 'HB20' },
+  { brand: 'Hyundai', model: 'HB20S' },
+  { brand: 'Hyundai', model: 'HB20X' },
+  { brand: 'Hyundai', model: 'Creta' },
+  { brand: 'Hyundai', model: 'Tucson' },
+  { brand: 'Hyundai', model: 'ix35' },
+  { brand: 'Hyundai', model: 'Santa Fe' },
+  { brand: 'Hyundai', model: 'i30' },
+  { brand: 'Hyundai', model: 'Elantra' },
+  { brand: 'Hyundai', model: 'Azera' },
+  { brand: 'Hyundai', model: 'HR' },
+
+  // HONDA
+  { brand: 'Honda', model: 'Civic' },
+  { brand: 'Honda', model: 'Civic Touring' },
+  { brand: 'Honda', model: 'HR-V' },
+  { brand: 'Honda', model: 'City Hatch' },
+  { brand: 'Honda', model: 'City Sedan' },
+  { brand: 'Honda', model: 'Fit' },
+  { brand: 'Honda', model: 'WR-V' },
+  { brand: 'Honda', model: 'CR-V' },
+  { brand: 'Honda', model: 'Accord' },
+  { brand: 'Honda', model: 'ZR-V' },
+
+  // JEEP
+  { brand: 'Jeep', model: 'Renegade' },
+  { brand: 'Jeep', model: 'Compass' },
+  { brand: 'Jeep', model: 'Commander' },
+  { brand: 'Jeep', model: 'Grand Cherokee' },
+  { brand: 'Jeep', model: 'Wrangler' },
+
+  // NISSAN
+  { brand: 'Nissan', model: 'Kicks' },
+  { brand: 'Nissan', model: 'Versa' },
+  { brand: 'Nissan', model: 'Sentra' },
+  { brand: 'Nissan', model: 'Frontier' },
+  { brand: 'Nissan', model: 'March' },
+  { brand: 'Nissan', model: 'Tiida' },
+  { brand: 'Nissan', model: 'Livina' },
+  { brand: 'Nissan', model: 'Grand Livina' },
+
+  // RENAULT
+  { brand: 'Renault', model: 'Kwid' },
+  { brand: 'Renault', model: 'Sandero' },
+  { brand: 'Renault', model: 'Stepway' },
+  { brand: 'Renault', model: 'Logan' },
+  { brand: 'Renault', model: 'Duster' },
+  { brand: 'Renault', model: 'Duster Oroch' },
+  { brand: 'Renault', model: 'Captur' },
+  { brand: 'Renault', model: 'Kardian' },
+  { brand: 'Renault', model: 'Fluence' },
+  { brand: 'Renault', model: 'Megane' },
+  { brand: 'Renault', model: 'Clio' },
+  { brand: 'Renault', model: 'Master' },
+
+  // FORD
+  { brand: 'Ford', model: 'Ka' },
+  { brand: 'Ford', model: 'Ka Sedan' },
+  { brand: 'Ford', model: 'EcoSport' },
+  { brand: 'Ford', model: 'Ranger' },
+  { brand: 'Ford', model: 'Territory' },
+  { brand: 'Ford', model: 'Maverick' },
+  { brand: 'Ford', model: 'Fiesta' },
+  { brand: 'Ford', model: 'Focus' },
+  { brand: 'Ford', model: 'Focus Sedan' },
+  { brand: 'Ford', model: 'Fusion' },
+  { brand: 'Ford', model: 'Bronco Sport' },
+  { brand: 'Ford', model: 'Edge' },
+
+  // PEUGEOT
+  { brand: 'Peugeot', model: '208' },
+  { brand: 'Peugeot', model: '2008' },
+  { brand: 'Peugeot', model: '3008' },
+  { brand: 'Peugeot', model: '206' },
+  { brand: 'Peugeot', model: '207' },
+  { brand: 'Peugeot', model: '307' },
+  { brand: 'Peugeot', model: '308' },
+  { brand: 'Peugeot', model: '408' },
+  { brand: 'Peugeot', model: 'Partner' },
+  { brand: 'Peugeot', model: 'Expert' },
+  { brand: 'Peugeot', model: 'Boxer' },
+
+  // CITROËN
+  { brand: 'Citroën', model: 'C3' },
+  { brand: 'Citroën', model: 'C3 Aircross' },
+  { brand: 'Citroën', model: 'C3 Picasso' },
+  { brand: 'Citroën', model: 'C4 Cactus' },
+  { brand: 'Citroën', model: 'C4 Lounge' },
+  { brand: 'Citroën', model: 'C4 Pallas' },
+  { brand: 'Citroën', model: 'AirCross' },
+  { brand: 'Citroën', model: 'Jumpy' },
+
+  // MITSUBISHI
+  { brand: 'Mitsubishi', model: 'L200 Triton' },
+  { brand: 'Mitsubishi', model: 'Eclipse Cross' },
+  { brand: 'Mitsubishi', model: 'Outlander' },
+  { brand: 'Mitsubishi', model: 'Pajero TR4' },
+  { brand: 'Mitsubishi', model: 'Pajero Sport' },
+  { brand: 'Mitsubishi', model: 'Pajero Full' },
+  { brand: 'Mitsubishi', model: 'Pajero Dakar' },
+  { brand: 'Mitsubishi', model: 'ASX' },
+  { brand: 'Mitsubishi', model: 'Lancer' },
+
+  // CAOA CHERY
+  { brand: 'Caoa Chery', model: 'Tiggo 5X' },
+  { brand: 'Caoa Chery', model: 'Tiggo 5X Pro' },
+  { brand: 'Caoa Chery', model: 'Tiggo 7' },
+  { brand: 'Caoa Chery', model: 'Tiggo 7 Pro' },
+  { brand: 'Caoa Chery', model: 'Tiggo 8' },
+  { brand: 'Caoa Chery', model: 'Arrizo 6' },
+  { brand: 'Caoa Chery', model: 'Arrizo 6 Pro' },
+  { brand: 'Caoa Chery', model: 'Tiggo 2' },
+  { brand: 'Caoa Chery', model: 'Tiggo 3X' },
+  { brand: 'Caoa Chery', model: 'iCar' },
+
+  // BYD
+  { brand: 'BYD', model: 'Dolphin' },
+  { brand: 'BYD', model: 'Dolphin Mini' },
+  { brand: 'BYD', model: 'Dolphin Plus' },
+  { brand: 'BYD', model: 'Song Plus' },
+  { brand: 'BYD', model: 'Song Pro' },
+  { brand: 'BYD', model: 'Yuan Plus' },
+  { brand: 'BYD', model: 'Yuan Pro' },
+  { brand: 'BYD', model: 'Seal' },
+  { brand: 'BYD', model: 'King' },
+  { brand: 'BYD', model: 'Shark' },
+  { brand: 'BYD', model: 'Tan' },
+  { brand: 'BYD', model: 'Han' },
+
+  // GWM
+  { brand: 'GWM', model: 'Haval H6' },
+  { brand: 'GWM', model: 'Haval H6 HEV' },
+  { brand: 'GWM', model: 'Haval H6 PHEV' },
+  { brand: 'GWM', model: 'Haval H6 GT' },
+  { brand: 'GWM', model: 'Ora 03' },
+  { brand: 'GWM', model: 'Ora 03 GT' },
+  { brand: 'GWM', model: 'Poer' },
+  { brand: 'GWM', model: 'Tank 300' },
+
+  // BMW
+  { brand: 'BMW', model: 'Série 3 (320i)' },
+  { brand: 'BMW', model: 'Série 3 (330e)' },
+  { brand: 'BMW', model: 'X1' },
+  { brand: 'BMW', model: 'X3' },
+  { brand: 'BMW', model: 'X4' },
+  { brand: 'BMW', model: 'X5' },
+  { brand: 'BMW', model: 'Série 1 (118i)' },
+  { brand: 'BMW', model: 'Série 2 Gran Coupé' },
+
+  // MERCEDES-BENZ
+  { brand: 'Mercedes-Benz', model: 'Classe C (C180)' },
+  { brand: 'Mercedes-Benz', model: 'Classe C (C200)' },
+  { brand: 'Mercedes-Benz', model: 'Classe C (C300)' },
+  { brand: 'Mercedes-Benz', model: 'Classe A (A200)' },
+  { brand: 'Mercedes-Benz', model: 'GLA 200' },
+  { brand: 'Mercedes-Benz', model: 'GLB 200' },
+  { brand: 'Mercedes-Benz', model: 'GLC 300' },
+  { brand: 'Mercedes-Benz', model: 'CLA 200' },
+
+  // AUDI
+  { brand: 'Audi', model: 'A3 Sedan' },
+  { brand: 'Audi', model: 'A3 Sportback' },
+  { brand: 'Audi', model: 'A4 Sedan' },
+  { brand: 'Audi', model: 'A5 Sportback' },
+  { brand: 'Audi', model: 'Q3' },
+  { brand: 'Audi', model: 'Q3 Sportback' },
+  { brand: 'Audi', model: 'Q5' },
+
+  // VOLVO
+  { brand: 'Volvo', model: 'XC40' },
+  { brand: 'Volvo', model: 'XC60' },
+  { brand: 'Volvo', model: 'XC90' },
+  { brand: 'Volvo', model: 'EX30' },
+  { brand: 'Volvo', model: 'C40' },
+
+  // KIA
+  { brand: 'Kia', model: 'Sportage' },
+  { brand: 'Kia', model: 'Cerato' },
+  { brand: 'Kia', model: 'Seltos' },
+  { brand: 'Kia', model: 'Picanto' },
+  { brand: 'Kia', model: 'Stonic' },
+  { brand: 'Kia', model: 'Carnival' },
+  { brand: 'Kia', model: 'Soul' },
+  { brand: 'Kia', model: 'Niro' },
+
+  // RAM
+  { brand: 'RAM', model: 'Rampage' },
+  { brand: 'RAM', model: '1500' },
+  { brand: 'RAM', model: '2500' },
+  { brand: 'RAM', model: '3500' },
+
+  // SUZUKI
+  { brand: 'Suzuki', model: 'Jimny' },
+  { brand: 'Suzuki', model: 'Jimny Sierra' },
+  { brand: 'Suzuki', model: 'Vitara' },
+  { brand: 'Suzuki', model: 'Grand Vitara' },
+  { brand: 'Suzuki', model: 'SX4' },
+  { brand: 'Suzuki', model: 'S-Cross' },
+
+  // JAC MOTORS
+  { brand: 'JAC Motors', model: 'E-JS1' },
+  { brand: 'JAC Motors', model: 'T40' },
+  { brand: 'JAC Motors', model: 'T50' },
+  { brand: 'JAC Motors', model: 'T60' },
+  { brand: 'JAC Motors', model: 'J3' },
+  { brand: 'JAC Motors', model: 'J5' },
+  { brand: 'JAC Motors', model: 'J6' }
+];
+
+// ==========================================
 // 3. ESTADO E DADOS INICIAIS (LOCAL STORAGE)
 // ==========================================
 
@@ -169,14 +460,30 @@ const INITIAL_STATE = {
     avatarUrl: DEFAULT_BLANK_AVATAR, // Padrão SVG blank profile
     rating: 4.9,
     totalTrips: 28,
+    vehicles: [
+      {
+        id: 'veh-001',
+        brand: 'Toyota',
+        model: 'Corolla Sedan 2.0',
+        plate: 'BRA-2E19',
+        renavam: '98765432101',
+        year: 2023,
+        hasAC: true,
+        hasUSB: true,
+        isPrimary: true,
+      }
+    ],
     vehicle: {
+      id: 'veh-001',
       plate: 'BRA-2E19',
       state: 'CE',
       brand: 'Toyota',
       model: 'Corolla Sedan 2.0',
+      renavam: '98765432101',
       year: 2023,
       hasAC: true,
       hasUSB: true,
+      isPrimary: true,
     }
   },
   searchParams: {
@@ -367,6 +674,32 @@ class AppStore {
         if (!this.state.currentUser.avatarUrl) {
           this.state.currentUser.avatarUrl = DEFAULT_BLANK_AVATAR;
         }
+        // Migração suave para lista de veículos
+        if (!Array.isArray(this.state.currentUser.vehicles) || this.state.currentUser.vehicles.length === 0) {
+          const defaultVeh = this.state.currentUser.vehicle || {
+            id: 'veh-001',
+            brand: 'Toyota',
+            model: 'Corolla Sedan 2.0',
+            plate: 'BRA-2E19',
+            renavam: '98765432101',
+            year: 2023,
+            hasAC: true,
+            hasUSB: true,
+            isPrimary: true,
+          };
+          if (!defaultVeh.id) defaultVeh.id = 'veh-001';
+          if (!defaultVeh.renavam) defaultVeh.renavam = '98765432101';
+          defaultVeh.isPrimary = true;
+          this.state.currentUser.vehicles = [defaultVeh];
+          this.state.currentUser.vehicle = defaultVeh;
+        } else {
+          const hasPrimary = this.state.currentUser.vehicles.some(v => v.isPrimary);
+          if (!hasPrimary && this.state.currentUser.vehicles.length > 0) {
+            this.state.currentUser.vehicles[0].isPrimary = true;
+          }
+          const primaryVeh = this.state.currentUser.vehicles.find(v => v.isPrimary) || this.state.currentUser.vehicles[0];
+          this.state.currentUser.vehicle = primaryVeh;
+        }
       } catch (e) {
         this.state = JSON.parse(JSON.stringify(INITIAL_STATE));
       }
@@ -401,6 +734,93 @@ class AppStore {
     this.saveState();
     renderApp();
     renderHeader();
+  }
+
+  addVehicle({ brand, model, plate, renavam, year, hasAC, hasUSB, isPrimary }) {
+    if (!Array.isArray(this.state.currentUser.vehicles)) {
+      this.state.currentUser.vehicles = [];
+    }
+    const newId = 'veh-' + Date.now();
+    const isFirst = this.state.currentUser.vehicles.length === 0;
+    const shouldBePrimary = isPrimary || isFirst;
+
+    if (shouldBePrimary) {
+      this.state.currentUser.vehicles.forEach(v => { v.isPrimary = false; });
+    }
+
+    const newVehicle = {
+      id: newId,
+      brand: (brand || '').trim(),
+      model: (model || '').trim(),
+      plate: (plate || '').toUpperCase().trim(),
+      renavam: (renavam || '').trim(),
+      year: parseInt(year, 10) || new Date().getFullYear(),
+      hasAC: !!hasAC,
+      hasUSB: !!hasUSB,
+      isPrimary: shouldBePrimary,
+    };
+
+    this.state.currentUser.vehicles.unshift(newVehicle);
+    if (shouldBePrimary) {
+      this.state.currentUser.vehicle = newVehicle;
+    }
+    this.saveState();
+    renderApp();
+  }
+
+  updateVehicle(vehicleId, { brand, model, plate, renavam, year, hasAC, hasUSB, isPrimary }) {
+    if (!Array.isArray(this.state.currentUser.vehicles)) return;
+    const idx = this.state.currentUser.vehicles.findIndex(v => v.id === vehicleId);
+    if (idx === -1) return;
+
+    if (isPrimary) {
+      this.state.currentUser.vehicles.forEach(v => { v.isPrimary = false; });
+    }
+
+    const updated = {
+      ...this.state.currentUser.vehicles[idx],
+      brand: (brand || '').trim(),
+      model: (model || '').trim(),
+      plate: (plate || '').toUpperCase().trim(),
+      renavam: (renavam || '').trim(),
+      year: parseInt(year, 10) || this.state.currentUser.vehicles[idx].year,
+      hasAC: !!hasAC,
+      hasUSB: !!hasUSB,
+      isPrimary: isPrimary !== undefined ? !!isPrimary : this.state.currentUser.vehicles[idx].isPrimary,
+    };
+
+    this.state.currentUser.vehicles[idx] = updated;
+    const primaryVeh = this.state.currentUser.vehicles.find(v => v.isPrimary) || this.state.currentUser.vehicles[0];
+    this.state.currentUser.vehicle = primaryVeh;
+
+    this.saveState();
+    renderApp();
+  }
+
+  deleteVehicle(vehicleId) {
+    if (!Array.isArray(this.state.currentUser.vehicles)) return;
+    this.state.currentUser.vehicles = this.state.currentUser.vehicles.filter(v => v.id !== vehicleId);
+    if (this.state.currentUser.vehicles.length > 0) {
+      const hasPrimary = this.state.currentUser.vehicles.some(v => v.isPrimary);
+      if (!hasPrimary) {
+        this.state.currentUser.vehicles[0].isPrimary = true;
+      }
+      this.state.currentUser.vehicle = this.state.currentUser.vehicles.find(v => v.isPrimary) || this.state.currentUser.vehicles[0];
+    } else {
+      this.state.currentUser.vehicle = null;
+    }
+    this.saveState();
+    renderApp();
+  }
+
+  setPrimaryVehicle(vehicleId) {
+    if (!Array.isArray(this.state.currentUser.vehicles)) return;
+    this.state.currentUser.vehicles.forEach(v => {
+      v.isPrimary = v.id === vehicleId;
+    });
+    this.state.currentUser.vehicle = this.state.currentUser.vehicles.find(v => v.id === vehicleId) || null;
+    this.saveState();
+    renderApp();
   }
 
   connectGoogleAccount() {
@@ -1114,14 +1534,148 @@ function selectAutocompleteLocation(inputId, dropdownId, displayText, city, spot
   }
 }
 
+// Dropdown Dinâmico de Marcas/Modelos de Veículos (Brasil)
+function handleVehicleSearchFocus() {
+  handleVehicleSearchInput();
+}
 
-// Fechar autocomplete ao clicar fora
+function handleVehicleSearchInput() {
+  const input = document.getElementById('veh-brand-model-input');
+  const dropdown = document.getElementById('veh-model-dropdown');
+  if (!input || !dropdown) return;
+
+  const query = (input.value || '').toLowerCase().trim();
+  let matches = [];
+
+  if (!query) {
+    matches = BRAZIL_VEHICLES_DATABASE.slice(0, 15);
+  } else {
+    matches = BRAZIL_VEHICLES_DATABASE.filter(v =>
+      v.brand.toLowerCase().includes(query) ||
+      v.model.toLowerCase().includes(query) ||
+      `${v.brand} ${v.model}`.toLowerCase().includes(query)
+    ).slice(0, 15);
+  }
+
+  if (matches.length === 0) {
+    dropdown.innerHTML = `
+      <div class="p-3 text-center text-xs text-uber-iron font-medium">
+        <span>Nenhum modelo padrão encontrado. Você pode continuar digitando o modelo personalizado acima.</span>
+      </div>
+    `;
+    dropdown.classList.remove('hidden');
+    return;
+  }
+
+  dropdown.innerHTML = matches.map(v => {
+    const fullText = `${v.brand} ${v.model}`;
+    const safeBrand = v.brand.replace(/'/g, "\\'");
+    const safeModel = v.model.replace(/'/g, "\\'");
+    return `
+      <button
+        type="button"
+        onclick="selectVehicleModel('${safeBrand}', '${safeModel}')"
+        class="w-full px-3.5 py-2.5 text-left flex items-center justify-between hover:bg-uber-gray transition-colors group cursor-pointer border-b border-gray-100 last:border-0"
+      >
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="text-uber-iron group-hover:text-uber-black transition-colors shrink-0">
+            ${icon('directions_car', { size: 'sm' })}
+          </div>
+          <div class="truncate">
+            <span class="text-xs font-bold text-uber-black block group-hover:text-black">${v.brand} <span class="font-semibold text-uber-charcoal">${v.model}</span></span>
+          </div>
+        </div>
+        <span class="text-[10px] text-uber-iron uppercase tracking-wider font-semibold group-hover:text-uber-black">Selecionar</span>
+      </button>
+    `;
+  }).join('');
+
+  dropdown.classList.remove('hidden');
+}
+
+function selectVehicleModel(brand, model) {
+  const input = document.getElementById('veh-brand-model-input');
+  const brandInput = document.getElementById('veh-brand');
+  const modelInput = document.getElementById('veh-model');
+  const dropdown = document.getElementById('veh-model-dropdown');
+  const previewImg = document.getElementById('veh-modal-preview-img');
+
+  if (input) input.value = `${brand} ${model}`;
+  if (brandInput) brandInput.value = brand;
+  if (modelInput) modelInput.value = model;
+  if (previewImg) previewImg.src = getVehicleImage(brand, model);
+
+  if (dropdown) dropdown.classList.add('hidden');
+}
+
+// Mapeamento e Resolução de Renders de Veículos (estilo Uber, 99, inDrive, Bolt)
+function getVehicleCategory(brand = '', model = '') {
+  const text = `${brand} ${model}`.toLowerCase();
+
+  // PICKUPS / CAMIONETES
+  if (/toro|hilux|s10|ranger|amarok|strada|saveiro|montana|rampage|oroch|maverick|triton|l200|frontier|titano|poer|1500|2500|3500/.test(text)) {
+    return 'pickup';
+  }
+
+  // ELECTRIC / EV
+  if (/dolphin|ora\s*03|icar|e-js1|seal|yuan|song\s*pro|song\s*plus|king|shark|tan|han|niro|ex30|c40/.test(text)) {
+    return 'electric';
+  }
+
+  // MINIVAN / MULTIVAN
+  if (/spin|doblo|zafira|meriva|carnival|partner|expert|jumpy|boxer|master|livina/.test(text)) {
+    return 'minivan';
+  }
+
+  // LUXURY / EXECUTIVE
+  if (/bmw|mercedes|audi|volvo|classe\s*c|série\s*3|320i|a4|a5|a3|c180|c200|c300|xc60|xc90|camry|accord|fusion|azera|passat/.test(text)) {
+    return 'luxury';
+  }
+
+  // SUVS / CROSSOVERS
+  if (/suv|tracker|creta|compass|renegade|commander|t-cross|nivus|taos|tiguan|kicks|duster|captur|kardian|pulse|fastback|hr-v|wr-v|cr-v|zr-v|corolla\s*cross|sw4|rav4|tiggo|haval|crossfox|aircross|cactus|ecosport|territory|bronco|2008|3008|jimny|vitara|asx|outlander|pajero|t40|t50|t60|sportage|seltos/.test(text)) {
+    return 'suv';
+  }
+
+  // HATCHBACKS
+  if (/hatch|onix(?!\s*plus)|hb20(?!\s*s)|polo|argo|gol|mobi|kwid|up!|uno|palio|fox|celta|corsa|clio|sandero|stepway|fit|yaris\s*hatch|etios\s*hatch|208|207|206|c3(?!\s*aircross)|ka(?!\s*sedan)|fiesta|i30|picanto|stonic|soul/.test(text)) {
+    return 'hatch';
+  }
+
+  // SEDANS
+  if (/sedan|corolla|civic|onix\s*plus|hb20s|cronos|virtus|voyage|siena|grand\s*siena|prisma|cobalt|cruze|sentra|versa|city|jetta|logan|fluence|ka\s*sedan|fiesta\s*sedan|focus\s*sedan|cerato|elantra|yaris\s*sedan|etios\s*sedan|arrizo/.test(text)) {
+    return 'sedan';
+  }
+
+  return 'sedan';
+}
+
+function getVehicleImage(vehicleOrBrand, model = '') {
+  let brand = '';
+  let mod = '';
+  if (typeof vehicleOrBrand === 'object' && vehicleOrBrand !== null) {
+    brand = vehicleOrBrand.brand || '';
+    mod = vehicleOrBrand.model || '';
+  } else {
+    brand = vehicleOrBrand || '';
+    mod = model || '';
+  }
+
+  const category = getVehicleCategory(brand, mod);
+  return `assets/vehicles/${category}.svg`;
+}
+
+// Fechar autocompletes ao clicar fora
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#hero-search-form')) {
     const d1 = document.getElementById('autocomplete-origin-dropdown');
     const d2 = document.getElementById('autocomplete-dest-dropdown');
     if (d1) d1.classList.add('hidden');
     if (d2) d2.classList.add('hidden');
+  }
+  if (!e.target.closest('#veh-model-picker-container')) {
+    const d3 = document.getElementById('veh-model-dropdown');
+    if (d3) d3.classList.add('hidden');
   }
 });
 
@@ -1298,13 +1852,15 @@ function renderRideCard(ride) {
           </div>
         </div>
 
-        <div class="flex items-center gap-2 text-uber-iron shrink-0">
+        <div class="flex items-center gap-2.5 text-uber-iron shrink-0">
           ${ride.vehicle.hasAC ? `<span title="Ar-condicionado" class="flex items-center">${icon('ac_unit', { size: 'sm', className: 'text-uber-iron' })}</span>` : ''}
           ${ride.vehicle.hasUSB ? `<span title="Carregador USB" class="flex items-center">${icon('usb', { size: 'sm', className: 'text-uber-iron' })}</span>` : ''}
-          <span title="${ride.vehicle.model}" class="flex items-center text-xs text-uber-iron font-medium hidden sm:inline">
-            ${icon('directions_car', { size: 'sm', className: 'text-uber-iron mr-1' })}
-            ${ride.vehicle.model}
-          </span>
+          <div class="flex items-center gap-1.5 bg-uber-gray px-2 py-1 rounded-md border border-uber-border">
+            <img src="${getVehicleImage(ride.vehicle)}" alt="${ride.vehicle.model}" class="w-8 h-5 object-contain shrink-0" />
+            <span title="${ride.vehicle.model}" class="text-xs text-uber-black font-semibold hidden sm:inline truncate max-w-[120px]">
+              ${ride.vehicle.model}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -1673,10 +2229,28 @@ function viewRideDetails(rideId) {
               </span>
             </div>
           </div>
+        </div>
 
-          <div class="pt-3 flex items-center justify-between text-xs text-uber-charcoal h-6 font-medium">
-            <span>Veículo: <strong class="text-uber-black font-semibold">${ride.vehicle.brand} ${ride.vehicle.model}</strong></span>
-            <span>Placa: <strong class="text-uber-black font-semibold">${ride.vehicle.plate}</strong></span>
+        <!-- Vehicle Showcase Card (Uber/99 Style) -->
+        <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+          <div class="flex items-center gap-4 w-full sm:w-auto">
+            <div class="w-24 h-16 bg-uber-gray border border-uber-border rounded-lg flex items-center justify-center p-1.5 shrink-0 overflow-hidden shadow-2xs">
+              <img src="${getVehicleImage(ride.vehicle)}" alt="${ride.vehicle.brand} ${ride.vehicle.model}" class="w-full h-full object-contain" />
+            </div>
+            <div>
+              <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Veículo Confirmado</span>
+              <h4 class="text-sm sm:text-base font-bold text-uber-black">${ride.vehicle.brand} ${ride.vehicle.model}</h4>
+              <div class="flex items-center gap-2 mt-1 text-xs text-uber-charcoal">
+                <span class="font-mono font-bold bg-uber-gray px-1.5 py-0.5 rounded border border-uber-border text-[11px]">${ride.vehicle.plate}</span>
+                <span class="text-uber-border">•</span>
+                <span>Ano ${ride.vehicle.year}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 text-xs font-semibold text-uber-charcoal w-full sm:w-auto justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-uber-border">
+            ${ride.vehicle.hasAC ? `<span class="inline-flex items-center gap-1 bg-uber-gray px-2.5 py-1 rounded-md text-[11px] border border-uber-border">${icon('ac_unit', { size: 'sm' })} Ar-condicionado</span>` : ''}
+            ${ride.vehicle.hasUSB ? `<span class="inline-flex items-center gap-1 bg-uber-gray px-2.5 py-1 rounded-md text-[11px] border border-uber-border">${icon('usb', { size: 'sm' })} USB</span>` : ''}
           </div>
         </div>
 
@@ -1810,14 +2384,14 @@ function viewMyTrips() {
                 </div>
 
                 ${ride ? `
-                  <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                  <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                     <div class="flex items-center gap-3">
-                      <div class="w-8 h-8 rounded-lg bg-uber-gray flex items-center justify-center shrink-0">
-                        ${icon('directions_car', { size: 'sm', className: 'text-uber-black' })}
+                      <div class="w-14 h-10 rounded-lg bg-uber-gray border border-uber-border flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs">
+                        <img src="${getVehicleImage(ride.vehicle)}" alt="${ride.vehicle.model}" class="w-full h-full object-contain" />
                       </div>
                       <div>
                         <p class="font-bold text-sm sm:text-base text-uber-black">${ride.originCity} ➔ ${ride.destinationCity}</p>
-                        <p class="text-uber-iron font-normal mt-0.5">${ride.departureDate} às ${ride.departureTime} • ${ride.driverName}</p>
+                        <p class="text-uber-iron font-normal mt-0.5">${ride.departureDate} às ${ride.departureTime} • ${ride.driverName} (${ride.vehicle.model})</p>
                       </div>
                     </div>
                     <div class="text-left sm:text-right mt-1 sm:mt-0">
@@ -2786,29 +3360,117 @@ function viewProfile() {
         </div>
 
         <!-- Vehicle Details (Driver only) -->
-        ${role === 'DRIVER' && currentUser.vehicle ? `
-          <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl">
-            <div class="flex items-center gap-2 pb-3 border-b border-uber-border">
-              ${icon('directions_car', { size: 'md', className: 'text-uber-black' })}
-              <h3 class="font-bold text-base text-uber-black">Veículo Cadastrado</h3>
+        ${role === 'DRIVER' ? `
+          <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl shadow-sm">
+            <div class="flex items-center justify-between pb-3 border-b border-uber-border">
+              <div class="flex items-center gap-2">
+                ${icon('directions_car', { size: 'md', className: 'text-uber-black' })}
+                <h3 class="font-bold text-base text-uber-black">Veículos Cadastrados</h3>
+                <span class="text-xs font-semibold px-2 py-0.5 bg-uber-gray border border-uber-border text-uber-charcoal rounded-md">${currentUser.vehicles?.length || 0}</span>
+              </div>
+              <button
+                type="button"
+                onclick="openVehicleModal()"
+                title="Cadastrar novo veículo"
+                aria-label="Cadastrar novo veículo"
+                class="flex items-center gap-1.5 px-3.5 py-2 bg-uber-black hover:bg-neutral-900 text-white text-xs font-bold rounded-lg shadow-sm active:scale-95 transition-all cursor-pointer"
+              >
+                ${icon('add', { size: 'sm' })}
+                <span class="hidden sm:inline">Adicionar Veículo</span>
+                <span class="sm:hidden">Novo</span>
+              </button>
             </div>
-            <div class="pt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
-                <span class="font-semibold text-uber-iron block text-[11px]">Marca/Modelo</span>
-                <p class="font-bold text-uber-black mt-0.5">${currentUser.vehicle.brand} ${currentUser.vehicle.model}</p>
-              </div>
-              <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
-                <span class="font-semibold text-uber-iron block text-[11px]">Placa</span>
-                <p class="font-mono font-bold text-uber-black mt-0.5">${currentUser.vehicle.plate}</p>
-              </div>
-              <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
-                <span class="font-semibold text-uber-iron block text-[11px]">Ano</span>
-                <p class="font-bold text-uber-black mt-0.5">${currentUser.vehicle.year}</p>
-              </div>
-              <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
-                <span class="font-semibold text-uber-iron block text-[11px]">Recursos</span>
-                <p class="font-bold text-uber-black mt-0.5">${currentUser.vehicle.hasAC ? 'Ar-condicionado' : ''} ${currentUser.vehicle.hasUSB ? '• USB' : ''}</p>
-              </div>
+
+            <div class="pt-4 flex flex-col gap-3">
+              ${(!currentUser.vehicles || currentUser.vehicles.length === 0) ? `
+                <div class="p-6 text-center bg-uber-gray border border-dashed border-uber-border rounded-lg">
+                  <div class="text-uber-iron mb-2">${icon('directions_car', { size: 'lg' })}</div>
+                  <p class="text-xs font-bold text-uber-black">Nenhum veículo cadastrado</p>
+                  <p class="text-[11px] text-uber-iron mt-0.5">Adicione um veículo para publicar e realizar viagens.</p>
+                  <button
+                    type="button"
+                    onclick="openVehicleModal()"
+                    class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-uber-black text-white text-xs font-bold rounded-lg hover:bg-neutral-900 transition-colors"
+                  >
+                    ${icon('add', { size: 'sm' })}
+                    <span>Cadastrar Veículo Agora</span>
+                  </button>
+                </div>
+              ` : `
+                ${currentUser.vehicles.map(veh => `
+                  <div class="p-3.5 sm:p-4 bg-uber-gray border border-uber-border rounded-xl flex flex-col gap-3 transition-all hover:border-uber-charcoal">
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-16 h-11 bg-white border border-uber-border rounded-lg flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs">
+                          <img src="${getVehicleImage(veh)}" alt="${veh.brand} ${veh.model}" class="w-full h-full object-contain" />
+                        </div>
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-bold text-sm sm:text-base text-uber-black truncate">${veh.brand} ${veh.model}</span>
+                            ${veh.isPrimary ? `
+                              <span class="text-[10px] font-bold px-2 py-0.5 bg-black text-white rounded-md tracking-wider uppercase">Principal</span>
+                            ` : `
+                              <button
+                                type="button"
+                                onclick="store.setPrimaryVehicle('${veh.id}'); showToast('Veículo principal definido.', 'info');"
+                                class="text-[11px] font-medium text-uber-iron hover:text-uber-black underline transition-colors cursor-pointer"
+                              >
+                                Tornar principal
+                              </button>
+                            `}
+                          </div>
+                          <p class="text-[11px] text-uber-iron mt-0.5">Ano ${veh.year} • Placa ${veh.plate}</p>
+                        </div>
+                      </div>
+
+                      <!-- Action buttons with icons only -->
+                      <div class="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onclick="openVehicleModal('${veh.id}')"
+                          title="Editar informações do veículo"
+                          aria-label="Editar informações do veículo"
+                          class="p-2 text-uber-charcoal hover:text-uber-black hover:bg-white border border-transparent hover:border-uber-border rounded-lg transition-all active:scale-90 cursor-pointer"
+                        >
+                          ${icon('edit', { size: 'sm' })}
+                        </button>
+                        <button
+                          type="button"
+                          onclick="openDeleteVehicleModal('${veh.id}')"
+                          title="Excluir veículo"
+                          aria-label="Excluir veículo"
+                          class="p-2 text-uber-iron hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-lg transition-all active:scale-90 cursor-pointer"
+                        >
+                          ${icon('delete', { size: 'sm' })}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <div class="p-2.5 bg-white border border-uber-border rounded-lg">
+                        <span class="font-medium text-uber-iron block text-[10px] uppercase tracking-wider">Placa</span>
+                        <p class="font-mono font-bold text-uber-black mt-0.5 text-xs">${veh.plate}</p>
+                      </div>
+                      <div class="p-2.5 bg-white border border-uber-border rounded-lg">
+                        <span class="font-medium text-uber-iron block text-[10px] uppercase tracking-wider">RENAVAM</span>
+                        <p class="font-mono font-bold text-uber-black mt-0.5 text-xs">${veh.renavam || 'Não inf.'}</p>
+                      </div>
+                      <div class="p-2.5 bg-white border border-uber-border rounded-lg">
+                        <span class="font-medium text-uber-iron block text-[10px] uppercase tracking-wider">Ano</span>
+                        <p class="font-bold text-uber-black mt-0.5 text-xs">${veh.year}</p>
+                      </div>
+                      <div class="p-2.5 bg-white border border-uber-border rounded-lg">
+                        <span class="font-medium text-uber-iron block text-[10px] uppercase tracking-wider">Recursos</span>
+                        <div class="flex items-center gap-1.5 mt-0.5 text-uber-black font-semibold text-[11px] flex-wrap">
+                          ${veh.hasAC ? `<span title="Ar-condicionado" class="inline-flex items-center gap-0.5">${icon('ac_unit', { size: 'sm', className: 'text-uber-charcoal' })} Ar</span>` : ''}
+                          ${veh.hasUSB ? `<span title="Entrada USB" class="inline-flex items-center gap-0.5">${icon('usb', { size: 'sm', className: 'text-uber-charcoal' })} USB</span>` : ''}
+                          ${!veh.hasAC && !veh.hasUSB ? '<span class="text-uber-iron font-normal">Básico</span>' : ''}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
+              `}
             </div>
           </div>
         ` : ''}
@@ -2835,6 +3497,301 @@ function handleSaveFullProfile(e) {
   } else {
     showToast('Perfil atualizado com sucesso!', 'success');
   }
+}
+
+// ==========================================
+// 7.1 MODAIS DE VEÍCULOS (CADASTRO, EDIÇÃO, EXCLUSÃO)
+// ==========================================
+
+function openVehicleModal(vehicleId = null) {
+  const modalRoot = document.getElementById('modal-root');
+  if (!modalRoot) return;
+
+  const isEdit = !!vehicleId;
+  const veh = isEdit 
+    ? (store.state.currentUser.vehicles || []).find(v => v.id === vehicleId) 
+    : null;
+
+  const currentYear = new Date().getFullYear();
+  const selectedYear = veh ? veh.year : currentYear;
+
+  // Generate Year Options
+  let yearOptions = '';
+  for (let y = currentYear + 1; y >= 1995; y--) {
+    yearOptions += `<option value="${y}" ${y === Number(selectedYear) ? 'selected' : ''}>${y}</option>`;
+  }
+
+  const brandVal = veh ? veh.brand : '';
+  const modelVal = veh ? veh.model : '';
+  const searchVal = veh ? `${veh.brand} ${veh.model}` : '';
+
+  modalRoot.innerHTML = `
+    <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-uber-black/80 backdrop-blur-xs animate-fade-in">
+      <div class="bg-white rounded-t-2xl sm:rounded-2xl border border-uber-border shadow-2xl max-w-lg w-full p-5 sm:p-6 text-left max-h-[92vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-4 border-b border-uber-border">
+          <div class="flex items-center gap-3">
+            <div class="bg-uber-gray text-uber-black p-2.5 rounded-xl flex items-center justify-center">
+              ${icon('directions_car', { size: 'md' })}
+            </div>
+            <div>
+              <h3 class="font-bold text-lg text-uber-black leading-tight">${isEdit ? 'Editar Veículo' : 'Cadastrar Novo Veículo'}</h3>
+              <p class="text-xs text-uber-iron font-normal">Informações para viagens e conformidade com a Cooperativa</p>
+            </div>
+          </div>
+          <button type="button" onclick="closeModal()" class="text-uber-iron hover:text-uber-black p-1.5 rounded-lg hover:bg-uber-gray transition-colors cursor-pointer" aria-label="Fechar">
+            ${icon('close', { size: 'md' })}
+          </button>
+        </div>
+
+        <form onsubmit="handleSaveVehicle(event, '${vehicleId || ''}')" class="pt-4 space-y-4">
+          <!-- Real-time Vehicle Visual Preview Card (Uber Style) -->
+          <div class="p-3 bg-uber-gray border border-uber-border rounded-xl flex items-center gap-3.5">
+            <div class="w-20 h-13 bg-white border border-uber-border rounded-lg flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs">
+              <img id="veh-modal-preview-img" src="${getVehicleImage(brandVal, modelVal)}" alt="Prévia do Veículo" class="w-full h-full object-contain" />
+            </div>
+            <div class="min-w-0">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-uber-iron block">Render do Modelo</span>
+              <span class="text-xs font-bold text-uber-black truncate block">Atualizado automaticamente conforme o modelo</span>
+            </div>
+          </div>
+
+          <!-- Placa e RENAVAM -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Placa do Carro</label>
+              <input
+                id="veh-form-plate"
+                type="text"
+                maxlength="8"
+                required
+                value="${veh ? veh.plate : ''}"
+                placeholder="Ex: BRA2E19"
+                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-mono font-bold uppercase rounded-xl h-12 px-4 focus:outline-none transition-all"
+                oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9-]/g, '')"
+              />
+              <span class="text-[10px] text-uber-iron mt-1 block">Padrão Mercosul ou antigo</span>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">RENAVAM</label>
+              <input
+                id="veh-form-renavam"
+                type="text"
+                maxlength="11"
+                required
+                value="${veh ? (veh.renavam || '') : ''}"
+                placeholder="Ex: 12345678901"
+                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-mono font-bold rounded-xl h-12 px-4 focus:outline-none transition-all"
+                oninput="this.value = this.value.replace(/\\D/g, '')"
+              />
+              <span class="text-[10px] text-uber-iron mt-1 block">11 dígitos numéricos</span>
+            </div>
+          </div>
+
+          <!-- Marca / Modelo com Dropdown Interativo de Veículos do Brasil -->
+          <div id="veh-model-picker-container" class="relative">
+            <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Marca e Modelo</label>
+            <div class="relative">
+              <input
+                id="veh-brand-model-input"
+                type="text"
+                autocomplete="off"
+                required
+                value="${searchVal}"
+                placeholder="Digite para buscar modelo (ex: Onix, Corolla, HB20...)"
+                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 pr-10 focus:outline-none transition-all"
+                onfocus="handleVehicleSearchFocus()"
+                oninput="handleVehicleSearchInput()"
+              />
+              <div class="absolute right-3 top-3.5 text-uber-iron pointer-events-none">
+                ${icon('search', { size: 'sm' })}
+              </div>
+            </div>
+            
+            <input type="hidden" id="veh-brand" value="${brandVal}" />
+            <input type="hidden" id="veh-model" value="${modelVal}" />
+
+            <!-- Dropdown List Container -->
+            <div
+              id="veh-model-dropdown"
+              class="hidden absolute top-full left-0 right-0 mt-1.5 bg-white border border-uber-border rounded-xl shadow-2xl z-[100] max-h-56 overflow-y-auto divide-y divide-gray-100"
+            ></div>
+            <span class="text-[10px] text-uber-iron mt-1 block">Selecione na lista de veículos do Brasil ou digite o modelo</span>
+          </div>
+
+          <!-- Ano de Fabricação/Modelo -->
+          <div>
+            <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Ano de Fabricação / Modelo</label>
+            <select
+              id="veh-form-year"
+              required
+              class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+            >
+              ${yearOptions}
+            </select>
+          </div>
+
+          <!-- Recursos do Carro (Checkboxes) -->
+          <div>
+            <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-2">Recursos Disponíveis no Carro</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <label class="flex items-center gap-3 p-3 bg-uber-gray border border-uber-border rounded-xl cursor-pointer hover:bg-neutral-100 transition-colors">
+                <input
+                  type="checkbox"
+                  id="veh-form-has-ac"
+                  ${veh ? (veh.hasAC ? 'checked' : '') : 'checked'}
+                  class="w-4 h-4 rounded text-black focus:ring-black cursor-pointer"
+                />
+                <div class="flex items-center gap-2 text-xs font-semibold text-uber-black">
+                  ${icon('ac_unit', { size: 'sm', className: 'text-uber-charcoal' })}
+                  <span>Ar-condicionado</span>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-3 p-3 bg-uber-gray border border-uber-border rounded-xl cursor-pointer hover:bg-neutral-100 transition-colors">
+                <input
+                  type="checkbox"
+                  id="veh-form-has-usb"
+                  ${veh ? (veh.hasUSB ? 'checked' : '') : 'checked'}
+                  class="w-4 h-4 rounded text-black focus:ring-black cursor-pointer"
+                />
+                <div class="flex items-center gap-2 text-xs font-semibold text-uber-black">
+                  ${icon('usb', { size: 'sm', className: 'text-uber-charcoal' })}
+                  <span>Carregador USB</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Checkbox: Tornar veículo principal -->
+          <div class="pt-1">
+            <label class="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                id="veh-form-is-primary"
+                ${veh ? (veh.isPrimary ? 'checked' : '') : 'checked'}
+                class="w-4 h-4 rounded text-black focus:ring-black cursor-pointer"
+              />
+              <span class="text-xs font-medium text-uber-black">Definir como veículo principal para novas viagens</span>
+            </label>
+          </div>
+
+          <!-- Botões de Ação do Modal -->
+          <div class="pt-4 border-t border-uber-border flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5">
+            <button
+              type="button"
+              onclick="closeModal()"
+              class="w-full sm:w-auto h-11 px-5 border border-uber-border hover:bg-uber-gray text-uber-black text-xs font-bold rounded-xl transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="w-full sm:w-auto h-11 px-7 bg-black hover:bg-neutral-900 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 active:scale-95 shadow-md transition-all cursor-pointer"
+            >
+              ${icon('check_circle', { size: 'sm' })}
+              <span>${isEdit ? 'Salvar Alterações' : 'Cadastrar Veículo'}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+function handleSaveVehicle(e, vehicleId = null) {
+  e.preventDefault();
+  const plate = document.getElementById('veh-form-plate').value.trim().toUpperCase();
+  const renavam = document.getElementById('veh-form-renavam').value.trim();
+  const rawInput = document.getElementById('veh-brand-model-input').value.trim();
+  let brand = document.getElementById('veh-brand').value.trim();
+  let model = document.getElementById('veh-model').value.trim();
+  const year = parseInt(document.getElementById('veh-form-year').value, 10);
+  const hasAC = document.getElementById('veh-form-has-ac').checked;
+  const hasUSB = document.getElementById('veh-form-has-usb').checked;
+  const isPrimary = document.getElementById('veh-form-is-primary').checked;
+
+  if (!plate) {
+    showToast('Por favor, informe a placa do veículo.', 'error');
+    return;
+  }
+
+  if (!rawInput) {
+    showToast('Por favor, informe a marca e o modelo do veículo.', 'error');
+    return;
+  }
+
+  // Se o usuário digitou diretamente sem clicar no dropdown
+  if (!brand || !model || `${brand} ${model}`.toLowerCase() !== rawInput.toLowerCase()) {
+    const parts = rawInput.split(' ');
+    brand = parts[0] || 'Veículo';
+    model = parts.slice(1).join(' ') || parts[0];
+  }
+
+  if (vehicleId) {
+    store.updateVehicle(vehicleId, { brand, model, plate, renavam, year, hasAC, hasUSB, isPrimary });
+    showToast('Veículo atualizado com sucesso!', 'success');
+  } else {
+    store.addVehicle({ brand, model, plate, renavam, year, hasAC, hasUSB, isPrimary });
+    showToast('Novo veículo cadastrado com sucesso!', 'success');
+  }
+
+  closeModal();
+}
+
+function openDeleteVehicleModal(vehicleId) {
+  const modalRoot = document.getElementById('modal-root');
+  if (!modalRoot) return;
+
+  const veh = (store.state.currentUser.vehicles || []).find(v => v.id === vehicleId);
+  if (!veh) return;
+
+  modalRoot.innerHTML = `
+    <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-uber-black/80 backdrop-blur-xs animate-fade-in">
+      <div class="bg-white rounded-t-2xl sm:rounded-2xl border border-uber-border shadow-2xl max-w-md w-full p-5 sm:p-6 text-left">
+        <div class="flex items-center gap-3 pb-3 border-b border-uber-border">
+          <div class="bg-red-50 text-red-600 p-2.5 rounded-xl flex items-center justify-center">
+            ${icon('delete', { size: 'md' })}
+          </div>
+          <div>
+            <h3 class="font-bold text-lg text-uber-black leading-tight">Excluir Veículo</h3>
+            <p class="text-xs text-uber-iron font-normal">Confirmação de remoção</p>
+          </div>
+        </div>
+
+        <div class="py-4 text-xs text-uber-charcoal space-y-2">
+          <p>Deseja realmente remover o veículo <strong class="text-uber-black font-bold">${veh.brand} ${veh.model}</strong> (Placa: <strong class="font-mono text-uber-black font-bold">${veh.plate}</strong>)?</p>
+          <div class="p-3 bg-uber-gray border border-uber-border rounded-lg text-uber-iron">
+            Esta ação não pode ser desfeita. O veículo será removido do seu perfil.
+          </div>
+        </div>
+
+        <div class="pt-2 flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5">
+          <button
+            type="button"
+            onclick="closeModal()"
+            class="w-full sm:w-auto h-11 px-5 border border-uber-border hover:bg-uber-gray text-uber-black text-xs font-bold rounded-xl transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onclick="handleConfirmDeleteVehicle('${vehicleId}')"
+            class="w-full sm:w-auto h-11 px-6 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 active:scale-95 shadow-md transition-all cursor-pointer"
+          >
+            ${icon('delete', { size: 'sm' })}
+            <span>Excluir Veículo</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function handleConfirmDeleteVehicle(vehicleId) {
+  store.deleteVehicle(vehicleId);
+  closeModal();
+  showToast('Veículo removido com sucesso.', 'info');
 }
 
 // ==========================================
@@ -3171,28 +4128,34 @@ function viewDriverProfile(driverId) {
 
         <!-- Vehicle Details -->
         <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl">
-
-          <div class="flex items-center gap-2 pb-3 border-b border-uber-border h-8">
-            ${icon('directions_car', { size: 'md', className: 'text-uber-black' })}
-            <h2 class="font-bold text-sm sm:text-base text-uber-black">Veículo de Viagem</h2>
+          <div class="flex items-center justify-between pb-3 border-b border-uber-border">
+            <div class="flex items-center gap-2">
+              ${icon('directions_car', { size: 'md', className: 'text-uber-black' })}
+              <h2 class="font-bold text-sm sm:text-base text-uber-black">Veículo de Viagem</h2>
+            </div>
+            <span class="text-xs font-semibold px-2 py-0.5 bg-uber-gray border border-uber-border rounded-md text-uber-charcoal">
+              ${driver.vehicle.year}
+            </span>
           </div>
 
-          <div class="pt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
-              <span class="font-semibold text-uber-iron block text-[11px]">Modelo</span>
-              <p class="font-bold text-uber-black mt-0.5">${driver.vehicle.brand} ${driver.vehicle.model}</p>
+          <div class="pt-4 flex flex-col sm:flex-row items-center gap-4">
+            <div class="w-28 h-18 bg-uber-gray border border-uber-border rounded-xl flex items-center justify-center p-2 shrink-0 overflow-hidden shadow-2xs">
+              <img src="${getVehicleImage(driver.vehicle)}" alt="${driver.vehicle.brand} ${driver.vehicle.model}" class="w-full h-full object-contain" />
             </div>
-            <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
-              <span class="font-semibold text-uber-iron block text-[11px]">Placa</span>
-              <p class="font-mono font-bold text-uber-black mt-0.5">${driver.vehicle.plate}</p>
-            </div>
-            <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
-              <span class="font-semibold text-uber-iron block text-[11px]">Ano</span>
-              <p class="font-bold text-uber-black mt-0.5">${driver.vehicle.year}</p>
-            </div>
-            <div class="p-3 bg-uber-gray border border-uber-border rounded-lg">
-              <span class="font-semibold text-uber-iron block text-[11px]">Conforto</span>
-              <p class="font-bold text-uber-black mt-0.5">${driver.vehicle.hasAC ? 'Ar-condicionado' : ''} ${driver.vehicle.hasUSB ? '• USB' : ''}</p>
+
+            <div class="flex-1 w-full grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+              <div class="p-2.5 bg-uber-gray border border-uber-border rounded-lg">
+                <span class="font-semibold text-uber-iron block text-[10px] uppercase tracking-wider">Modelo</span>
+                <p class="font-bold text-uber-black mt-0.5 text-xs">${driver.vehicle.brand} ${driver.vehicle.model}</p>
+              </div>
+              <div class="p-2.5 bg-uber-gray border border-uber-border rounded-lg">
+                <span class="font-semibold text-uber-iron block text-[10px] uppercase tracking-wider">Placa</span>
+                <p class="font-mono font-bold text-uber-black mt-0.5 text-xs">${driver.vehicle.plate}</p>
+              </div>
+              <div class="p-2.5 bg-uber-gray border border-uber-border rounded-lg col-span-2 sm:col-span-1">
+                <span class="font-semibold text-uber-iron block text-[10px] uppercase tracking-wider">Conforto</span>
+                <p class="font-bold text-uber-black mt-0.5 text-xs">${driver.vehicle.hasAC ? 'Ar-condicionado' : ''} ${driver.vehicle.hasUSB ? '• USB' : ''}</p>
+              </div>
             </div>
           </div>
         </div>
