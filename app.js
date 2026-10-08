@@ -3337,8 +3337,77 @@ function ensureHeroVideoPlays() {
   }
 }
 
+// Suporte a gesto de arrastar na tela para trocar de aba (Swipe Navigation)
+function setupSwipeNavigation() {
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchEndX = 0;
+  let touchEndY = 0;
+
+  const minSwipeDistance = 60; // distância mínima em px para considerar swipe
+  const maxPerpendicularDistance = 80; // tolerância vertical para não confundir com rolagem
+
+  window.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }, { passive: true });
+
+  window.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    touchEndY = e.changedTouches[0].screenY;
+    handleSwipeGesture();
+  }, { passive: true });
+
+  function handleSwipeGesture() {
+    const diffX = touchEndX - touchStartX;
+    const diffY = touchEndY - touchStartY;
+
+    // Se o movimento vertical for maior que a tolerância, o usuário estava apenas rolando a página
+    if (Math.abs(diffY) > maxPerpendicularDistance) return;
+
+    if (Math.abs(diffX) < minSwipeDistance) return;
+
+    const role = store.state.role;
+    const currentPath = window.location.hash.slice(1) || '/';
+
+    const tabs = [
+      { href: '#/buscar', isActive: currentPath === '/' || currentPath === '/buscar' }
+    ];
+
+    if (role === 'DRIVER') {
+      tabs.push({ href: '#/publicar', isActive: currentPath === '/publicar' });
+    }
+    if (role === 'ADMIN' || role === 'MANAGER') {
+      tabs.push({ href: '#/admin', isActive: currentPath === '/admin' });
+    }
+    tabs.push(
+      { href: '#/minhas-viagens', isActive: currentPath === '/minhas-viagens' },
+      { href: '#/perfil', isActive: currentPath === '/perfil' }
+    );
+
+    let activeIdx = tabs.findIndex(t => t.isActive);
+    if (activeIdx === -1) return; // se estiver em subpáginas de detalhe, não dispara swipe acidental
+
+    if (diffX < 0) {
+      // Swipe para a esquerda -> Próxima aba
+      if (activeIdx < tabs.length - 1) {
+        if (typeof SoundEngine !== 'undefined') SoundEngine.play('info');
+        window.location.hash = tabs[activeIdx + 1].href;
+      }
+    } else {
+      // Swipe para a direita -> Aba anterior
+      if (activeIdx > 0) {
+        if (typeof SoundEngine !== 'undefined') SoundEngine.play('info');
+        window.location.hash = tabs[activeIdx - 1].href;
+      }
+    }
+  }
+}
+
 window.addEventListener('hashchange', renderApp);
 window.addEventListener('DOMContentLoaded', () => {
   renderFooter();
   renderApp();
+  setupSwipeNavigation();
 });
+
