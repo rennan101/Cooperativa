@@ -1038,15 +1038,34 @@ function viewHome() {
   return `
     <div class="flex flex-col gap-10 md:gap-14 pb-12 text-left animate-fade-in">
       
-      <!-- Hero Section (Sem badges e sem cards de 3 passos conforme solicitado) -->
-      <section class="relative bg-uber-black text-white pt-12 pb-16 px-4">
-        <div class="max-w-4xl mx-auto text-center flex flex-col items-center gap-4">
+      <!-- Hero Section with Background Video & Tempered Glass (Blur) Overlay -->
+      <section class="relative bg-uber-black text-white pt-12 pb-16 px-4 overflow-hidden min-h-[380px] sm:min-h-[420px] flex items-center justify-center">
+        
+        <!-- Background Video with Loop & Mobile Autoplay -->
+        <video
+          id="hero-bg-video"
+          autoplay
+          loop
+          muted
+          playsinline
+          webkit-playsinline
+          preload="auto"
+          class="absolute inset-0 w-full h-full object-cover object-center pointer-events-none z-0 scale-105"
+        >
+          <source src="assets/video/homevideo.mp4" type="video/mp4" />
+        </video>
+
+        <!-- Frosted Tempered Glass (Dark Glassmorphism) Overlay -->
+        <div class="absolute inset-0 hero-glass-overlay z-10"></div>
+
+        <!-- Hero Content Layer -->
+        <div class="relative z-20 max-w-4xl mx-auto text-center flex flex-col items-center gap-4 w-full">
           
-          <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight max-w-2xl leading-tight text-white">
+          <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight max-w-2xl leading-tight text-white drop-shadow-sm">
             Viagens Compartilhadas pelo Nordeste
           </h1>
 
-          <p class="text-uber-slate text-sm sm:text-base max-w-xl font-normal">
+          <p class="text-uber-slate text-sm sm:text-base max-w-xl font-normal drop-shadow-sm">
             Encontre motoristas verificados, garanta sua vaga com 50% no PIX e pague o restante na chegada.
           </p>
 
@@ -1055,6 +1074,7 @@ function viewHome() {
           </div>
         </div>
       </section>
+
 
       <!-- Popular Routes (Nordeste) -->
       <section class="max-w-4xl mx-auto px-4 w-full">
@@ -2549,6 +2569,27 @@ function renderApp() {
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  ensureHeroVideoPlays();
+}
+
+function ensureHeroVideoPlays() {
+  const vid = document.getElementById('hero-bg-video');
+  if (vid) {
+    vid.muted = true;
+    const playPromise = vid.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Auto-play was prevented; add one-time touch listener for iOS / mobile browsers
+        const resumeVideo = () => {
+          vid.play().catch(() => {});
+          window.removeEventListener('touchstart', resumeVideo);
+          window.removeEventListener('click', resumeVideo);
+        };
+        window.addEventListener('touchstart', resumeVideo, { once: true, passive: true });
+        window.addEventListener('click', resumeVideo, { once: true, passive: true });
+      });
+    }
+  }
 }
 
 window.addEventListener('hashchange', renderApp);
@@ -2556,3 +2597,4 @@ window.addEventListener('DOMContentLoaded', () => {
   renderFooter();
   renderApp();
 });
+
