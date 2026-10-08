@@ -6,7 +6,15 @@
  */
 
 // ==========================================
-// 1. DADOS GEOGRÁFICOS DO NORDESTE BRASIL
+// 1. AVATAR PADRÃO SVG ("BLANK PROFILE")
+// ==========================================
+
+const DEFAULT_BLANK_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23767676'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+
+const GOOGLE_SAMPLE_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80";
+
+// ==========================================
+// 2. DADOS GEOGRÁFICOS DO NORDESTE BRASIL
 // ==========================================
 
 const NORDESTE_LOCATIONS = [
@@ -97,11 +105,56 @@ const NORDESTE_LOCATIONS = [
   { city: 'Lagarto, SE', spot: 'Praça da Matriz Nossa Senhora da Piedade' }
 ];
 
-// Lista única de cidades para datalists
 const NORDESTE_CITIES = Array.from(new Set(NORDESTE_LOCATIONS.map(l => l.city))).sort();
 
+// Rotas em destaque com fotos reais de alta qualidade
+const POPULAR_ROUTES = [
+  {
+    origin: 'Fortaleza, CE',
+    destination: 'Juazeiro do Norte, CE',
+    label: 'Fortaleza ➔ Juazeiro do Norte',
+    price: 75.00,
+    photoUrl: 'https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    origin: 'Recife, PE',
+    destination: 'Caruaru, PE',
+    label: 'Recife ➔ Caruaru',
+    price: 35.00,
+    photoUrl: 'https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    origin: 'Salvador, BA',
+    destination: 'Feira de Santana, BA',
+    label: 'Salvador ➔ Feira de Santana',
+    price: 30.00,
+    photoUrl: 'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    origin: 'João Pessoa, PB',
+    destination: 'Campina Grande, PB',
+    label: 'João Pessoa ➔ Campina Grande',
+    price: 32.00,
+    photoUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    origin: 'Natal, RN',
+    destination: 'Mossoró, RN',
+    label: 'Natal ➔ Mossoró',
+    price: 55.00,
+    photoUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    origin: 'Maceió, AL',
+    destination: 'Arapiraca, AL',
+    label: 'Maceió ➔ Arapiraca',
+    price: 35.00,
+    photoUrl: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=300&auto=format&fit=crop&q=80',
+  }
+];
+
 // ==========================================
-// 2. ESTADO E DADOS INICIAIS (LOCAL STORAGE)
+// 3. ESTADO E DADOS INICIAIS (LOCAL STORAGE)
 // ==========================================
 
 const INITIAL_STATE = {
@@ -110,11 +163,12 @@ const INITIAL_STATE = {
     id: 'user-001',
     name: 'Carlos Oliveira',
     email: 'carlos.oliveira@empresa.com.br',
+    cpf: '123.456.789-00',
     phone: '(85) 98765-4321',
     pixKey: 'carlos.oliveira@empresa.com.br',
+    avatarUrl: DEFAULT_BLANK_AVATAR, // Padrão SVG blank profile
     rating: 4.9,
     totalTrips: 28,
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     vehicle: {
       plate: 'BRA-2E19',
       state: 'CE',
@@ -247,122 +301,6 @@ const INITIAL_STATE = {
       },
       status: 'PUBLISHED',
       notes: 'Porta-malas livre para bagagens médias.',
-    },
-    {
-      id: 'ride-105',
-      driverId: 'drv-05',
-      driverName: 'Lucas Albuquerque',
-      driverAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
-      driverRating: 4.96,
-      driverTripsCount: 110,
-      originCity: 'Natal, RN',
-      originSpot: 'Midway Mall',
-      destinationCity: 'Mossoró, RN',
-      destinationSpot: 'Partage Shopping Mossoró',
-      departureDate: new Date().toISOString().split('T')[0],
-      departureTime: '14:00',
-      estimatedDuration: '3h 45m',
-      estimatedArrivalTime: '17:45',
-      pricePerSeat: 55.00,
-      totalSeats: 6,
-      availableSeats: 5,
-      vehicle: {
-        brand: 'Chevrolet',
-        model: 'Spin 7 Lugares',
-        plate: 'RN-NAT-7700',
-        year: 2024,
-        hasAC: true,
-        hasUSB: true,
-      },
-      status: 'PUBLISHED',
-      notes: 'Veículo com 7 lugares, muito confortável.',
-    },
-    {
-      id: 'ride-106',
-      driverId: 'drv-06',
-      driverName: 'Camila Vasconcelos',
-      driverAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-      driverRating: 4.98,
-      driverTripsCount: 76,
-      originCity: 'Maceió, AL',
-      originSpot: 'Parque Shopping Maceió',
-      destinationCity: 'Arapiraca, AL',
-      destinationSpot: 'Garden Shopping Arapiraca',
-      departureDate: new Date().toISOString().split('T')[0],
-      departureTime: '09:00',
-      estimatedDuration: '2h 15m',
-      estimatedArrivalTime: '11:15',
-      pricePerSeat: 35.00,
-      totalSeats: 4,
-      availableSeats: 3,
-      vehicle: {
-        brand: 'Hyundai',
-        model: 'Creta Ultimate',
-        plate: 'AL-MCZ-1234',
-        year: 2023,
-        hasAC: true,
-        hasUSB: true,
-      },
-      status: 'PUBLISHED',
-      notes: 'Viagem executiva com pontualidade.',
-    },
-    {
-      id: 'ride-107',
-      driverId: 'drv-07',
-      driverName: 'André Nascimento',
-      driverAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80',
-      driverRating: 4.91,
-      driverTripsCount: 52,
-      originCity: 'Teresina, PI',
-      originSpot: 'Teresina Shopping',
-      destinationCity: 'Parnaíba, PI',
-      destinationSpot: 'Porto das Barcas',
-      departureDate: new Date().toISOString().split('T')[0],
-      departureTime: '06:00',
-      estimatedDuration: '5h 00m',
-      estimatedArrivalTime: '11:00',
-      pricePerSeat: 65.00,
-      totalSeats: 4,
-      availableSeats: 2,
-      vehicle: {
-        brand: 'Toyota',
-        model: 'Yaris Sedan',
-        plate: 'PI-THE-3344',
-        year: 2022,
-        hasAC: true,
-        hasUSB: true,
-      },
-      status: 'PUBLISHED',
-      notes: 'Ida para o litoral piauiense.',
-    },
-    {
-      id: 'ride-108',
-      driverId: 'drv-08',
-      driverName: 'Renata Lins',
-      driverAvatar: 'https://images.unsplash.com/photo-1534751516642-a171edd25218?w=150&auto=format&fit=crop&q=80',
-      driverRating: 4.94,
-      driverTripsCount: 88,
-      originCity: 'Aracaju, SE',
-      originSpot: 'Shopping Jardins',
-      destinationCity: 'Itabaiana, SE',
-      destinationSpot: 'Shopping Peixoto',
-      departureDate: new Date().toISOString().split('T')[0],
-      departureTime: '16:00',
-      estimatedDuration: '1h 00m',
-      estimatedArrivalTime: '17:00',
-      pricePerSeat: 25.00,
-      totalSeats: 4,
-      availableSeats: 3,
-      vehicle: {
-        brand: 'Nissan',
-        model: 'Kicks Exclusive',
-        plate: 'SE-AJU-6655',
-        year: 2023,
-        hasAC: true,
-        hasUSB: true,
-      },
-      status: 'PUBLISHED',
-      notes: 'Carona rápida pela BR-235.',
     }
   ],
   bookings: [
@@ -377,6 +315,7 @@ const INITIAL_STATE = {
       amountPaidSignal: 37.50,
       amountDueFinal: 37.50,
       status: 'SIGNAL_CONFIRMED',
+      rated: false,
       pixCopyPasteCode: '00020126580014br.gov.bcb.pix0136cooperativa-viagens-custodia-bk8941520400005303986540537.505802BR5925COOPERATIVA VIAGENS LTDA6009FORTALEZA62070503***6304D1A9',
       createdAt: new Date(Date.now() - 3600000).toISOString(),
     }
@@ -421,10 +360,13 @@ class AppStore {
   }
 
   loadState() {
-    const saved = localStorage.getItem('cooperativa_state_v2');
+    const saved = localStorage.getItem('cooperativa_state_v3');
     if (saved) {
       try {
         this.state = JSON.parse(saved);
+        if (!this.state.currentUser.avatarUrl) {
+          this.state.currentUser.avatarUrl = DEFAULT_BLANK_AVATAR;
+        }
       } catch (e) {
         this.state = JSON.parse(JSON.stringify(INITIAL_STATE));
       }
@@ -435,7 +377,7 @@ class AppStore {
   }
 
   saveState() {
-    localStorage.setItem('cooperativa_state_v2', JSON.stringify(this.state));
+    localStorage.setItem('cooperativa_state_v3', JSON.stringify(this.state));
   }
 
   setRole(newRole) {
@@ -451,9 +393,36 @@ class AppStore {
     this.saveState();
   }
 
-  updatePixKey(key) {
-    this.state.currentUser.pixKey = key;
+  updateUserProfile({ name, cpf, pixKey, avatarUrl }) {
+    if (name) this.state.currentUser.name = name;
+    if (cpf) this.state.currentUser.cpf = cpf;
+    if (pixKey) this.state.currentUser.pixKey = pixKey;
+    if (avatarUrl) this.state.currentUser.avatarUrl = avatarUrl;
     this.saveState();
+    renderApp();
+    renderHeader();
+  }
+
+  connectGoogleAccount() {
+    this.state.currentUser.avatarUrl = GOOGLE_SAMPLE_AVATAR;
+    this.saveState();
+    renderApp();
+    renderHeader();
+  }
+
+  resetAvatarToDefault() {
+    this.state.currentUser.avatarUrl = DEFAULT_BLANK_AVATAR;
+    this.saveState();
+    renderApp();
+    renderHeader();
+  }
+
+  markRideAsRated(rideId) {
+    const booking = this.state.bookings.find(b => b.rideId === rideId);
+    if (booking) {
+      booking.rated = true;
+      this.saveState();
+    }
   }
 
   bookRide(rideId, seats) {
@@ -476,6 +445,7 @@ class AppStore {
       amountPaidSignal: signal,
       amountDueFinal: finalVal,
       status: 'SIGNAL_CONFIRMED',
+      rated: false,
       pixCopyPasteCode: `00020126580014br.gov.bcb.pix0136cooperativa-viagens-custodia-${bookingId.toLowerCase()}5204000053039865405${signal.toFixed(2)}5802BR5925COOPERATIVA VIAGENS LTDA6009RECIFE62070503***6304C9E2`,
       createdAt: new Date().toISOString(),
     };
@@ -582,7 +552,7 @@ class AppStore {
 const store = new AppStore();
 
 // ==========================================
-// 3. HELPER DE ÍCONES E TOASTS
+// 4. HELPER DE ÍCONES E TOASTS
 // ==========================================
 
 function icon(name, { size = 'md', fill = false, className = '' } = {}) {
@@ -626,7 +596,7 @@ function showToast(message, type = 'info') {
 }
 
 // ==========================================
-// 4. LAYOUT FIXO: HEADER, NAV, FOOTER
+// 5. LAYOUT FIXO: HEADER, NAV, FOOTER
 // ==========================================
 
 function renderHeader() {
@@ -634,6 +604,7 @@ function renderHeader() {
   const role = store.state.role;
   const currentPath = window.location.hash.slice(1) || '/';
   const isSearchActive = currentPath === '/' || currentPath === '/buscar';
+  const avatar = store.state.currentUser.avatarUrl || DEFAULT_BLANK_AVATAR;
 
   headerRoot.innerHTML = `
     <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
@@ -674,16 +645,17 @@ function renderHeader() {
           </a>
         ` : ''}
 
-        <a href="#/perfil" class="h-full flex items-center gap-1.5 text-sm font-semibold transition-colors border-b-2 ${currentPath === '/perfil' ? 'text-white border-white' : 'text-uber-slate border-transparent hover:text-white'}">
-          ${icon('account_circle', { size: 'sm' })}
+        <a href="#/perfil" class="h-full flex items-center gap-2 text-sm font-semibold transition-colors border-b-2 ${currentPath === '/perfil' ? 'text-white border-white' : 'text-uber-slate border-transparent hover:text-white'}">
+          <img src="${avatar}" alt="Avatar" class="w-5 h-5 rounded-full object-cover bg-uber-gray border border-white/20" />
           <span>Perfil</span>
         </a>
       </nav>
 
-      <!-- Role Switcher & Profile -->
+      <!-- Role Switcher & Profile Quick Action -->
       <div class="flex items-center gap-3 shrink-0">
-        <a href="#/perfil" class="text-xs sm:text-sm font-semibold text-white hidden sm:inline hover:opacity-90">
-          ${store.state.currentUser.name.split(' ')[0]}
+        <a href="#/perfil" class="flex items-center gap-2 text-xs sm:text-sm font-semibold text-white hover:opacity-90">
+          <img src="${avatar}" alt="Avatar" class="w-6 h-6 rounded-full object-cover bg-uber-gray border border-white/30" />
+          <span class="hidden sm:inline">${store.state.currentUser.name.split(' ')[0]}</span>
         </a>
 
         <button onclick="toggleRole()" title="Alternar Perfil para Teste" class="h-8 px-3 flex items-center gap-1.5 text-xs font-semibold text-white bg-uber-charcoal hover:bg-uber-iron/30 rounded-full transition-colors active:scale-95">
@@ -813,7 +785,7 @@ function toggleRole() {
 }
 
 // ==========================================
-// 5. COMPONENTES REUTILIZÁVEIS
+// 6. COMPONENTES REUTILIZÁVEIS
 // ==========================================
 
 function renderDatalists() {
@@ -831,10 +803,10 @@ function renderHeroSearchBar() {
   return `
     ${renderDatalists()}
     <div class="w-full max-w-4xl mx-auto relative">
-      <form id="hero-search-form" onsubmit="handleSearchSubmit(event)" class="bg-white border border-uber-border shadow-lg rounded-xl p-2.5 sm:p-3 flex flex-col md:flex-row items-stretch md:items-center gap-2">
+      <form id="hero-search-form" onsubmit="handleSearchSubmit(event)" class="bg-white border border-uber-border shadow-2xl rounded-2xl p-3 sm:p-4 flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
         
-        <!-- Origin -->
-        <div class="flex-1 relative flex items-center gap-3 px-3.5 h-12 bg-uber-gray rounded-lg border border-transparent focus-within:border-uber-black focus-within:bg-white transition-all">
+        <!-- Origin Input Dropdown Box -->
+        <div class="flex-1 relative flex items-center gap-3 px-3.5 h-12 bg-uber-gray rounded-xl border border-uber-border hover:border-uber-iron focus-within:border-uber-black focus-within:bg-white transition-all">
           <div class="w-2.5 h-2.5 rounded-full bg-uber-black shrink-0"></div>
           <div class="flex-1 text-left min-w-0">
             <input
@@ -850,12 +822,12 @@ function renderHeroSearchBar() {
         </div>
 
         <!-- Swap Button -->
-        <button type="button" onclick="swapSearchCities()" title="Inverter Cidades" class="w-8 h-8 self-center bg-uber-gray hover:bg-uber-border text-uber-black rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 shrink-0">
+        <button type="button" onclick="swapSearchCities()" title="Inverter Cidades" class="w-9 h-9 self-center bg-uber-gray hover:bg-uber-border text-uber-black rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 shrink-0 border border-uber-border">
           ${icon('swap_horiz', { size: 'sm' })}
         </button>
 
-        <!-- Destination -->
-        <div class="flex-1 relative flex items-center gap-3 px-3.5 h-12 bg-uber-gray rounded-lg border border-transparent focus-within:border-uber-black focus-within:bg-white transition-all">
+        <!-- Destination Input Dropdown Box -->
+        <div class="flex-1 relative flex items-center gap-3 px-3.5 h-12 bg-uber-gray rounded-xl border border-uber-border hover:border-uber-iron focus-within:border-uber-black focus-within:bg-white transition-all">
           <div class="w-2.5 h-2.5 bg-uber-black shrink-0"></div>
           <div class="flex-1 text-left min-w-0">
             <input
@@ -870,9 +842,9 @@ function renderHeroSearchBar() {
           </div>
         </div>
 
-        <!-- Date & Seats Row (Mobile Optimized with 4-digit Year & Up to 7 Seats) -->
+        <!-- Date & Seats Row -->
         <div class="flex items-center gap-2 flex-initial">
-          <div class="flex-1 md:flex-initial flex items-center gap-2 px-3 h-12 bg-uber-gray rounded-lg border border-transparent focus-within:border-uber-black focus-within:bg-white min-w-[155px] transition-all">
+          <div class="flex-1 md:flex-initial flex items-center gap-2 px-3 h-12 bg-uber-gray rounded-xl border border-uber-border hover:border-uber-iron focus-within:border-uber-black focus-within:bg-white min-w-[155px] transition-all">
             ${icon('calendar_today', { size: 'sm', className: 'text-uber-iron shrink-0' })}
             <input
               id="search-date"
@@ -884,7 +856,7 @@ function renderHeroSearchBar() {
             />
           </div>
 
-          <div class="flex-1 md:flex-initial flex items-center gap-2 px-3 h-12 bg-uber-gray rounded-lg border border-transparent focus-within:border-uber-black focus-within:bg-white min-w-[115px] transition-all">
+          <div class="flex-1 md:flex-initial flex items-center gap-2 px-3 h-12 bg-uber-gray rounded-xl border border-uber-border hover:border-uber-iron focus-within:border-uber-black focus-within:bg-white min-w-[115px] transition-all">
             ${icon('group', { size: 'sm', className: 'text-uber-iron shrink-0' })}
             <select
               id="search-seats"
@@ -901,10 +873,10 @@ function renderHeroSearchBar() {
           </div>
         </div>
 
-        <!-- Submit -->
+        <!-- Submit Button -->
         <button
           type="submit"
-          class="w-full md:w-auto h-12 px-6 shrink-0 font-bold bg-black text-white hover:bg-neutral-900 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-[0.98]"
+          class="w-full md:w-auto h-12 px-7 shrink-0 font-bold bg-black text-white hover:bg-neutral-900 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-[0.98] shadow-md"
         >
           ${icon('search', { size: 'sm' })}
           <span>Buscar</span>
@@ -972,12 +944,12 @@ function renderRideCard(ride) {
       <!-- Driver and Amenities Row -->
       <div class="flex items-center justify-between pt-3 border-t border-uber-border">
         <div class="flex items-center gap-2.5 min-w-0">
-          <img src="${ride.driverAvatar}" alt="${ride.driverName}" class="w-7 h-7 rounded-full object-cover border border-uber-border shrink-0" />
+          <img src="${ride.driverAvatar}" alt="${ride.driverName}" class="w-7 h-7 rounded-full object-cover border border-uber-border shrink-0 bg-uber-gray" />
           <div class="flex items-center gap-1.5 truncate">
             <span class="font-semibold text-xs text-uber-black truncate">${ride.driverName}</span>
             <span class="text-uber-border">•</span>
             <div class="flex items-center gap-0.5 text-xs text-uber-black font-semibold shrink-0">
-              ${icon('star', { size: 'sm', fill: true, className: 'text-uber-black' })}
+              ${icon('star', { size: 'sm', fill: true, className: 'star-gold' })}
               <span>${ride.driverRating.toFixed(1)}</span>
             </div>
           </div>
@@ -997,7 +969,7 @@ function renderRideCard(ride) {
 }
 
 // ==========================================
-// 6. TELAS E VIEWS (SPA ROUTER)
+// 7. TELAS E VIEWS (SPA ROUTER)
 // ==========================================
 
 function handleSearchSubmit(e) {
@@ -1055,17 +1027,17 @@ function viewHome() {
           <source src="assets/video/homevideo.mp4" type="video/mp4" />
         </video>
 
-        <!-- Frosted Tempered Glass (Dark Glassmorphism) Overlay -->
+        <!-- Frosted Tempered Glass (Dark Glassmorphism) Overlay (Calibrated 45% Transparency) -->
         <div class="absolute inset-0 hero-glass-overlay z-10"></div>
 
         <!-- Hero Content Layer -->
         <div class="relative z-20 max-w-4xl mx-auto text-center flex flex-col items-center gap-4 w-full">
           
-          <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight max-w-2xl leading-tight text-white drop-shadow-sm">
+          <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight max-w-2xl leading-tight text-white drop-shadow-md">
             Viagens Compartilhadas pelo Nordeste
           </h1>
 
-          <p class="text-uber-slate text-sm sm:text-base max-w-xl font-normal drop-shadow-sm">
+          <p class="text-white/90 text-sm sm:text-base max-w-xl font-medium drop-shadow-md">
             Encontre motoristas verificados, garanta sua vaga com 50% no PIX e pague o restante na chegada.
           </p>
 
@@ -1075,8 +1047,7 @@ function viewHome() {
         </div>
       </section>
 
-
-      <!-- Popular Routes (Nordeste) -->
+      <!-- Popular Routes with Location Photos (Nordeste) -->
       <section class="max-w-4xl mx-auto px-4 w-full">
         <div class="flex items-center justify-between mb-4 h-8">
           <h2 class="text-lg sm:text-xl font-bold text-uber-black flex items-center gap-2">
@@ -1085,45 +1056,28 @@ function viewHome() {
           </h2>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div onclick="selectPopularRoute('Fortaleza, CE', 'Juazeiro do Norte, CE')" class="p-4 flex items-center justify-between border border-uber-border hover:border-uber-black rounded-xl h-20 bg-white cursor-pointer transition-all active:scale-95">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="p-2 bg-uber-gray text-uber-black rounded-lg shrink-0">
-                ${icon('commute', { size: 'sm' })}
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
+          ${POPULAR_ROUTES.map(route => `
+            <div
+              onclick="selectPopularRoute('${route.origin}', '${route.destination}')"
+              class="p-3 border border-uber-border hover:border-uber-black rounded-xl bg-white cursor-pointer transition-all active:scale-[0.98] flex items-center justify-between gap-3 group hover:shadow-md"
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <img
+                  src="${route.photoUrl}"
+                  alt="${route.label}"
+                  class="w-14 h-14 rounded-lg object-cover border border-uber-border shrink-0 group-hover:scale-105 transition-transform"
+                />
+                <div class="truncate">
+                  <p class="font-bold text-xs sm:text-sm text-uber-black truncate group-hover:text-black">${route.label}</p>
+                  <p class="text-[11px] font-semibold text-uber-charcoal mt-0.5">A partir de R$ ${route.price.toFixed(2).replace('.', ',')}</p>
+                </div>
               </div>
-              <div class="truncate">
-                <p class="font-bold text-xs sm:text-sm text-uber-black truncate">Fortaleza ➔ Juazeiro do Norte</p>
-                <p class="text-[11px] font-semibold text-uber-charcoal">A partir de R$ 75,00</p>
-              </div>
-            </div>
-            ${icon('chevron_right', { size: 'sm', className: 'text-uber-iron shrink-0' })}
-          </div>
-
-          <div onclick="selectPopularRoute('Recife, PE', 'Caruaru, PE')" class="p-4 flex items-center justify-between border border-uber-border hover:border-uber-black rounded-xl h-20 bg-white cursor-pointer transition-all active:scale-95">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="p-2 bg-uber-gray text-uber-black rounded-lg shrink-0">
-                ${icon('commute', { size: 'sm' })}
-              </div>
-              <div class="truncate">
-                <p class="font-bold text-xs sm:text-sm text-uber-black truncate">Recife ➔ Caruaru</p>
-                <p class="text-[11px] font-semibold text-uber-charcoal">A partir de R$ 35,00</p>
+              <div class="p-1 rounded-full group-hover:bg-uber-gray transition-colors shrink-0">
+                ${icon('chevron_right', { size: 'sm', className: 'text-uber-iron' })}
               </div>
             </div>
-            ${icon('chevron_right', { size: 'sm', className: 'text-uber-iron shrink-0' })}
-          </div>
-
-          <div onclick="selectPopularRoute('Salvador, BA', 'Feira de Santana, BA')" class="p-4 flex items-center justify-between border border-uber-border hover:border-uber-black rounded-xl h-20 bg-white cursor-pointer transition-all active:scale-95">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="p-2 bg-uber-gray text-uber-black rounded-lg shrink-0">
-                ${icon('commute', { size: 'sm' })}
-              </div>
-              <div class="truncate">
-                <p class="font-bold text-xs sm:text-sm text-uber-black truncate">Salvador ➔ Feira de Santana</p>
-                <p class="text-[11px] font-semibold text-uber-charcoal">A partir de R$ 30,00</p>
-              </div>
-            </div>
-            ${icon('chevron_right', { size: 'sm', className: 'text-uber-iron shrink-0' })}
-          </div>
+          `).join('')}
         </div>
       </section>
 
@@ -1341,12 +1295,12 @@ function viewRideDetails(rideId) {
         <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl">
           <div class="flex items-center justify-between pb-3 border-b border-uber-border h-12">
             <div class="flex items-center gap-3">
-              <img src="${ride.driverAvatar}" alt="${ride.driverName}" class="w-10 h-10 rounded-full object-cover border border-uber-border" />
+              <img src="${ride.driverAvatar}" alt="${ride.driverName}" class="w-10 h-10 rounded-full object-cover border border-uber-border bg-uber-gray" />
               <div>
                 <span class="text-sm font-bold text-uber-black block leading-tight">${ride.driverName}</span>
                 <div class="flex items-center gap-1.5 text-xs text-uber-iron font-medium mt-0.5">
                   <span class="flex items-center gap-0.5 text-uber-black font-bold">
-                    ${icon('star', { size: 'sm', fill: true, className: 'text-uber-black' })}
+                    ${icon('star', { size: 'sm', fill: true, className: 'star-gold' })}
                     ${ride.driverRating.toFixed(1)}
                   </span>
                   <span>•</span>
@@ -1518,11 +1472,20 @@ function viewMyTrips() {
                         ${icon('chat', { size: 'sm' })}
                         <span>Conversar</span>
                       </a>
-                      <a href="#/avaliar/${ride.id}" class="font-semibold text-uber-black hover:bg-uber-border flex items-center gap-1.5 px-3 py-1.5 bg-uber-gray rounded-lg transition-colors active:scale-95">
-                        ${icon('star', { size: 'sm', fill: true, className: 'text-uber-black' })}
-                        <span>Avaliar</span>
-                      </a>
+                      
+                      ${b.rated ? `
+                        <button disabled class="font-semibold text-uber-iron bg-uber-gray px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-default opacity-80 select-none">
+                          ${icon('check', { size: 'sm', className: 'text-green-600' })}
+                          <span>Avaliado</span>
+                        </button>
+                      ` : `
+                        <a href="#/avaliar/${ride.id}" class="font-semibold text-uber-black hover:bg-uber-border flex items-center gap-1.5 px-3 py-1.5 bg-uber-gray rounded-lg transition-colors active:scale-95">
+                          ${icon('star', { size: 'sm', fill: true, className: 'star-gold' })}
+                          <span>Avaliar</span>
+                        </a>
+                      `}
                     ` : ''}
+
                     <button onclick="openReceiptModalById('${b.id}')" class="font-semibold text-uber-black hover:bg-uber-border flex items-center gap-1.5 px-3 py-1.5 bg-uber-gray rounded-lg transition-colors active:scale-95">
                       ${icon('receipt', { size: 'sm' })}
                       <span>Comprovante</span>
@@ -1814,7 +1777,7 @@ function viewChat(rideId) {
           const isMe = msg.senderId === myId;
           return `
             <div class="flex gap-2.5 max-w-[85%] ${isMe ? 'self-end flex-row-reverse' : 'self-start'} animate-fade-in">
-              <img src="${msg.senderAvatar}" alt="${msg.senderName}" class="w-7 h-7 rounded-full object-cover border border-uber-border shrink-0 mt-1" />
+              <img src="${msg.senderAvatar}" alt="${msg.senderName}" class="w-7 h-7 rounded-full object-cover border border-uber-border shrink-0 mt-1 bg-uber-gray" />
               <div class="p-3 rounded-xl text-xs ${isMe ? 'bg-uber-black text-white text-left' : 'bg-uber-gray text-uber-black text-left'}">
                 <p class="font-bold text-[11px] mb-0.5 ${isMe ? 'text-uber-slate' : 'text-uber-black'}">${msg.senderName}</p>
                 <p class="leading-relaxed font-normal">${msg.text}</p>
@@ -1885,6 +1848,14 @@ function toggleRatingTag(tag) {
   renderApp();
 }
 
+function handleCommentInput(e) {
+  const countEl = document.getElementById('comment-char-count');
+  if (countEl) {
+    const len = e.target.value.length;
+    countEl.textContent = `${len}/100`;
+  }
+}
+
 function viewRating(rideId) {
   const ride = store.state.rides.find(r => r.id === rideId);
   const availableTags = ['Pontualidade', 'Direção Segura', 'Carro Limpo', 'Boa Comunicação', 'Confortável', 'Respeitoso'];
@@ -1902,8 +1873,10 @@ function viewRating(rideId) {
         </p>
       </div>
 
-      <div class="p-5 sm:p-6 border border-uber-border rounded-xl bg-white">
-        <form onsubmit="handleRatingSubmit(event)" class="flex flex-col gap-5">
+      <div class="p-5 sm:p-6 border border-uber-border rounded-xl bg-white shadow-sm">
+        <form onsubmit="handleRatingSubmit(event, '${rideId}')" class="flex flex-col gap-5">
+          
+          <!-- Golden Rating Stars -->
           <div class="text-center py-4 bg-uber-gray border border-uber-border rounded-xl">
             <span class="text-xs font-bold text-uber-black block mb-3 uppercase tracking-wider">Nota da Viagem:</span>
             <div class="flex justify-center gap-2">
@@ -1913,15 +1886,16 @@ function viewRating(rideId) {
                   onclick="ratingScore = ${star}; renderApp();"
                   class="p-1 hover:scale-110 active:scale-95 transition-transform focus:outline-none"
                 >
-                  ${icon('star', { size: 'xl', fill: star <= ratingScore, className: star <= ratingScore ? 'text-uber-black' : 'text-uber-border' })}
+                  ${icon('star', { size: 'xl', fill: star <= ratingScore, className: star <= ratingScore ? 'star-gold' : 'star-empty' })}
                 </button>
               `).join('')}
             </div>
-            <span class="text-xs font-semibold text-uber-black mt-2 block">
-              ${ratingScore === 5 ? 'Excelente!' : ratingScore === 4 ? 'Muito Bom' : ratingScore === 3 ? 'Regular' : 'Abaixo do esperado'}
+            <span class="text-xs font-bold text-amber-600 mt-2 block">
+              ${ratingScore === 5 ? 'Excelente! (5 estrelas)' : ratingScore === 4 ? 'Muito Bom (4 estrelas)' : ratingScore === 3 ? 'Regular (3 estrelas)' : ratingScore === 2 ? 'Ruim (2 estrelas)' : 'Muito Ruim (1 estrela)'}
             </span>
           </div>
 
+          <!-- Tags -->
           <div>
             <span class="text-xs font-bold text-uber-black block mb-2 uppercase tracking-wider">Destaques da viagem:</span>
             <div class="flex flex-wrap gap-2">
@@ -1941,17 +1915,28 @@ function viewRating(rideId) {
             </div>
           </div>
 
+          <!-- Comment with 0/100 limit -->
           <div>
-            <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Comentário (Opcional):</label>
-            <textarea id="rating-comment" rows="3" placeholder="Ex: Motorista super pontual, carro impecável e viagem muito tranquila." class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white font-normal rounded-xl p-3 text-xs text-uber-black focus:outline-none transition-all"></textarea>
+            <div class="flex justify-between items-center mb-1.5">
+              <label class="text-xs font-bold text-uber-black uppercase tracking-wider">Comentário:</label>
+              <span id="comment-char-count" class="text-xs font-mono font-medium text-uber-iron">0/100</span>
+            </div>
+            <textarea
+              id="rating-comment"
+              rows="3"
+              maxlength="100"
+              oninput="handleCommentInput(event)"
+              placeholder="Conte como foi sua viagem com o motorista (máximo 100 caracteres)..."
+              class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white font-normal rounded-xl p-3 text-xs text-uber-black focus:outline-none transition-all resize-none"
+            ></textarea>
           </div>
 
           <div class="border border-uber-border rounded-lg p-3 bg-uber-gray text-left">
-            <p class="text-xs font-normal text-uber-charcoal">As avaliações são calculadas automaticamente no perfil dos membros.</p>
+            <p class="text-xs font-normal text-uber-charcoal">Sua avaliação fica registrada no perfil do motorista na cooperativa.</p>
           </div>
 
           <button type="submit" class="w-full h-12 font-bold bg-black text-white hover:bg-neutral-900 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-98">
-            ${icon('star', { size: 'sm', fill: true })}
+            ${icon('star', { size: 'sm', fill: true, className: 'text-amber-400' })}
             <span>Enviar Avaliação</span>
           </button>
         </form>
@@ -1960,8 +1945,9 @@ function viewRating(rideId) {
   `;
 }
 
-function handleRatingSubmit(e) {
+function handleRatingSubmit(e, rideId) {
   e.preventDefault();
+  store.markRideAsRated(rideId);
   showToast('Avaliação enviada com sucesso! Obrigado por fortalecer a cooperativa.', 'success');
   window.location.hash = '#/minhas-viagens';
 }
@@ -2170,9 +2156,38 @@ function handleReleaseCustodyAdmin(id, amount) {
   renderApp();
 }
 
-// View: Profile
+// View: Profile (Edição completa: Foto, Google, Nome, CPF, Senha, PIX)
+let isPasswordVisible = false;
+
+function togglePasswordVisibility() {
+  isPasswordVisible = !isPasswordVisible;
+  const input = document.getElementById('profile-password');
+  if (input) {
+    input.type = isPasswordVisible ? 'text' : 'password';
+  }
+}
+
+function handleAvatarUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('A imagem deve ter menos de 2MB.', 'error');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    store.updateUserProfile({ avatarUrl: dataUrl });
+    showToast('Foto de perfil atualizada com sucesso!', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
 function viewProfile() {
   const { currentUser, role } = store.state;
+  const avatar = currentUser.avatarUrl || DEFAULT_BLANK_AVATAR;
 
   return `
     <div class="max-w-3xl mx-auto px-4 py-6 text-left pb-24 md:pb-12 animate-fade-in">
@@ -2184,36 +2199,139 @@ function viewProfile() {
         </div>
       </div>
 
-      <div class="flex flex-col gap-4">
-        <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl">
-          <div class="flex items-center gap-4 pb-4 border-b border-uber-border">
-            <img src="${currentUser.avatarUrl}" alt="${currentUser.name}" class="w-14 h-14 rounded-full object-cover border border-uber-border" />
-            <div>
-              <h2 class="text-lg font-bold text-uber-black">${currentUser.name}</h2>
-              <p class="text-xs text-uber-iron font-normal">${currentUser.email} • ${currentUser.phone}</p>
-              <div class="flex items-center gap-1 text-xs text-uber-black font-semibold mt-1">
-                ${icon('star', { size: 'sm', fill: true, className: 'text-uber-black' })}
-                <span>${currentUser.rating.toFixed(1)} de reputação</span>
-                <span class="text-uber-border">•</span>
-                <span class="text-uber-charcoal font-normal">${currentUser.totalTrips} viagens concluídas</span>
+      <div class="flex flex-col gap-5">
+        
+        <!-- Profile Form Card -->
+        <div class="p-5 sm:p-6 border border-uber-border bg-white rounded-2xl shadow-sm">
+          
+          <!-- Avatar & Social Header -->
+          <div class="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4 pb-5 border-b border-uber-border">
+            <div class="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+              <div class="relative group">
+                <img
+                  id="profile-avatar-preview"
+                  src="${avatar}"
+                  alt="${currentUser.name}"
+                  class="w-20 h-20 rounded-full object-cover border-2 border-uber-border bg-uber-gray shadow-sm"
+                />
+                <label for="avatar-file-input" class="absolute bottom-0 right-0 w-7 h-7 bg-uber-black text-white rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-neutral-800 transition-transform active:scale-90" title="Trocar Foto">
+                  ${icon('photo_camera', { size: 'sm' })}
+                </label>
+                <input id="avatar-file-input" type="file" accept="image/*" onchange="handleAvatarUpload(event)" class="hidden" />
               </div>
+
+              <div>
+                <h2 class="text-lg font-bold text-uber-black">${currentUser.name}</h2>
+                <p class="text-xs text-uber-iron font-normal">${currentUser.email}</p>
+                
+                <div class="flex items-center gap-1 text-xs text-uber-black font-semibold mt-1 justify-center sm:justify-start">
+                  ${icon('star', { size: 'sm', fill: true, className: 'star-gold' })}
+                  <span>${currentUser.rating.toFixed(1)} de reputação</span>
+                  <span class="text-uber-border">•</span>
+                  <span class="text-uber-charcoal font-normal">${currentUser.totalTrips} viagens concluídas</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Social / Quick Actions -->
+            <div class="flex flex-wrap sm:flex-col gap-2 shrink-0">
+              <button
+                type="button"
+                onclick="store.connectGoogleAccount(); showToast('Conectado com Google! Foto e dados sincronizados.', 'success');"
+                class="h-9 px-3.5 bg-white border border-uber-border hover:bg-uber-gray text-uber-black font-semibold rounded-lg text-xs flex items-center gap-2 transition-all active:scale-95 shadow-xs"
+              >
+                ${icon('account_circle', { size: 'sm', className: 'text-uber-black' })}
+                <span>Puxar Foto do Google</span>
+              </button>
+
+              <button
+                type="button"
+                onclick="store.resetAvatarToDefault(); showToast('Foto restaurada para o padrão.', 'info');"
+                class="h-9 px-3.5 bg-uber-gray hover:bg-uber-border text-uber-iron font-medium rounded-lg text-xs flex items-center gap-1.5 transition-all active:scale-95"
+              >
+                ${icon('delete', { size: 'sm' })}
+                <span>Remover Foto</span>
+              </button>
             </div>
           </div>
 
-          <!-- PIX Form -->
-          <form onsubmit="handleSavePixKey(event)" class="pt-4 flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
-            <div class="flex-1">
-              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Chave PIX para Estornos e Resgates</label>
-              <input id="profile-pix-key" type="text" value="${currentUser.pixKey}" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
-              <p class="text-xs font-medium text-uber-iron mt-1">Utilizada para estornos automáticos e transferências.</p>
+          <!-- Main Profile Edit Form -->
+          <form onsubmit="handleSaveFullProfile(event)" class="pt-5 space-y-4">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Name -->
+              <div>
+                <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Nome Completo</label>
+                <input
+                  id="profile-name"
+                  type="text"
+                  value="${currentUser.name}"
+                  required
+                  class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none transition-all"
+                />
+              </div>
+
+              <!-- CPF -->
+              <div>
+                <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">CPF</label>
+                <input
+                  id="profile-cpf"
+                  type="text"
+                  value="${currentUser.cpf || '123.456.789-00'}"
+                  placeholder="000.000.000-00"
+                  required
+                  class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none transition-all font-mono"
+                />
+              </div>
             </div>
-            <button type="submit" class="h-12 px-5 bg-black text-white font-bold rounded-lg hover:bg-neutral-900 flex items-center justify-center gap-2 active:scale-95">
-              ${icon('save', { size: 'sm' })}
-              <span>Salvar Chave</span>
-            </button>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Password -->
+              <div>
+                <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Alterar Senha</label>
+                <div class="relative flex items-center">
+                  <input
+                    id="profile-password"
+                    type="password"
+                    placeholder="Digite nova senha..."
+                    class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 pr-11 focus:outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onclick="togglePasswordVisibility()"
+                    class="absolute right-3 p-1 text-uber-iron hover:text-uber-black transition-colors"
+                  >
+                    ${icon('visibility', { size: 'sm' })}
+                  </button>
+                </div>
+              </div>
+
+              <!-- PIX Key -->
+              <div>
+                <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Chave PIX (Estornos & Resgates)</label>
+                <input
+                  id="profile-pix-key"
+                  type="text"
+                  value="${currentUser.pixKey}"
+                  required
+                  class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+              <button
+                type="submit"
+                class="w-full sm:w-auto h-12 px-8 bg-black text-white font-bold rounded-xl hover:bg-neutral-900 flex items-center justify-center gap-2 active:scale-95 shadow-md"
+              >
+                ${icon('save', { size: 'sm' })}
+                <span>Salvar Alterações do Perfil</span>
+              </button>
+            </div>
           </form>
         </div>
 
+        <!-- Vehicle Details (Driver only) -->
         ${role === 'DRIVER' && currentUser.vehicle ? `
           <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl">
             <div class="flex items-center gap-2 pb-3 border-b border-uber-border">
@@ -2251,17 +2369,23 @@ function viewProfile() {
   `;
 }
 
-function handleSavePixKey(e) {
+function handleSaveFullProfile(e) {
   e.preventDefault();
-  const input = document.getElementById('profile-pix-key');
-  if (input) {
-    store.updatePixKey(input.value);
-    showToast('Chave PIX salva com sucesso!', 'success');
+  const name = document.getElementById('profile-name').value;
+  const cpf = document.getElementById('profile-cpf').value;
+  const pixKey = document.getElementById('profile-pix-key').value;
+  const pass = document.getElementById('profile-password').value;
+
+  store.updateUserProfile({ name, cpf, pixKey });
+  if (pass) {
+    showToast('Perfil e nova senha atualizados com sucesso!', 'success');
+  } else {
+    showToast('Perfil atualizado com sucesso!', 'success');
   }
 }
 
 // ==========================================
-// 7. MODAIS (PIX, COMPROVANTE, CANCELAMENTO)
+// 8. MODAIS (PIX, COMPROVANTE, CANCELAMENTO)
 // ==========================================
 
 function openPixModal(booking) {
@@ -2455,6 +2579,7 @@ function openReceiptModalById(bookingId) {
   `;
 }
 
+// Modal de Cancelamento com botão exatamente "Cancelamento"
 function openCancelModalById(bookingId) {
   const b = store.state.bookings.find(bk => bk.id === bookingId);
   const r = store.state.rides.find(rd => rd.id === b?.rideId);
@@ -2512,7 +2637,7 @@ function openCancelModalById(bookingId) {
           <button onclick="closeModal()" class="flex-1 h-11 font-semibold bg-uber-gray text-uber-black rounded-lg hover:bg-uber-border">Manter Reserva</button>
           <button onclick="executeCancelBooking('${b.id}')" class="flex-1 h-11 font-bold bg-black text-white hover:bg-red-700 rounded-lg flex items-center justify-center gap-1.5">
             ${icon('cancel', { size: 'sm' })}
-            <span>Confirmar Cancelamento</span>
+            <span>Cancelamento</span>
           </button>
         </div>
       </div>
@@ -2533,7 +2658,7 @@ function closeModal() {
 }
 
 // ==========================================
-// 8. ROTEADOR SPA & CICLO DE VIDA
+// 9. ROTEADOR SPA & CICLO DE VIDA
 // ==========================================
 
 function renderApp() {
@@ -2579,7 +2704,6 @@ function ensureHeroVideoPlays() {
     const playPromise = vid.play();
     if (playPromise !== undefined) {
       playPromise.catch(() => {
-        // Auto-play was prevented; add one-time touch listener for iOS / mobile browsers
         const resumeVideo = () => {
           vid.play().catch(() => {});
           window.removeEventListener('touchstart', resumeVideo);
@@ -2597,4 +2721,3 @@ window.addEventListener('DOMContentLoaded', () => {
   renderFooter();
   renderApp();
 });
-

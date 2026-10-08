@@ -75,11 +75,18 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
 
-/* Glassmorphism / Frosted Tempered Glass overlay */
+/* Glassmorphism / Frosted Tempered Glass overlay (Calibrated Transparency) */
 .hero-glass-overlay {
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
+/* Golden Rating Stars */
+.star-gold {
+  color: #F59E0B !important;
+}
 
+.star-empty {
+  color: #D1D5DB !important;
+}
