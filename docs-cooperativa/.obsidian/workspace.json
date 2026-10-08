@@ -1,0 +1,238 @@
+{
+  "main": {
+    "id": "43b2315851798623",
+    "type": "split",
+    "children": [
+      {
+        "id": "56c5cc432378b786",
+        "type": "tabs",
+        "dimension": 35.44117647058824,
+        "children": [
+          {
+            "id": "7bb7104ed4cbb1fb",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "Nova aba"
+            }
+          }
+        ]
+      },
+      {
+        "id": "651f91759bc447a6",
+        "type": "tabs",
+        "dimension": 64.55882352941177,
+        "children": [
+          {
+            "id": "67324c470f7d7e7c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "PRD_Plataforma_Viagens_Profissionais.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "PRD_Plataforma_Viagens_Profissionais"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "8e1fb5637e8c98c1",
+    "type": "split",
+    "children": [
+      {
+        "id": "f50864d5deda231f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b29e13c4deecf75b",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de arquivos"
+            }
+          },
+          {
+            "id": "72bfe51b2d88ebc2",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Procurar"
+            }
+          },
+          {
+            "id": "62b366b88af64e6f",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "fa42543d666edafb",
+    "type": "split",
+    "children": [
+      {
+        "id": "ea209650cba0c273",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "3859aa32d0654b11",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Links inversos"
+            }
+          },
+          {
+            "id": "c63bb269c969dbc6",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Links de saída"
+            }
+          },
+          {
+            "id": "55f8f9deaa3ea1b8",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Etiquetas"
+            }
+          },
+          {
+            "id": "f0713b84416b9f39",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Todas as propriedades"
+            }
+          },
+          {
+            "id": "c37fcdd800876978",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Sumário"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir a troca rápida": false,
+      "graph:Abrir visualização em gráfico": false,
+      "canvas:Criar novo canvas": false,
+      "daily-notes:Abrir a nota de hoje": false,
+      "templates:Inserir modelo": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Criar nova base": false
+    }
+  },
+  "active": "67324c470f7d7e7c",
+  "lastOpenFiles": [
+    "sprints/Sprint_08_Dashboard_Gestao.md",
+    "sprints/Sprint_07_Avaliacoes_Cooperativa.md",
+    "sprints/Sprint_06_Mensageria_Notificacoes.md",
+    "sprints/Sprint_05_Reserva_Checkout_PIX.md",
+    "sprints/Sprint_04_Publicacao_Viagem.md",
+    "sprints/Sprint_03_Busca_Listagem.md",
+    "sprints/Sprint_02_Autenticacao_Perfis.md",
+    "sprints/Sprint_01_DesignSystem_Fundacao.md",
+    "sprints/Sprint_Overview.md",
+    "features/Dashboard_Admin_Gestor.md",
+    "features/Avaliacoes_Reputacao.md",
+    "features/Mensageria_Notificacoes.md",
+    "features/Cooperativa_Assinaturas_Beneficios.md",
+    "features/Cancelamento_Estorno_Repasse.md",
+    "features/Reserva_Checkout_PIX.md",
+    "features/Busca_Compatibilidade_Rotas.md",
+    "features/Publicacao_Viagem.md",
+    "features/Cadastro_Autenticacao.md",
+    "MOC_Perfis_Permissoes.md",
+    "MOC_Regras_Negocio.md",
+    "MOC_Frontend.md",
+    "design/Design_System_BlaBlaCar.md",
+    "MOC_Geral.md",
+    "regras",
+    "sprints",
+    "design",
+    "features",
+    "PRD_Plataforma_Viagens_Profissionais.md",
+    "Bem-vindo.md"
+  ]
+}
