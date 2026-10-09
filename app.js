@@ -2642,189 +2642,939 @@ function handleDriverRejectBooking(bookingId) {
   showToast('Reserva recusada.', 'warning');
 }
 
-// View: Publish Ride (Driver only)
+// ==========================================
+// MATRIZ DE ROTAS E PRECIFICAÇÃO INTELIGENTE
+// ==========================================
+
+const ROUTE_METRICS_DATABASE = {
+  // Ceará
+  'fortaleza, ce|juazeiro do norte, ce': { distanceKm: 490, duration: '6h 30m' },
+  'fortaleza, ce|sobral, ce': { distanceKm: 235, duration: '3h 15m' },
+  'fortaleza, ce|quixada, ce': { distanceKm: 168, duration: '2h 30m' },
+  'fortaleza, ce|mossoro, rn': { distanceKm: 245, duration: '3h 30m' },
+  'fortaleza, ce|natal, rn': { distanceKm: 535, duration: '7h 15m' },
+  'fortaleza, ce|teresina, pi': { distanceKm: 600, duration: '8h 30m' },
+  
+  // Pernambuco
+  'recife, pe|caruaru, pe': { distanceKm: 135, duration: '2h 00m' },
+  'recife, pe|petrolina, pe': { distanceKm: 710, duration: '9h 30m' },
+  'recife, pe|joao pessoa, pb': { distanceKm: 120, duration: '1h 45m' },
+  'recife, pe|maceio, al': { distanceKm: 258, duration: '3h 45m' },
+  'recife, pe|garanhuns, pe': { distanceKm: 230, duration: '3h 20m' },
+  'recife, pe|campina grande, pb': { distanceKm: 195, duration: '2h 45m' },
+
+  // Bahia
+  'salvador, ba|feira de santana, ba': { distanceKm: 110, duration: '1h 30m' },
+  'salvador, ba|vitoria da conquista, ba': { distanceKm: 518, duration: '7h 00m' },
+  'salvador, ba|aracaju, se': { distanceKm: 325, duration: '4h 30m' },
+  'salvador, ba|ilheus, ba': { distanceKm: 460, duration: '6h 45m' },
+  'salvador, ba|itabuna, ba': { distanceKm: 435, duration: '6h 15m' },
+
+  // Paraíba / RN / Alagoas / Sergipe / Piauí / Maranhão
+  'joao pessoa, pb|campina grande, pb': { distanceKm: 130, duration: '1h 45m' },
+  'natal, rn|mossoro, rn': { distanceKm: 278, duration: '3h 50m' },
+  'maceio, al|aracaju, se': { distanceKm: 275, duration: '3h 40m' },
+  'teresina, pi|parnaiba, pi': { distanceKm: 340, duration: '4h 45m' },
+  'sao luis, ma|imperatriz, ma': { distanceKm: 630, duration: '8h 30m' }
+};
+
+function normalizeCityKey(city) {
+  return String(city || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
+function getRouteMetrics(origin, destination) {
+  const o = normalizeCityKey(origin);
+  const d = normalizeCityKey(destination);
+  const directKey = `${o}|${d}`;
+  const reverseKey = `${d}|${o}`;
+
+  if (ROUTE_METRICS_DATABASE[directKey]) return ROUTE_METRICS_DATABASE[directKey];
+  if (ROUTE_METRICS_DATABASE[reverseKey]) return ROUTE_METRICS_DATABASE[reverseKey];
+
+  // Heurística para rotas não mapeadas exatamente
+  return { distanceKm: 180, duration: '2h 30m' };
+}
+
+function calculateSmartPrice(distanceKm) {
+  const km = Math.max(20, Number(distanceKm) || 150);
+  const baseRate = 12.00; // Taxa base de partida
+  const ratePerKm = 0.15; // R$ 0,15 por km rateado por passageiro
+  const suggested = Math.max(20, Math.round(baseRate + km * ratePerKm));
+  const minPrice = Math.max(15, Math.round(suggested * 0.65));
+  const maxPrice = Math.max(35, Math.round(suggested * 1.45));
+
+  return { suggested, minPrice, maxPrice, distanceKm: km };
+}
+
+// Estado em memória do Wizard de Publicação
+let publishWizardState = {
+  step: 1, // 1: Trajeto, 2: Data/Hora, 3: Veículo/Vagas/Preço, 4: Volta (opcional), 5: Resumo
+  originCity: 'Fortaleza, CE',
+  originSpot: 'Shopping Iguatemi Bosque',
+  destinationCity: 'Juazeiro do Norte, CE',
+  destinationSpot: 'Cariri Garden Shopping',
+  departureDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+  departureTime: '08:00',
+  vehicleId: '',
+  seats: 4,
+  pricePerSeat: 75.00,
+  hasReturn: false,
+  returnDate: new Date(Date.now() + 172800000).toISOString().split('T')[0],
+  returnTime: '17:00',
+  returnSeats: 4,
+  returnPrice: 75.00,
+  notes: '',
+  distanceKm: 490,
+  duration: '6h 30m',
+  priceMetrics: { suggested: 75, minPrice: 48, maxPrice: 105 }
+};
+
+function initPublishWizardState() {
+  const driverVehicles = store.state.currentUser.vehicles || [];
+  const primaryVeh = driverVehicles.find(v => v.isPrimary) || driverVehicles[0];
+  
+  if (!publishWizardState.vehicleId && primaryVeh) {
+    publishWizardState.vehicleId = primaryVeh.id;
+  }
+  
+  const metrics = getRouteMetrics(publishWizardState.originCity, publishWizardState.destinationCity);
+  publishWizardState.distanceKm = metrics.distanceKm;
+  publishWizardState.duration = metrics.duration;
+  publishWizardState.priceMetrics = calculateSmartPrice(metrics.distanceKm);
+  if (!publishWizardState.pricePerSeat || publishWizardState.pricePerSeat === 75) {
+    publishWizardState.pricePerSeat = publishWizardState.priceMetrics.suggested;
+    publishWizardState.returnPrice = publishWizardState.priceMetrics.suggested;
+  }
+}
+
+function updatePublishRouteMetrics() {
+  const originCity = document.getElementById('pub-origin-city')?.value || publishWizardState.originCity;
+  const destinationCity = document.getElementById('pub-dest-city')?.value || publishWizardState.destinationCity;
+  
+  const metrics = getRouteMetrics(originCity, destinationCity);
+  publishWizardState.distanceKm = metrics.distanceKm;
+  publishWizardState.duration = metrics.duration;
+  publishWizardState.priceMetrics = calculateSmartPrice(metrics.distanceKm);
+
+  // Atualizar estimativa no DOM se visível
+  const metricEl = document.getElementById('pub-route-metrics-preview');
+  if (metricEl) {
+    metricEl.innerHTML = `
+      <div class="flex items-center gap-4 text-xs font-semibold text-uber-charcoal">
+        <span class="flex items-center gap-1">${icon('straighten', { size: 'sm', className: 'text-uber-black' })} ${metrics.distanceKm} km estimados</span>
+        <span>•</span>
+        <span class="flex items-center gap-1">${icon('schedule', { size: 'sm', className: 'text-uber-black' })} ~${metrics.duration} de viagem</span>
+      </div>
+    `;
+  }
+}
+
+function setPublishWizardStep(newStep) {
+  // Validações antes de avançar
+  if (newStep > publishWizardState.step) {
+    if (publishWizardState.step === 1) {
+      const orig = document.getElementById('pub-origin-city')?.value?.trim();
+      const origSpot = document.getElementById('pub-origin-spot')?.value?.trim();
+      const dest = document.getElementById('pub-dest-city')?.value?.trim();
+      const destSpot = document.getElementById('pub-dest-spot')?.value?.trim();
+
+      if (!orig || !dest) {
+        showToast('Informe a cidade de partida e a cidade de destino.', 'error');
+        return;
+      }
+      if (orig.toLowerCase() === dest.toLowerCase()) {
+        showToast('A cidade de partida e de destino não podem ser iguais.', 'error');
+        return;
+      }
+
+      publishWizardState.originCity = orig;
+      publishWizardState.originSpot = origSpot || 'Centro / Ponto principal';
+      publishWizardState.destinationCity = dest;
+      publishWizardState.destinationSpot = destSpot || 'Centro / Desembarque';
+
+      const metrics = getRouteMetrics(orig, dest);
+      publishWizardState.distanceKm = metrics.distanceKm;
+      publishWizardState.duration = metrics.duration;
+      publishWizardState.priceMetrics = calculateSmartPrice(metrics.distanceKm);
+      publishWizardState.pricePerSeat = publishWizardState.priceMetrics.suggested;
+      publishWizardState.returnPrice = publishWizardState.priceMetrics.suggested;
+    }
+
+    if (publishWizardState.step === 2) {
+      const depDate = document.getElementById('pub-date')?.value;
+      const depTime = document.getElementById('pub-time')?.value;
+
+      if (!depDate || !depTime) {
+        showToast('Informe a data e o horário de saída da viagem.', 'error');
+        return;
+      }
+
+      const targetDate = new Date(`${depDate}T${depTime}:00`);
+      const minValid = new Date(Date.now() + 2 * 60 * 60 * 1000);
+      if (targetDate < minValid) {
+        showToast('A viagem deve ser agendada com pelo menos 2 horas de antecedência.', 'error');
+        return;
+      }
+
+      publishWizardState.departureDate = depDate;
+      publishWizardState.departureTime = depTime;
+    }
+
+    if (publishWizardState.step === 3) {
+      const seats = parseInt(document.getElementById('pub-seats')?.value, 10) || 4;
+      const price = parseFloat(document.getElementById('pub-price')?.value) || publishWizardState.priceMetrics.suggested;
+      const vehId = document.getElementById('pub-selected-vehicle-id')?.value || publishWizardState.vehicleId;
+
+      if (!vehId) {
+        showToast('Selecione um veículo cadastrado para realizar a viagem.', 'error');
+        return;
+      }
+
+      const { minPrice, maxPrice } = publishWizardState.priceMetrics;
+      if (price < minPrice || price > maxPrice) {
+        showToast(`O valor deve estar entre R$ ${minPrice.toFixed(2)} e R$ ${maxPrice.toFixed(2)}.`, 'error');
+        return;
+      }
+
+      publishWizardState.seats = seats;
+      publishWizardState.pricePerSeat = price;
+      publishWizardState.vehicleId = vehId;
+      publishWizardState.returnSeats = seats;
+      publishWizardState.returnPrice = price;
+    }
+
+    if (publishWizardState.step === 4) {
+      const hasRet = document.getElementById('pub-has-return')?.checked || false;
+      publishWizardState.hasReturn = hasRet;
+
+      if (hasRet) {
+        const retDate = document.getElementById('pub-return-date')?.value;
+        const retTime = document.getElementById('pub-return-time')?.value;
+        const retPrice = parseFloat(document.getElementById('pub-return-price')?.value) || publishWizardState.pricePerSeat;
+        const retSeats = parseInt(document.getElementById('pub-return-seats')?.value, 10) || publishWizardState.seats;
+
+        if (!retDate || !retTime) {
+          showToast('Informe a data e o horário da viagem de volta.', 'error');
+          return;
+        }
+
+        const goDate = new Date(`${publishWizardState.departureDate}T${publishWizardState.departureTime}:00`);
+        const backDate = new Date(`${retDate}T${retTime}:00`);
+
+        if (backDate <= goDate) {
+          showToast('A volta deve ser em data e horário posteriores à viagem de ida.', 'error');
+          return;
+        }
+
+        publishWizardState.returnDate = retDate;
+        publishWizardState.returnTime = retTime;
+        publishWizardState.returnPrice = retPrice;
+        publishWizardState.returnSeats = retSeats;
+      }
+    }
+  }
+
+  publishWizardState.step = Math.max(1, Math.min(5, newStep));
+  renderApp();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function handleSelectPublishVehicle(vehId) {
+  publishWizardState.vehicleId = vehId;
+  const input = document.getElementById('pub-selected-vehicle-id');
+  if (input) input.value = vehId;
+
+  // Atualizar visual dos cartões de veículos
+  document.querySelectorAll('.pub-vehicle-card').forEach(card => {
+    const isSelected = card.getAttribute('data-veh-id') === vehId;
+    if (isSelected) {
+      card.classList.add('ring-2', 'ring-black', 'border-black', 'bg-neutral-50');
+      card.classList.remove('border-uber-border', 'bg-white');
+    } else {
+      card.classList.remove('ring-2', 'ring-black', 'border-black', 'bg-neutral-50');
+      card.classList.add('border-uber-border', 'bg-white');
+    }
+  });
+}
+
+function adjustPublishPrice(delta) {
+  const input = document.getElementById('pub-price');
+  if (!input) return;
+  const current = parseFloat(input.value) || publishWizardState.priceMetrics.suggested;
+  const { minPrice, maxPrice } = publishWizardState.priceMetrics;
+  const updated = Math.max(minPrice, Math.min(maxPrice, current + delta));
+  input.value = updated.toFixed(2);
+  publishWizardState.pricePerSeat = updated;
+  updatePublishPriceBadge(updated);
+}
+
+function updatePublishPriceBadge(value) {
+  const badge = document.getElementById('pub-price-indicator-badge');
+  if (!badge) return;
+  const { suggested, minPrice, maxPrice } = publishWizardState.priceMetrics;
+  
+  if (value < suggested) {
+    badge.className = 'text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md inline-flex items-center gap-1';
+    badge.innerHTML = `${icon('trending_down', { size: 'sm' })} Tarifa Econômica (Abaixo da média recomendada)`;
+  } else if (value === suggested) {
+    badge.className = 'text-[11px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md inline-flex items-center gap-1';
+    badge.innerHTML = `${icon('verified', { size: 'sm' })} Preço Ideal Recomendado (Excelente adesão)`;
+  } else {
+    badge.className = 'text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md inline-flex items-center gap-1';
+    badge.innerHTML = `${icon('trending_up', { size: 'sm' })} Tarifa Superior (Próxima do teto permitido)`;
+  }
+}
+
+function togglePublishReturn(checked) {
+  publishWizardState.hasReturn = checked;
+  const container = document.getElementById('pub-return-details-container');
+  if (container) {
+    if (checked) {
+      container.classList.remove('hidden');
+    } else {
+      container.classList.add('hidden');
+    }
+  }
+}
+
+function handleFinishPublishRide() {
+  const notes = document.getElementById('pub-final-notes')?.value?.trim() || '';
+  publishWizardState.notes = notes;
+
+  const driverVehicles = store.state.currentUser.vehicles || [];
+  const selectedVeh = driverVehicles.find(v => v.id === publishWizardState.vehicleId) || store.state.currentUser.vehicle || {
+    brand: 'Toyota',
+    model: 'Corolla 2.0',
+    color: 'prata',
+    plate: 'CE-FOR-2023',
+    year: 2023,
+    hasAC: true,
+    hasUSB: true,
+  };
+
+  // 1. Criar Viagem de Ida
+  store.addRide({
+    originCity: publishWizardState.originCity,
+    originSpot: publishWizardState.originSpot,
+    destinationCity: publishWizardState.destinationCity,
+    destinationSpot: publishWizardState.destinationSpot,
+    departureDate: publishWizardState.departureDate,
+    departureTime: publishWizardState.departureTime,
+    estimatedDuration: publishWizardState.duration,
+    pricePerSeat: publishWizardState.pricePerSeat,
+    totalSeats: publishWizardState.seats,
+    availableSeats: publishWizardState.seats,
+    vehicle: selectedVeh,
+    notes: publishWizardState.notes || 'Saída pontual no local combinado.',
+    status: 'PUBLISHED',
+  });
+
+  // 2. Criar Viagem de Volta se solicitada
+  if (publishWizardState.hasReturn) {
+    store.addRide({
+      originCity: publishWizardState.destinationCity,
+      originSpot: publishWizardState.destinationSpot,
+      destinationCity: publishWizardState.originCity,
+      destinationSpot: publishWizardState.originSpot,
+      departureDate: publishWizardState.returnDate,
+      departureTime: publishWizardState.returnTime,
+      estimatedDuration: publishWizardState.duration,
+      pricePerSeat: publishWizardState.returnPrice,
+      totalSeats: publishWizardState.returnSeats,
+      availableSeats: publishWizardState.returnSeats,
+      vehicle: selectedVeh,
+      notes: (publishWizardState.notes ? `${publishWizardState.notes} • ` : '') + 'Viagem de retorno.',
+      status: 'PUBLISHED',
+    });
+  }
+
+  // Som de feedback e Toast
+  if (typeof SoundEngine !== 'undefined') SoundEngine.play('success');
+  
+  if (publishWizardState.hasReturn) {
+    showToast('Viagens de Ida e Volta publicadas com sucesso!', 'success');
+  } else {
+    showToast('Viagem cadastrada e publicada com sucesso!', 'success');
+  }
+
+  // Reset do Wizard
+  publishWizardState.step = 1;
+  publishWizardState.hasReturn = false;
+
+  window.location.hash = '#/minhas-viagens';
+}
+
+// View Principal: Publicar Viagem Step-by-Step
 function viewPublishRide() {
   const role = store.state.role;
 
   if (role !== 'DRIVER') {
     return `
       <div class="max-w-md mx-auto py-16 px-4 text-center animate-fade-in">
-        <div class="w-14 h-14 bg-uber-gray text-uber-black rounded-full flex items-center justify-center mx-auto mb-3">
+        <div class="w-14 h-14 bg-uber-gray text-uber-black rounded-xl flex items-center justify-center mx-auto mb-3">
           ${icon('lock', { size: 'lg' })}
         </div>
-        <h2 class="text-xl font-bold text-uber-black">Acesso Restrito</h2>
-        <p class="text-uber-iron text-xs sm:text-sm font-normal mt-1 mb-5">
-          Apenas motoristas credenciados podem cadastrar viagens na plataforma.
+        <h2 class="text-xl font-bold text-uber-black">Acesso Restrito ao Motorista</h2>
+        <p class="text-uber-iron text-xs sm:text-sm font-normal mt-1 mb-5 leading-relaxed">
+          Apenas motoristas cadastrados e verificados podem publicar rotas na Cooperativa.
         </p>
-        <a href="#/" class="inline-block w-full h-11 py-2.5 bg-black text-white font-bold rounded-lg text-sm">
+        <a href="#/" class="inline-block w-full h-11 py-2.5 bg-black text-white font-bold rounded-xl text-sm transition-transform active:scale-98">
           Voltar para o Início
         </a>
       </div>
     `;
   }
 
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  initPublishWizardState();
+  const driverVehicles = store.state.currentUser.vehicles || [];
+  const currentStep = publishWizardState.step;
+
+  const stepTitles = [
+    '1. Trajeto da Viagem',
+    '2. Data e Horário',
+    '3. Veículo e Preço',
+    '4. Viagem de Volta',
+    '5. Resumo e Publicação'
+  ];
 
   return `
     ${renderDatalists()}
-    <div class="max-w-2xl mx-auto px-4 py-6 text-left pb-24 md:pb-12 animate-fade-in">
+    <div class="max-w-2xl mx-auto px-4 py-6 text-left pb-28 md:pb-16 animate-fade-in">
+      
+      <!-- Top Navigation & Stepper Header -->
       <div class="mb-6">
-        <button onclick="window.history.back()" class="flex items-center gap-1.5 text-xs font-bold text-uber-black hover:text-uber-iron mb-3 transition-colors">
-          ${icon('arrow_back', { size: 'sm' })}
-          <span>Voltar</span>
-        </button>
-        <h1 class="text-2xl sm:text-3xl font-bold text-uber-black">Nova Viagem</h1>
-        <p class="text-uber-iron text-xs sm:text-sm font-normal mt-0.5">
-          Cadastre uma nova rota no Nordeste e receba passageiros verificados.
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <button
+            type="button"
+            onclick="${currentStep === 1 ? 'window.history.back()' : `setPublishWizardStep(${currentStep - 1})`}"
+            class="inline-flex items-center gap-1.5 text-xs font-bold text-uber-black hover:text-uber-iron transition-colors cursor-pointer"
+          >
+            ${icon('arrow_back', { size: 'sm' })}
+            <span>${currentStep === 1 ? 'Voltar' : 'Etapa Anterior'}</span>
+          </button>
+          <span class="text-xs font-bold uppercase tracking-wider text-uber-iron bg-uber-gray px-2.5 py-1 rounded-md border border-uber-border">
+            Etapa ${currentStep} de 5
+          </span>
+        </div>
+
+        <h1 class="text-xl sm:text-2xl font-extrabold text-uber-black leading-tight">${stepTitles[currentStep - 1]}</h1>
+        <p class="text-xs sm:text-sm text-uber-iron mt-0.5">
+          ${currentStep === 1 ? 'Defina a rota de partida e chegada no Nordeste.' : ''}
+          ${currentStep === 2 ? 'Defina a data e o horário programado para saída.' : ''}
+          ${currentStep === 3 ? 'Escolha o carro, número de passageiros e o valor da vaga.' : ''}
+          ${currentStep === 4 ? 'Deseja também agendar o retorno no sentido inverso?' : ''}
+          ${currentStep === 5 ? 'Confira todos os dados antes de publicar na Cooperativa.' : ''}
         </p>
+
+        <!-- Visual Progress Bar (Step-by-Step) -->
+        <div class="w-full bg-uber-gray h-2 rounded-md overflow-hidden mt-4 border border-uber-border">
+          <div class="bg-black h-full transition-all duration-300 rounded-md" style="width: ${(currentStep / 5) * 100}%"></div>
+        </div>
       </div>
 
-      <form onsubmit="handlePublishSubmit(event)" class="flex flex-col gap-4">
-        <!-- Step 1: Trajeto -->
-        <div class="p-4 sm:p-5 border border-uber-border rounded-xl flex flex-col gap-3 bg-white">
-          <div class="flex items-center gap-2 pb-3 border-b border-uber-border h-8">
-            ${icon('route', { size: 'sm', className: 'text-uber-black' })}
-            <h2 class="font-bold text-sm sm:text-base text-uber-black">1. Trajeto</h2>
+      <!-- STEP 1: TRAJETO -->
+      ${currentStep === 1 ? `
+        <div class="p-5 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Cidade de Partida (Origem)</label>
+              <input
+                id="pub-origin-city"
+                type="text"
+                list="nordeste-cities-list"
+                required
+                value="${publishWizardState.originCity}"
+                placeholder="Ex: Fortaleza, CE"
+                onchange="updatePublishRouteMetrics()"
+                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none transition-all"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Ponto de Encontro</label>
+              <input
+                id="pub-origin-spot"
+                type="text"
+                required
+                value="${publishWizardState.originSpot}"
+                placeholder="Ex: Shopping Iguatemi / Rodoviária"
+                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none transition-all"
+              />
+            </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Cidade de Partida</label>
-              <input id="pub-origin-city" type="text" list="nordeste-cities-list" placeholder="Ex: Fortaleza, CE" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
+              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Cidade de Destino (Chegada)</label>
+              <input
+                id="pub-dest-city"
+                type="text"
+                list="nordeste-cities-list"
+                required
+                value="${publishWizardState.destinationCity}"
+                placeholder="Ex: Juazeiro do Norte, CE"
+                onchange="updatePublishRouteMetrics()"
+                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none transition-all"
+              />
             </div>
             <div>
-              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Ponto de Encontro</label>
-              <input id="pub-origin-spot" type="text" placeholder="Ex: Shopping Iguatemi / Rodoviária" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
+              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Ponto de Desembarque</label>
+              <input
+                id="pub-dest-spot"
+                type="text"
+                required
+                value="${publishWizardState.destinationSpot}"
+                placeholder="Ex: Cariri Garden Shopping / Praça Central"
+                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none transition-all"
+              />
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Cidade de Destino</label>
-              <input id="pub-dest-city" type="text" list="nordeste-cities-list" placeholder="Ex: Juazeiro do Norte, CE" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
+          <!-- Dynamic Route Metrics Card -->
+          <div id="pub-route-metrics-preview" class="p-3.5 bg-uber-gray border border-uber-border rounded-xl">
+            <div class="flex items-center gap-3 text-xs font-semibold text-uber-charcoal flex-wrap">
+              <span class="flex items-center gap-1">${icon('straighten', { size: 'sm', className: 'text-uber-black' })} ${publishWizardState.distanceKm} km estimados</span>
+              <span>•</span>
+              <span class="flex items-center gap-1">${icon('schedule', { size: 'sm', className: 'text-uber-black' })} ~${publishWizardState.duration} de viagem</span>
             </div>
-            <div>
-              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Ponto de Chegada</label>
-              <input id="pub-dest-spot" type="text" placeholder="Ex: Cariri Garden Shopping / Praça Central" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
-            </div>
+          </div>
+
+          <div class="pt-2">
+            <button
+              type="button"
+              onclick="setPublishWizardStep(2)"
+              class="w-full h-12 bg-black hover:bg-neutral-900 text-white font-bold rounded-xl flex items-center justify-center gap-2 active:scale-98 shadow-md transition-all cursor-pointer"
+            >
+              <span>Continuar para Data e Horário</span>
+              ${icon('arrow_forward', { size: 'sm' })}
+            </button>
           </div>
         </div>
+      ` : ''}
 
-        <!-- Step 2: Data e Horário -->
-        <div class="p-4 sm:p-5 border border-uber-border rounded-xl flex flex-col gap-3 bg-white">
-          <div class="flex items-center gap-2 pb-3 border-b border-uber-border h-8">
-            ${icon('schedule', { size: 'sm', className: 'text-uber-black' })}
-            <h2 class="font-bold text-sm sm:text-base text-uber-black">2. Data e Horário</h2>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <!-- STEP 2: DATA E HORÁRIO -->
+      ${currentStep === 2 ? `
+        <div class="p-5 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Data da Viagem</label>
-              <input id="pub-date" type="date" value="${tomorrow}" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none cursor-pointer" />
+              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Data da Viagem</label>
+              <input
+                id="pub-date"
+                type="date"
+                required
+                min="${new Date().toISOString().split('T')[0]}"
+                value="${publishWizardState.departureDate}"
+                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+              />
             </div>
             <div>
-              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Horário de Saída</label>
-              <input id="pub-time" type="time" value="08:00" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none cursor-pointer" />
+              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Horário de Saída</label>
+              <input
+                id="pub-time"
+                type="time"
+                required
+                value="${publishWizardState.departureTime}"
+                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+              />
             </div>
           </div>
 
-          <div class="flex items-center gap-2 text-xs font-semibold text-uber-black bg-uber-gray p-3 rounded-lg border border-uber-border">
-            ${icon('check_circle', { size: 'sm', className: 'text-uber-black shrink-0' })}
-            <span>Antecedência mínima de 2h respeitada.</span>
+          <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-emerald-900">
+            ${icon('check_circle', { size: 'sm', className: 'text-emerald-700 shrink-0' })}
+            <span>Aviso Preventivo: A saída deve ter antecedência mínima de 2 horas para conforto dos passageiros.</span>
+          </div>
+
+          <div class="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
+            <button
+              type="button"
+              onclick="setPublishWizardStep(1)"
+              class="w-full sm:w-1/3 h-12 border border-uber-border hover:bg-uber-gray text-uber-black font-bold text-xs rounded-xl transition-colors cursor-pointer"
+            >
+              Voltar
+            </button>
+            <button
+              type="button"
+              onclick="setPublishWizardStep(3)"
+              class="w-full sm:w-2/3 h-12 bg-black hover:bg-neutral-900 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-98 shadow-md transition-all cursor-pointer"
+            >
+              <span>Continuar para Veículo e Preço</span>
+              ${icon('arrow_forward', { size: 'sm' })}
+            </button>
           </div>
         </div>
+      ` : ''}
 
-        <!-- Step 3: Vagas e Valor (Até 7 Lugares) -->
-        <div class="p-4 sm:p-5 border border-uber-border rounded-xl flex flex-col gap-3 bg-white">
-          <div class="flex items-center gap-2 pb-3 border-b border-uber-border h-8">
-            ${icon('payments', { size: 'sm', className: 'text-uber-black' })}
-            <h2 class="font-bold text-sm sm:text-base text-uber-black">3. Vagas e Valor</h2>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Vagas Livres</label>
-              <select id="pub-seats" class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-uber-black rounded-lg h-[48px] px-3 font-semibold text-sm cursor-pointer transition-all focus:outline-none">
-                <option value="1">1 passageiro</option>
-                <option value="2">2 passageiros</option>
-                <option value="3">3 passageiros</option>
-                <option value="4" selected>4 passageiros</option>
-                <option value="5">5 passageiros</option>
-                <option value="6">6 passageiros</option>
-                <option value="7">7 passageiros</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Valor por Pessoa (R$)</label>
-              <input id="pub-price" type="number" step="0.50" value="45.00" required class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-lg h-12 px-4 focus:outline-none" />
-            </div>
-          </div>
-
+      <!-- STEP 3: VEÍCULO, VAGAS E PRECIFICAÇÃO INTELIGENTE -->
+      ${currentStep === 3 ? `
+        <div class="p-5 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-5">
+          
+          <!-- Seletor de Carro Cadastrado -->
           <div>
-            <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Observações (Opcional)</label>
-            <textarea id="pub-notes" rows="2" placeholder="Ex: Tolerância de 10 minutos no ponto de encontro." class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white font-normal rounded-lg p-3 text-xs text-uber-black focus:outline-none transition-all"></textarea>
+            <div class="flex items-center justify-between pb-2 mb-2 border-b border-uber-border">
+              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider">Selecione o Veículo</label>
+              <button
+                type="button"
+                onclick="openVehicleModal()"
+                class="text-xs font-bold text-black underline flex items-center gap-1 cursor-pointer"
+              >
+                ${icon('add', { size: 'sm' })}
+                <span>Cadastrar Outro Carro</span>
+              </button>
+            </div>
+
+            <input type="hidden" id="pub-selected-vehicle-id" value="${publishWizardState.vehicleId}" />
+
+            ${driverVehicles.length === 0 ? `
+              <div class="p-4 bg-uber-gray border border-dashed border-uber-border rounded-xl text-center">
+                <p class="text-xs text-uber-iron">Nenhum veículo cadastrado no seu perfil.</p>
+                <button
+                  type="button"
+                  onclick="openVehicleModal()"
+                  class="mt-2 px-4 py-2 bg-black text-white text-xs font-bold rounded-lg"
+                >
+                  Cadastrar Veículo Agora
+                </button>
+              </div>
+            ` : `
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                ${driverVehicles.map(veh => {
+                  const isSelected = veh.id === publishWizardState.vehicleId;
+                  const colorObj = getVehicleColorObj(veh.color);
+                  return `
+                    <div
+                      data-veh-id="${veh.id}"
+                      onclick="handleSelectPublishVehicle('${veh.id}')"
+                      class="pub-vehicle-card p-3 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${isSelected ? 'ring-2 ring-black border-black bg-neutral-50' : 'border-uber-border bg-white hover:bg-neutral-50'}"
+                    >
+                      <div class="w-14 h-10 bg-white border border-uber-border rounded-lg flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs">
+                        <img src="${getVehicleImage(veh)}" alt="${veh.brand} ${veh.model}" class="w-full h-full object-contain" />
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <div class="flex items-center justify-between gap-1">
+                          <span class="font-bold text-xs text-uber-black truncate">${veh.brand} ${veh.model}</span>
+                          ${isSelected ? `<span class="text-black font-bold text-xs">${icon('check_circle', { size: 'sm' })}</span>` : ''}
+                        </div>
+                        <div class="flex items-center gap-1.5 text-[11px] text-uber-iron mt-0.5">
+                          <span class="font-mono font-semibold">${veh.plate}</span>
+                          <span>•</span>
+                          <span class="inline-flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-xs border ${colorObj.border}" style="background-color: ${colorObj.hex}"></span>
+                            <span>${colorObj.name}</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `}
+          </div>
+
+          <!-- Vagas Disponíveis -->
+          <div>
+            <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Vagas Disponíveis para Passageiros</label>
+            <select
+              id="pub-seats"
+              class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-uber-black font-bold text-sm rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+            >
+              ${[1, 2, 3, 4, 5, 6, 7].map(num => `
+                <option value="${num}" ${num === publishWizardState.seats ? 'selected' : ''}>
+                  ${num} ${num === 1 ? 'passageiro' : 'passageiros'}
+                </option>
+              `).join('')}
+            </select>
+          </div>
+
+          <!-- Precificação Inteligente por Distância (Uber & BlaBlaCar Style) -->
+          <div class="p-4 bg-uber-gray border border-uber-border rounded-xl space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-uber-border">
+              <div class="flex items-center gap-2">
+                ${icon('payments', { size: 'sm', className: 'text-uber-black' })}
+                <span class="text-xs font-bold text-uber-black uppercase tracking-wider">Valor por Passageiro</span>
+              </div>
+              <span class="text-[11px] font-semibold text-uber-iron">
+                Distância: ~${publishWizardState.distanceKm} km
+              </span>
+            </div>
+
+            <!-- Preço Recomendado & Controles de Ajuste -->
+            <div class="flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <span class="text-[11px] text-uber-iron block font-medium">Faixa permitida para esta rota:</span>
+                <span class="text-xs font-bold text-uber-black">
+                  R$ ${publishWizardState.priceMetrics.minPrice.toFixed(2)} a R$ ${publishWizardState.priceMetrics.maxPrice.toFixed(2)}
+                </span>
+              </div>
+
+              <!-- Stepper Controls de Preço -->
+              <div class="flex items-center gap-1.5 bg-white border border-uber-border rounded-xl p-1 shadow-2xs">
+                <button
+                  type="button"
+                  onclick="adjustPublishPrice(-5)"
+                  title="Diminuir R$ 5,00"
+                  class="w-9 h-9 flex items-center justify-center bg-uber-gray hover:bg-neutral-200 text-uber-black font-bold rounded-lg transition-colors cursor-pointer"
+                >
+                  ${icon('remove', { size: 'sm' })}
+                </button>
+
+                <div class="flex items-center px-2">
+                  <span class="text-xs font-bold text-uber-iron mr-1">R$</span>
+                  <input
+                    id="pub-price"
+                    type="number"
+                    step="1.00"
+                    min="${publishWizardState.priceMetrics.minPrice}"
+                    max="${publishWizardState.priceMetrics.maxPrice}"
+                    value="${publishWizardState.pricePerSeat.toFixed(2)}"
+                    onchange="adjustPublishPrice(0)"
+                    class="w-16 font-extrabold text-base text-uber-black text-center bg-transparent focus:outline-none"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onclick="adjustPublishPrice(5)"
+                  title="Aumentar R$ 5,00"
+                  class="w-9 h-9 flex items-center justify-center bg-uber-gray hover:bg-neutral-200 text-uber-black font-bold rounded-lg transition-colors cursor-pointer"
+                >
+                  ${icon('add', { size: 'sm' })}
+                </button>
+              </div>
+            </div>
+
+            <!-- Indicator Badge de Precificação -->
+            <div id="pub-price-indicator-badge" class="text-[11px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md inline-flex items-center gap-1">
+              ${icon('verified', { size: 'sm' })} Preço Ideal Recomendado (Excelente adesão)
+            </div>
+          </div>
+
+          <div class="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
+            <button
+              type="button"
+              onclick="setPublishWizardStep(2)"
+              class="w-full sm:w-1/3 h-12 border border-uber-border hover:bg-uber-gray text-uber-black font-bold text-xs rounded-xl transition-colors cursor-pointer"
+            >
+              Voltar
+            </button>
+            <button
+              type="button"
+              onclick="setPublishWizardStep(4)"
+              class="w-full sm:w-2/3 h-12 bg-black hover:bg-neutral-900 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-98 shadow-md transition-all cursor-pointer"
+            >
+              <span>Continuar para Viagem de Volta</span>
+              ${icon('arrow_forward', { size: 'sm' })}
+            </button>
           </div>
         </div>
+      ` : ''}
 
-        <button type="submit" class="w-full h-12 mt-2 font-bold bg-black text-white hover:bg-neutral-900 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-98">
-          ${icon('check_circle', { size: 'md' })}
-          <span>Publicar Nova Viagem</span>
-        </button>
-      </form>
+      <!-- STEP 4: VIAGEM DE VOLTA (OPCIONAL) -->
+      ${currentStep === 4 ? `
+        <div class="p-5 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
+          
+          <div class="p-4 bg-uber-gray border border-uber-border rounded-xl">
+            <label class="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                id="pub-has-return"
+                ${publishWizardState.hasReturn ? 'checked' : ''}
+                onchange="togglePublishReturn(this.checked)"
+                class="w-5 h-5 mt-0.5 rounded text-black focus:ring-black cursor-pointer"
+              />
+              <div>
+                <span class="font-bold text-sm text-uber-black block">Desejo cadastrar também a viagem de volta</span>
+                <span class="text-xs text-uber-iron block mt-0.5 leading-relaxed">
+                  O trajeto contrário (${publishWizardState.destinationCity} ➔ ${publishWizardState.originCity}) será publicado automaticamente no mesmo anúncio.
+                </span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Return Trip Details (Conditional) -->
+          <div id="pub-return-details-container" class="${publishWizardState.hasReturn ? '' : 'hidden'} space-y-3.5 pt-1">
+            <div class="p-3 bg-neutral-50 border border-neutral-200 rounded-lg text-xs font-semibold text-uber-black flex items-center gap-2">
+              ${icon('sync_alt', { size: 'sm', className: 'text-uber-black' })}
+              <span>Percurso da Volta: <strong>${publishWizardState.destinationCity}</strong> ➔ <strong>${publishWizardState.originCity}</strong></span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Data de Retorno</label>
+                <input
+                  id="pub-return-date"
+                  type="date"
+                  min="${publishWizardState.departureDate}"
+                  value="${publishWizardState.returnDate}"
+                  class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Horário de Saída (Volta)</label>
+                <input
+                  id="pub-return-time"
+                  type="time"
+                  value="${publishWizardState.returnTime}"
+                  class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Vagas na Volta</label>
+                <select
+                  id="pub-return-seats"
+                  class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-uber-black font-bold text-sm rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+                >
+                  ${[1, 2, 3, 4, 5, 6, 7].map(num => `
+                    <option value="${num}" ${num === publishWizardState.returnSeats ? 'selected' : ''}>
+                      ${num} ${num === 1 ? 'passageiro' : 'passageiros'}
+                    </option>
+                  `).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Valor na Volta (R$)</label>
+                <input
+                  id="pub-return-price"
+                  type="number"
+                  step="1.00"
+                  value="${publishWizardState.returnPrice.toFixed(2)}"
+                  class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-bold rounded-xl h-12 px-4 focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
+            <button
+              type="button"
+              onclick="setPublishWizardStep(3)"
+              class="w-full sm:w-1/3 h-12 border border-uber-border hover:bg-uber-gray text-uber-black font-bold text-xs rounded-xl transition-colors cursor-pointer"
+            >
+              Voltar
+            </button>
+            <button
+              type="button"
+              onclick="setPublishWizardStep(5)"
+              class="w-full sm:w-2/3 h-12 bg-black hover:bg-neutral-900 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-98 shadow-md transition-all cursor-pointer"
+            >
+              <span>Revisar e Publicar</span>
+              ${icon('arrow_forward', { size: 'sm' })}
+            </button>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- STEP 5: RESUMO E CONFIRMAÇÃO FINAL -->
+      ${currentStep === 5 ? (() => {
+        const driverVehicles = store.state.currentUser.vehicles || [];
+        const veh = driverVehicles.find(v => v.id === publishWizardState.vehicleId) || store.state.currentUser.vehicle || {};
+        const colorObj = getVehicleColorObj(veh.color);
+        const maxEarningsOut = publishWizardState.pricePerSeat * publishWizardState.seats;
+        const maxEarningsReturn = publishWizardState.hasReturn ? (publishWizardState.returnPrice * publishWizardState.returnSeats) : 0;
+        const totalPotential = maxEarningsOut + maxEarningsReturn;
+
+        return `
+          <div class="p-5 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
+            
+            <!-- Summary Header Card -->
+            <div class="p-4 bg-uber-gray border border-uber-border rounded-xl flex items-center gap-3.5">
+              <div class="w-16 h-11 bg-white border border-uber-border rounded-lg flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs">
+                <img src="${getVehicleImage(veh)}" alt="${veh.brand} ${veh.model}" class="w-full h-full object-contain" />
+              </div>
+              <div class="min-w-0">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-uber-iron block">Veículo Confirmado</span>
+                <span class="font-bold text-sm text-uber-black block truncate">${veh.brand} ${veh.model}</span>
+                <div class="flex items-center gap-1.5 text-[11px] text-uber-iron mt-0.5">
+                  <span class="font-mono font-semibold">${veh.plate}</span>
+                  <span>•</span>
+                  <span class="inline-flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-xs border ${colorObj.border}" style="background-color: ${colorObj.hex}"></span>
+                    <span>Cor ${colorObj.name}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Outbound Trip Summary Card -->
+            <div class="p-4 border border-uber-border rounded-xl space-y-2.5">
+              <div class="flex items-center justify-between text-xs pb-2 border-b border-uber-border">
+                <span class="font-bold text-uber-black uppercase tracking-wider flex items-center gap-1.5">
+                  ${icon('navigation', { size: 'sm' })} Viagem de Ida
+                </span>
+                <span class="font-bold text-uber-black">R$ ${publishWizardState.pricePerSeat.toFixed(2).replace('.', ',')} / vaga</span>
+              </div>
+              <div class="text-xs space-y-1 text-uber-charcoal">
+                <p><strong>Trajeto:</strong> ${publishWizardState.originCity} ➔ ${publishWizardState.destinationCity}</p>
+                <p><strong>Partida:</strong> ${publishWizardState.originSpot} (${publishWizardState.departureDate} às ${publishWizardState.departureTime})</p>
+                <p><strong>Chegada:</strong> ${publishWizardState.destinationSpot} (~${publishWizardState.duration})</p>
+                <p><strong>Vagas:</strong> ${publishWizardState.seats} assentos disponíveis</p>
+              </div>
+            </div>
+
+            <!-- Inbound Trip Summary Card (if applicable) -->
+            ${publishWizardState.hasReturn ? `
+              <div class="p-4 border border-uber-border rounded-xl space-y-2.5 bg-neutral-50/50">
+                <div class="flex items-center justify-between text-xs pb-2 border-b border-uber-border">
+                  <span class="font-bold text-uber-black uppercase tracking-wider flex items-center gap-1.5">
+                    ${icon('sync_alt', { size: 'sm' })} Viagem de Retorno
+                  </span>
+                  <span class="font-bold text-uber-black">R$ ${publishWizardState.returnPrice.toFixed(2).replace('.', ',')} / vaga</span>
+                </div>
+                <div class="text-xs space-y-1 text-uber-charcoal">
+                  <p><strong>Trajeto:</strong> ${publishWizardState.destinationCity} ➔ ${publishWizardState.originCity}</p>
+                  <p><strong>Partida:</strong> ${publishWizardState.destinationSpot} (${publishWizardState.returnDate} às ${publishWizardState.returnTime})</p>
+                  <p><strong>Chegada:</strong> ${publishWizardState.originSpot}</p>
+                  <p><strong>Vagas:</strong> ${publishWizardState.returnSeats} assentos disponíveis</p>
+                </div>
+              </div>
+            ` : ''}
+
+            <!-- Estimated Total Earnings -->
+            <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs font-semibold text-emerald-950">
+              <span class="flex items-center gap-1.5 font-bold">
+                ${icon('payments', { size: 'sm', className: 'text-emerald-700' })}
+                Ganhos potenciais totais:
+              </span>
+              <span class="text-base font-extrabold text-emerald-900">
+                Até R$ ${totalPotential.toFixed(2).replace('.', ',')}
+              </span>
+            </div>
+
+            <!-- Optional Driver Notes -->
+            <div>
+              <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Observações para os Passageiros (Opcional)</label>
+              <textarea
+                id="pub-final-notes"
+                rows="2"
+                placeholder="Ex: Tolerância de 10 min no ponto de encontro, porta-malas espaçoso..."
+                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white font-normal rounded-xl p-3 text-xs text-uber-black focus:outline-none transition-all"
+              >${publishWizardState.notes}</textarea>
+            </div>
+
+            <div class="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
+              <button
+                type="button"
+                onclick="setPublishWizardStep(4)"
+                class="w-full sm:w-1/3 h-12 border border-uber-border hover:bg-uber-gray text-uber-black font-bold text-xs rounded-xl transition-colors cursor-pointer"
+              >
+                Voltar
+              </button>
+              <button
+                type="button"
+                onclick="handleFinishPublishRide()"
+                class="w-full sm:w-2/3 h-12 bg-black hover:bg-neutral-900 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-98 shadow-md transition-all cursor-pointer"
+              >
+                ${icon('check_circle', { size: 'sm' })}
+                <span>Publicar Viagem na Cooperativa</span>
+              </button>
+            </div>
+          </div>
+        `;
+      })() : ''}
+
     </div>
   `;
-}
-
-function handlePublishSubmit(e) {
-  e.preventDefault();
-  const originCity = document.getElementById('pub-origin-city').value;
-  const originSpot = document.getElementById('pub-origin-spot').value;
-  const destinationCity = document.getElementById('pub-dest-city').value;
-  const destinationSpot = document.getElementById('pub-dest-spot').value;
-  const departureDate = document.getElementById('pub-date').value;
-  const departureTime = document.getElementById('pub-time').value;
-  const totalSeats = Number(document.getElementById('pub-seats').value);
-  const pricePerSeat = parseFloat(document.getElementById('pub-price').value) || 35.0;
-  const notes = document.getElementById('pub-notes').value;
-
-  // Validation: 2 hours advance
-  const targetDate = new Date(`${departureDate}T${departureTime}:00`);
-  const minValid = new Date(Date.now() + 2 * 60 * 60 * 1000);
-
-  if (targetDate < minValid) {
-    showToast('A viagem deve ser cadastrada com pelo menos 2 horas de antecedência.', 'error');
-    return;
-  }
-
-  const vehicle = store.state.currentUser.vehicle || {
-    plate: 'CE-FOR-2023',
-    state: 'CE',
-    brand: 'Toyota',
-    model: 'Corolla 2.0',
-    year: 2023,
-    hasAC: true,
-    hasUSB: true,
-  };
-
-  store.addRide({
-    originCity,
-    originSpot,
-    destinationCity,
-    destinationSpot,
-    departureDate,
-    departureTime,
-    estimatedDuration: '2h 30m',
-    estimatedArrivalTime: '10:30',
-    pricePerSeat,
-    totalSeats,
-    availableSeats: totalSeats,
-    vehicle,
-    notes,
-    status: 'PUBLISHED',
-  });
-
-  showToast(`Viagem para ${destinationCity} publicada com sucesso!`, 'success');
-  window.location.hash = '#/minhas-viagens';
 }
 
 // View: Chat em Tela Cheia (Fullscreen)
@@ -4443,90 +5193,9 @@ function ensureHeroVideoPlays() {
   }
 }
 
-// Suporte a gesto de arrastar na tela para trocar de aba (Swipe Navigation)
-function setupSwipeNavigation() {
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let touchEndX = 0;
-  let touchEndY = 0;
-
-  const minSwipeDistance = 60; // distância mínima em px para considerar swipe
-  const maxPerpendicularDistance = 80; // tolerância vertical para não confundir com rolagem
-
-  window.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-    touchStartY = e.changedTouches[0].screenY;
-  }, { passive: true });
-
-  window.addEventListener('touchend', (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    touchEndY = e.changedTouches[0].screenY;
-    handleSwipeGesture();
-  }, { passive: true });
-
-  function handleSwipeGesture() {
-    const diffX = touchEndX - touchStartX;
-    const diffY = touchEndY - touchStartY;
-
-    // Se o movimento vertical for maior que a tolerância, o usuário estava apenas rolando a página
-    if (Math.abs(diffY) > maxPerpendicularDistance) return;
-
-    if (Math.abs(diffX) < minSwipeDistance) return;
-
-    const role = store.state.role;
-    const currentPath = window.location.hash.slice(1) || '/';
-
-    const tabs = [
-      { href: '#/buscar', isActive: currentPath === '/' || currentPath === '/buscar' }
-    ];
-
-    if (role === 'DRIVER') {
-      tabs.push({ href: '#/publicar', isActive: currentPath === '/publicar' });
-    }
-    if (role === 'ADMIN' || role === 'MANAGER') {
-      tabs.push({ href: '#/admin', isActive: currentPath === '/admin' });
-    }
-    tabs.push(
-      { href: '#/minhas-viagens', isActive: currentPath === '/minhas-viagens' },
-      { href: '#/perfil', isActive: currentPath === '/perfil' }
-    );
-
-    let activeIdx = tabs.findIndex(t => t.isActive);
-    if (activeIdx === -1) return; // se estiver em subpáginas de detalhe, não dispara swipe acidental
-
-    if (diffX < 0) {
-      // Swipe para a esquerda -> Próxima aba (tela surge da direita)
-      if (activeIdx < tabs.length - 1) {
-        if (typeof SoundEngine !== 'undefined') SoundEngine.play('info');
-        const appRoot = document.getElementById('app-root');
-        if (appRoot) {
-          appRoot.classList.remove('animate-slide-left', 'animate-slide-right', 'animate-fade-in');
-          void appRoot.offsetWidth; // trigger reflow
-          appRoot.classList.add('animate-slide-left');
-        }
-        window.location.hash = tabs[activeIdx + 1].href;
-      }
-    } else {
-      // Swipe para a direita -> Aba anterior (tela surge da esquerda)
-      if (activeIdx > 0) {
-        if (typeof SoundEngine !== 'undefined') SoundEngine.play('info');
-        const appRoot = document.getElementById('app-root');
-        if (appRoot) {
-          appRoot.classList.remove('animate-slide-left', 'animate-slide-right', 'animate-fade-in');
-          void appRoot.offsetWidth; // trigger reflow
-          appRoot.classList.add('animate-slide-right');
-        }
-        window.location.hash = tabs[activeIdx - 1].href;
-      }
-    }
-  }
-}
-
-
 window.addEventListener('hashchange', renderApp);
 window.addEventListener('DOMContentLoaded', () => {
   renderFooter();
   renderApp();
-  setupSwipeNavigation();
 });
 
