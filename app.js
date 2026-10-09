@@ -733,10 +733,10 @@ class AppStore {
           };
         }
         if (this.state.searchParams) {
-          if (this.state.searchParams.origin === 'Fortaleza, CE' && this.state.searchParams.destination === 'Juazeiro do Norte, CE') {
-            this.state.searchParams.origin = '';
-            this.state.searchParams.destination = '';
-          }
+          this.state.searchParams.origin = '';
+          this.state.searchParams.destination = '';
+        } else {
+          this.state.searchParams = { origin: '', destination: '', date: new Date().toISOString().split('T')[0], seats: 1 };
         }
         // Migração suave de CPFs em viagens e reservas
         if (Array.isArray(this.state.rides)) {
@@ -2141,8 +2141,10 @@ function swapPublishCities() {
   updatePublishRouteMetrics();
 }
 
-function renderHeroSearchBar() {
+function renderHeroSearchBar(keepValues = false) {
   const { origin, destination, date, seats } = store.state.searchParams;
+  const originVal = keepValues ? (origin || '') : '';
+  const destVal = keepValues ? (destination || '') : '';
   const todayStr = new Date().toISOString().split('T')[0];
 
   return `
@@ -2158,7 +2160,7 @@ function renderHeroSearchBar() {
                 id="search-origin"
                 type="text"
                 autocomplete="off"
-                value="${origin || ''}"
+                value="${originVal}"
                 placeholder="Cidade ou ponto de partida"
                 class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
                 onfocus="handleLocationFocus('search-origin', 'autocomplete-origin-dropdown', 'origin')"
@@ -2184,7 +2186,7 @@ function renderHeroSearchBar() {
                 id="search-dest"
                 type="text"
                 autocomplete="off"
-                value="${destination || ''}"
+                value="${destVal}"
                 placeholder="Cidade ou ponto de destino"
                 class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
                 onfocus="handleLocationFocus('search-dest', 'autocomplete-dest-dropdown', 'dest')"
@@ -2373,6 +2375,9 @@ function selectPopularRoute(origin, destination) {
 // View: Home
 function viewHome() {
   const role = store.state.role;
+  store.state.searchParams.origin = '';
+  store.state.searchParams.destination = '';
+  store.saveState();
 
   return `
     <div class="flex flex-col gap-10 md:gap-14 pb-12 text-left animate-fade-in overflow-visible">
@@ -2411,7 +2416,7 @@ function viewHome() {
           </p>
 
           <div class="w-full mt-4 relative z-30 overflow-visible">
-            ${renderHeroSearchBar()}
+            ${renderHeroSearchBar(false)}
           </div>
         </div>
       </section>
@@ -2523,7 +2528,7 @@ function viewSearchResults() {
   return `
     <div class="max-w-6xl xl:max-w-7xl mx-auto px-4 py-6 text-left animate-fade-in overflow-visible">
       <div class="mb-6 relative z-30 overflow-visible">
-        ${renderHeroSearchBar()}
+        ${renderHeroSearchBar(true)}
       </div>
 
 
