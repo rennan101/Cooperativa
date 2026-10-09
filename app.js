@@ -1390,7 +1390,7 @@ function renderNotificationPanel() {
   const items = list.length ? list.map(n => `
     <button onclick="markNotificationRead('${n.id}')${n.href ? `; window.location.hash='${n.href}'` : ''}"
       class="w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-uber-gray transition-colors ${n.read ? '' : 'bg-uber-gray/60'}">
-      <span class="shrink-0 mt-0.5 w-7 h-7 rounded-full flex items-center justify-center ${n.read ? 'bg-uber-gray text-uber-iron' : 'bg-uber-black text-white'}">
+      <span class="shrink-0 mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center ${n.read ? 'bg-uber-gray text-uber-iron' : 'bg-uber-black text-white'}">
         ${icon(n.icon, { size: 'sm' })}
       </span>
       <span class="min-w-0 flex-1">
@@ -1406,11 +1406,11 @@ function renderNotificationPanel() {
     </div>
   `;
   panel.innerHTML = `
-    <div class="flex items-center justify-between px-4 py-3 border-b border-uber-border">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-uber-border bg-white">
       <span class="text-sm font-extrabold text-uber-black">Notificações</span>
       ${unreadCount() > 0 ? `<button onclick="markAllNotificationsRead()" class="text-[11px] font-bold text-uber-iron hover:text-uber-black transition-colors">Marcar todas como lidas</button>` : ''}
     </div>
-    <div class="max-h-96 overflow-y-auto divide-y divide-uber-border">
+    <div class="max-h-[60vh] sm:max-h-96 overflow-y-auto divide-y divide-uber-border">
       ${items}
     </div>
   `;
@@ -1424,75 +1424,76 @@ function renderHeader() {
   const avatar = store.state.currentUser.avatarUrl || DEFAULT_BLANK_AVATAR;
 
   headerRoot.innerHTML = `
-    <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+    <div class="max-w-4xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2 sm:gap-4">
       <!-- Logo -->
-      <a href="#/" class="flex items-center gap-2.5 shrink-0 group">
+      <a href="#/" class="flex items-center gap-2 sm:gap-2.5 shrink-0 group" aria-label="Página inicial Cooperativa">
         <div class="bg-white text-uber-black w-8 h-8 rounded-lg flex items-center justify-center font-bold transition-transform group-hover:scale-105">
           ${icon('directions_car', { size: 'sm' })}
         </div>
         <div class="flex flex-col text-left">
-          <span class="font-extrabold text-lg tracking-tight text-white leading-none">Cooperativa</span>
-          <span class="text-[10px] font-semibold text-uber-iron uppercase tracking-wider">Nordeste</span>
+          <span class="font-extrabold text-base sm:text-lg tracking-tight text-white leading-none">Cooperativa</span>
+          <span class="text-[9px] sm:text-[10px] font-semibold text-uber-iron uppercase tracking-wider">Nordeste</span>
         </div>
       </a>
 
       <!-- Desktop Nav -->
-      <nav class="hidden md:flex items-center gap-6 h-full">
-        <a href="#/buscar" class="h-full flex items-center gap-1.5 text-sm font-semibold transition-colors border-b-2 ${isSearchActive ? 'text-white border-white' : 'text-uber-slate border-transparent hover:text-white'}">
+      <nav class="hidden md:flex items-center gap-2 lg:gap-6 h-full" aria-label="Navegação desktop">
+        <a href="#/buscar" class="h-full flex items-center gap-1.5 text-xs lg:text-sm font-semibold transition-colors border-b-2 ${isSearchActive ? 'text-white border-white' : 'text-uber-slate border-transparent hover:text-white'}">
           ${icon('search', { size: 'sm' })}
           <span>Buscar</span>
         </a>
 
         ${role === 'DRIVER' ? `
-          <a href="#/publicar" class="h-full flex items-center gap-1.5 text-sm font-semibold transition-colors border-b-2 ${currentPath === '/publicar' ? 'text-white border-white' : 'text-uber-slate border-transparent hover:text-white'}">
+          <a href="#/publicar" class="h-full flex items-center gap-1.5 text-xs lg:text-sm font-semibold transition-colors border-b-2 ${currentPath === '/publicar' ? 'text-white border-white' : 'text-uber-slate border-transparent hover:text-white'}">
             ${icon('add', { size: 'sm' })}
             <span>Nova Viagem</span>
           </a>
         ` : ''}
 
-        <a href="#/minhas-viagens" class="h-full flex items-center gap-1.5 text-sm font-semibold transition-colors border-b-2 ${currentPath === '/minhas-viagens' ? 'text-white border-white' : 'text-uber-slate border-transparent hover:text-white'}">
+        <a href="#/minhas-viagens" class="h-full flex items-center gap-1.5 text-xs lg:text-sm font-semibold transition-colors border-b-2 ${currentPath === '/minhas-viagens' ? 'text-white border-white' : 'text-uber-slate border-transparent hover:text-white'}">
           ${icon('history', { size: 'sm' })}
           <span>Viagens</span>
         </a>
 
         ${(role === 'ADMIN' || role === 'MANAGER') ? `
-          <a href="#/admin" class="h-full flex items-center gap-1.5 text-sm font-semibold transition-colors border-b-2 ${currentPath === '/admin' ? 'text-white border-white' : 'text-uber-slate border-transparent hover:text-white'}">
+          <a href="#/admin" class="h-full flex items-center gap-1.5 text-xs lg:text-sm font-semibold transition-colors border-b-2 ${currentPath === '/admin' ? 'text-white border-white' : 'text-uber-slate border-transparent hover:text-white'}">
             ${icon('admin_panel_settings', { size: 'sm' })}
             <span>Painel</span>
           </a>
         ` : ''}
 
-        <a href="#/perfil" class="h-full flex items-center gap-2 text-sm font-semibold transition-colors border-b-2 ${currentPath === '/perfil' ? 'text-white border-white' : 'text-uber-slate border-transparent hover:text-white'}">
-          <img src="${avatar}" alt="Avatar" class="w-5 h-5 rounded-full object-cover bg-uber-gray border border-white/20" />
+        <a href="#/perfil" class="h-full flex items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-semibold transition-colors border-b-2 ${currentPath === '/perfil' ? 'text-white border-white' : 'text-uber-slate border-transparent hover:text-white'}">
+          <img src="${avatar}" alt="Avatar" class="w-5 h-5 rounded-md object-cover bg-uber-gray border border-white/20" />
           <span>Perfil</span>
         </a>
       </nav>
 
       <!-- Role Switcher & Profile Quick Action -->
-      <div class="flex items-center gap-3 shrink-0">
+      <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
         <!-- Notifications Bell + Badge -->
         <div class="relative">
-          <button onclick="toggleNotificationCenter()" title="Notificações"
-            class="relative h-8 w-8 flex items-center justify-center rounded-lg hover:bg-uber-charcoal transition-colors">
+          <button onclick="toggleNotificationCenter()" title="Notificações" aria-label="Abrir central de notificações"
+            class="relative h-8 w-8 flex items-center justify-center rounded-lg hover:bg-uber-charcoal transition-colors active:scale-95">
             ${icon('notifications', { size: 'sm' })}
             <span id="notif-badge"
-              class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold leading-none"
+              class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 items-center justify-center rounded-md bg-red-500 text-white text-[10px] font-bold leading-none"
               style="display:none">0</span>
           </button>
           <!-- Notification dropdown -->
           <div id="notification-panel"
-            class="hidden absolute right-0 top-10 w-80 sm:w-96 bg-white rounded-xl border border-uber-border shadow-2xl z-50 overflow-hidden"
+            class="hidden fixed sm:absolute top-16 sm:top-10 left-3 right-3 sm:left-auto sm:right-0 max-w-sm sm:max-w-none sm:w-96 mx-auto sm:mx-0 bg-white rounded-xl border border-uber-border shadow-2xl z-50 overflow-hidden"
             style="display:none"></div>
         </div>
 
-        <a href="#/perfil" class="flex items-center gap-2 text-xs sm:text-sm font-semibold text-white hover:opacity-90">
-          <img src="${avatar}" alt="Avatar" class="w-6 h-6 rounded-full object-cover bg-uber-gray border border-white/30" />
+        <a href="#/perfil" class="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold text-white hover:opacity-90" aria-label="Ver perfil">
+          <img src="${avatar}" alt="Avatar" class="w-6 h-6 rounded-md object-cover bg-uber-gray border border-white/30" />
           <span class="hidden sm:inline">${store.state.currentUser.name.split(' ')[0]}</span>
         </a>
 
-        <button onclick="toggleRole()" title="Alternar Perfil para Teste" class="h-8 px-3 flex items-center gap-1.5 text-xs font-semibold text-white bg-uber-charcoal hover:bg-uber-iron/30 rounded-lg transition-colors active:scale-95">
+        <button onclick="toggleRole()" title="Alternar Perfil para Teste" aria-label="Alternar perfil: ${role === 'DRIVER' ? 'Motorista' : role === 'ADMIN' ? 'Admin' : 'Passageiro'}"
+          class="h-8 px-2 sm:px-3 flex items-center gap-1 sm:gap-1.5 text-xs font-semibold text-white bg-uber-charcoal hover:bg-uber-iron/30 rounded-lg transition-colors active:scale-95">
           ${icon('swap_horiz', { size: 'sm', className: 'text-uber-slate' })}
-          <span class="text-[11px] font-bold">${role === 'DRIVER' ? 'Motorista' : role === 'ADMIN' ? 'Admin' : 'Passageiro'}</span>
+          <span class="header-role-label text-[11px] font-bold hidden xs:inline">${role === 'DRIVER' ? 'Motorista' : role === 'ADMIN' ? 'Admin' : 'Passageiro'}</span>
         </button>
       </div>
     </div>

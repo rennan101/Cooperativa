@@ -169,9 +169,20 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
   }
 }
 
+/* Header Responsive & Safe Area Setup */
+#header-root {
+  padding-top: env(safe-area-inset-top, 0px);
+}
 
+@media (max-width: 399px) {
+  .header-role-label {
+    display: none !important;
+  }
+}
 
-
-
-
+@media (max-width: 639px) {
+  #notification-panel {
+    top: calc(4rem + env(safe-area-inset-top, 0px)) !important;
+  }
+}
 
