@@ -946,6 +946,7 @@ class AppStore {
   }
 
   bookRide(rideId, seats) {
+    if (this.state.role === 'DRIVER') return null;
     const ride = this.state.rides.find(r => r.id === rideId);
     if (!ride) return null;
 
@@ -2731,7 +2732,7 @@ function viewRideDetails(rideId) {
           </div>
         </div>
 
-        <!-- Booking Section (Non-driver) -->
+        <!-- Booking Section (Passageiro vs Motorista) -->
         ${!isDriverMode ? `
           <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl">
             <div class="flex items-center justify-between pb-3 border-b border-uber-border">
@@ -2770,18 +2771,39 @@ function viewRideDetails(rideId) {
               <button
                 type="button"
                 onclick="handleStartBooking('${ride.id}')"
-                class="w-full h-12 bg-black text-white hover:bg-neutral-900 rounded-lg font-bold text-base flex items-center justify-center gap-2 transition-transform active:scale-[0.98]"
+                class="w-full h-12 bg-black text-white hover:bg-neutral-900 rounded-lg font-bold text-base flex items-center justify-center gap-2 transition-transform active:scale-[0.98] cursor-pointer"
               >
                 ${icon('payments', { size: 'md' })}
                 <span>Reservar com PIX (50%)</span>
               </button>
             </div>
           </div>
-        ` : ''}
+        ` : `
+          <!-- Painel Informativo para o Modo Motorista -->
+          <div class="p-4 sm:p-5 border border-uber-border bg-uber-gray rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left">
+            <div class="flex items-start gap-3">
+              <div class="w-9 h-9 bg-white border border-uber-border rounded-lg flex items-center justify-center text-uber-black shrink-0 mt-0.5 shadow-2xs">
+                ${icon('visibility', { size: 'sm' })}
+              </div>
+              <div>
+                <h4 class="font-bold text-xs sm:text-sm text-uber-black">Modo Motorista (Apenas Consulta)</h4>
+                <p class="text-xs text-uber-iron mt-0.5 leading-relaxed">Você pode consultar rotas e detalhes de viagens publicadas, mas não pode reservar vagas como motorista. Para reservar um lugar, mude para o perfil de Passageiro.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onclick="store.setRole('PASSENGER')"
+              class="px-4 py-2.5 bg-black hover:bg-neutral-900 text-white font-bold rounded-lg text-xs shrink-0 active:scale-95 transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
+            >
+              ${icon('person', { size: 'xs' })}
+              <span>Mudar para Passageiro</span>
+            </button>
+          </div>
+        `}
 
       </div>
 
-      <!-- Mobile Sticky Footer -->
+      <!-- Mobile Sticky Footer (Apenas Passageiro) -->
       ${!isDriverMode ? `
         <div class="md:hidden fixed bottom-16 left-0 right-0 z-40 bg-white border-t border-uber-border p-3 shadow-lg flex items-center justify-between gap-3">
           <div class="text-left">
@@ -2791,7 +2813,7 @@ function viewRideDetails(rideId) {
           <button
             type="button"
             onclick="handleStartBooking('${ride.id}')"
-            class="flex-1 h-11 bg-black text-white rounded-lg font-bold flex items-center justify-center gap-2 active:scale-95"
+            class="flex-1 h-11 bg-black text-white rounded-lg font-bold flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
           >
             ${icon('payments', { size: 'sm' })}
             <span>Reservar com PIX</span>
@@ -2803,6 +2825,10 @@ function viewRideDetails(rideId) {
 }
 
 function handleStartBooking(rideId) {
+  if (store.state.role === 'DRIVER') {
+    showToast('Motoristas não podem reservar viagens. Mude para o perfil de Passageiro.', 'warning');
+    return;
+  }
   const booking = store.bookRide(rideId, selectedSeatsDetail);
   if (booking) {
     openPixModal(booking);
