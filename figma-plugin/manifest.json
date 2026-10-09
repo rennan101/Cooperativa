@@ -1,7 +1,0 @@
-{
-  "name": "Cooperativa — Gerador de Telas & Backend",
-  "id": "cooperativa-figma-importer",
-  "api": "1.0.0",
-  "main": "code.js",
-  "editorType": ["figma", "figjam"]
-}

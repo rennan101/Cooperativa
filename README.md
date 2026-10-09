@@ -1,34 +1,33 @@
 # Cooperativa — Viagens Compartilhadas
 
-> **Plataforma de viagens intermunicipais e interestaduais compartilhadas com foco no Nordeste brasileiro.**  
+> **Plataforma de viagens intermunicipais e interestaduais compartilhadas com foco no interior do Nordeste brasileiro.**  
 > Conecta passageiros e motoristas cooperados com máxima segurança, economia real, pagamento facilitado via PIX e uma experiência digital acessível para todos os níveis de letramento tecnológico.
 
 ---
 
-## 📌 Sobre o Projeto
+## 📌 O Desafio da Mobilidade no Interior do Nordeste
 
-O **Cooperativa** nasceu para resolver o desafio de mobilidade e transporte regional no Nordeste (ligando capitais a cidades polo como Fortaleza, Juazeiro do Norte, Sobral, Recife, Caruaru, Petrolina, Salvador, Feira de Santana, Natal, Mossoró e outras).
+No interior do Nordeste brasileiro, milhões de pessoas enfrentam diariamente a escassez de linhas regulares de transporte, passagens rodoviárias com preços elevados e horários inflexíveis. A dependência de transportes informais desregulados gera insegurança, incerteza de horários e falta de transparência financeira.
 
-### Principais Diferenciais:
-1. **Confiança e Segurança Comunitária**: Motoristas verificados com histórico de viagens, avaliações mútuas e veículos validados.
-2. **Modelo Financeiro Justo**: Sinal de 50% pago via PIX na reserva para garantir o assento, com os 50% restantes pagos diretamente na chegada.
-3. **Taxa de Manutenção Reduzida**: Cobrança transparente de apenas 5% de taxa de serviço para sustentabilidade da cooperativa.
-4. **Política Clara de Cancelamento**: Estorno automático de 100% do valor para cancelamentos com mais de 2 horas de antecedência (ou 50% se inferior a 2 horas).
-5. **Inclusão Digital & Alta Acessibilidade**: Interface baseada nas **10 Heurísticas de Jakob Nielsen**, com linguagem direta, fontes legíveis e sem jargões técnicos.
+O **Cooperativa** foi desenvolvido especificamente para transformar essa realidade:
+- **Conexão Real entre Cidades e Polos**: Integra capitais, cidades polo e pequenos municípios do interior (como Fortaleza, Juazeiro do Norte, Sobral, Quixadá, Crateús, Recife, Caruaru, Petrolina, Garanhuns, Salvador, Feira de Santana, Vitória da Conquista, João Pessoa, Campina Grande, Patos, Sousa, Natal, Mossoró, Caicó, Maceió, Arapiraca, São Luís, Imperatriz, Teresina, Parnaíba, Picos, Aracaju e Itabaiana).
+- **Garantia de Vaga com Custódia Segura**: O passageiro reserva sua vaga com antecedência pagando um sinal via PIX retido em custódia segura pela cooperativa, e acerta o restante diretamente no momento da viagem.
+- **Renda Justa e Direta para Condutores Locais**: Motoristas do interior monetizam assentos ociosos em trajetos que já fariam, recebendo repasses diretamente em suas chaves PIX.
+- **Inclusão Digital Absoluta**: Interface simples, direta e intuitiva, pensada para que qualquer pessoa, independente do nível de familiaridade com tecnologia, consiga pesquisar, reservar, pagar e viajar sem dificuldades.
 
 ---
 
-## 🛠️ Stack Tecnológica Atual
+## 🛠️ Stack Tecnológica
 
-A aplicação adota uma arquitetura **Vanilla JavaScript ES6+ Pura (Zero-Build)**, permitindo execução instantânea sem necessidade de etapas pesadas de compilação ou dependências desnecessárias:
+A aplicação adota uma arquitetura **Vanilla JavaScript ES6+ Pura (Zero-Build)**, permitindo alta performance e execução instantânea:
 
 * **Core Frontend**: Vanilla JavaScript (ES6+ Modules & SPA Hash Routing).
-* **Gerenciamento de Estado**: Reativo em memória (`Store` centralizada com suporte a persistência local).
-* **Estilização & Design**: Tailwind CSS (Utility-First) + CSS Customizado (`style.css`).
-* **Design System**: *Uber Monochrome Transit Kiosk* (Alto contraste, preto `#000000`, branco `#FFFFFF`, cinzas neutros).
+* **Gerenciamento de Estado**: Centralizado e reativo (`Store` com persistência local).
+* **Estilização**: Tailwind CSS (Utility-First) + CSS Customizado (`style.css`).
+* **Design System**: Monochrome Transit Kiosk (Alto contraste, preto `#000000`, branco `#FFFFFF`, cinzas neutros).
 * **Tipografia**: [Inter](https://fonts.google.com/specimen/Inter) (Google Fonts).
-* **Ícones**: [Google Material Symbols](https://fonts.google.com/icons) (Uso exclusivo de SVGs profissionais; **proibido o uso de emojis**).
-* **Motor Gráfico de Veículos**: `assets/vehicles/templates.js` (Engine própria de renderização e interpolação de cores de fábrica em SVG).
+* **Ícones**: [Google Material Symbols](https://fonts.google.com/icons) (Ícones profissionais em SVG).
+* **Motor Gráfico de Veículos**: `assets/vehicles/templates.js` (Renderização de veículos vetorizados com cores customizadas de fábrica).
 * **Deploy & Hospedagem**: Vercel / Static Web Hosting.
 
 ---
@@ -38,31 +37,20 @@ A aplicação adota uma arquitetura **Vanilla JavaScript ES6+ Pura (Zero-Build)*
 | Rota SPA | Módulo | Descrição |
 | :--- | :--- | :--- |
 | `#/` | **Home & Hero Transit** | Busca rápida de viagens, destaques de rotas nordestinas, estatísticas de impacto e vantagens. |
-| `#/buscar` | **Busca e Resultados** | Listagem filtrada por horário (Manhã/Tarde/Noite), ar-condicionado, bagagem e exibição dinâmica dos carros. |
-| `#/viagem/:id` | **Detalhes da Viagem** | Itinerário completo com paradas, perfil do condutor, comodidades, breakdown de custos e botão de reserva. |
-| `Overlay` | **Modal PIX Dinâmico** | QR Code gerado, código Copia e Cola, temporizador regressivo de 10 minutos e confirmação de pagamento. |
-| `#/motorista/:id` | **Perfil do Condutor** | Reputação por estrelas, selo de verificação, total de viagens completadas, frota e avaliações de passageiros. |
-| `#/minhas-viagens` | **Minhas Viagens** | Painel dividido em visão Passageiro (reservas ativas/cancelamento com estorno) e Motorista (gestão de solicitações). |
-| `#/publicar` | **Publicar Viagem** | Formulário inteligente com pontos de encontro, seleção de veículo da garagem e precificação sugerida por km. |
+| `#/buscar` | **Busca e Resultados** | Listagem filtrada por horário, ar-condicionado, bagagem e visualização gráfica dos veículos. |
+| `#/viagem/:id` | **Detalhes da Viagem** | Itinerário completo com paradas, perfil do condutor, comodidades, valores e reserva. |
+| `Overlay` | **Modal PIX Dinâmico** | QR Code gerado, código Copia e Cola, temporizador regressivo e confirmação de pagamento. |
+| `#/motorista/:id` | **Perfil do Condutor** | Reputação por estrelas, selo de verificação, total de viagens completadas, frota e avaliações. |
+| `#/minhas-viagens` | **Minhas Viagens / Plataforma** | Gestão de reservas do passageiro, controle de saídas do motorista e painel administrativo com busca por CPF. |
+| `#/publicar` | **Publicar Viagem** | Assistente passo a passo com estimativas inteligentes de valores, paradas e viagem de volta. |
 | `#/chat/:rideId` | **Chat em Tempo Real** | Comunicação direta e instantânea entre condutor e passageiros da viagem. |
-| `#/avaliar/:rideId` | **Avaliação Pós-Viagem** | Seleção de 1 a 5 estrelas, tags de elogio rápido (Pontualidade, Condução Segura, Conforto) e comentário. |
-| `#/perfil` | **Meu Perfil & Garagem** | Edição cadastral, chave PIX para repasses e gerenciamento completo de veículos com swatches de cores. |
-| `#/admin` | **Painel Administrativo** | Dashboard com GMV total bruto, receita da cooperativa (5%), fila de validação de CNH e auditoria de disputas. |
+| `#/avaliar/:rideId` | **Avaliação Pós-Viagem** | Seleção de 1 a 5 estrelas, tags de elogio rápido e comentário. |
+| `#/perfil` | **Meu Perfil & Garagem** | Edição cadastral, chave PIX e gerenciamento de múltiplos veículos com regras de viagem. |
+| `#/admin` | **Painel de Gestão** | Credenciamento de motoristas, custódia financeira e configuração interligada de taxas e estornos. |
 
 ---
 
-## 🎨 Diretrizes Estritas de Design e UX
-
-1. **PROIBIDO O USO DE EMOJIS**: Toda a interface utiliza exclusivamente a biblioteca de ícones profissionais do Google (`material-symbols-outlined`).
-2. **PROIBIDO O USO DE PÍLULAS (`rounded-full`)**: Botões, tags e inputs seguem estrutura retangular sólida e suavemente arredondada (`rounded-lg` / `rounded-xl` entre 6px e 12px).
-3. **ACESSIBILIDADE COGNITIVA**:
-   - Informações cruciais (horário, origem, destino, valor por pessoa) sempre visíveis.
-   - Botões explícitos de "Voltar" e confirmações antes de ações destrutivas.
-   - Mensagens de erro humanas que instruem exatamente como corrigir o problema.
-
----
-
-## 📂 Estrutura de Diretórios
+## 📂 Estrutura do Projeto
 
 ```
 Cooperativa/
@@ -76,12 +64,8 @@ Cooperativa/
 │   ├── PRD_Plataforma_Viagens...    # Documento de Requisitos de Produto
 │   ├── features/                    # Especificação detalhada de cada funcionalidade
 │   └── sprints/                     # Planejamento ágil de entregas
-├── figma-plugin/
-│   ├── manifest.json                # Manifesto para importação nativa no Figma
-│   └── code.js                      # Script gerador de telas e rotas
 ├── REQUISITOS_FUNCIONAIS_E_NAO_FUNCIONAIS.md # Matriz de requisitos e status
 ├── cooperativa_figma_artboards.svg  # Artboards completos em SVG para design
-├── figma_flow_interactive_map.html  # Visualizador interativo de telas e rotas
 ├── index.html                       # Entry point da aplicação SPA
 ├── style.css                        # Folha de estilos customizada e animações
 ├── app.js                           # Lógica central da aplicação (Vanilla JS)

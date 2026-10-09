@@ -1,2 +1,56 @@
+# Arquivos de Sistema & Ambientes
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Configurações & Variáveis de Ambiente Sensíveis
+.env
+.env.*
+.env.local
+*.env
+*.local
+
+# Orçamentos, Propostas, Financeiro & Dados Sensíveis
+orcamento/
+orcamento/*
+orcamento*
+orçamento/
+orçamento/*
+orçamento*
+[oO]r[cç][aã]mento/
+[oO]r[cç][aã]mento/*
+[oO]r[cç][aã]mento*
+*[oO]r[cç][aã]mento*
+*orcamento*
+*orçamento*
+propostas/
+proposta*
+financial/
+financeiro/
+contratos/
+contracts/
+*.docx
+*.doc
+*.xlsx
+*.xls
+*.pem
+*.key
+*.cert
+
+# Logs & Temporários
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Deploy & Builds
 .vercel
-.env*
+.output
+dist/
+build/
+.cache

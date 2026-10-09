@@ -517,6 +517,8 @@ const INITIAL_STATE = {
       id: 'ride-101',
       driverId: 'drv-01',
       driverName: 'Marcos Silva',
+      driverCpf: '341.892.510-44',
+      driverPhone: '(85) 98822-1144',
       driverAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
       driverRating: 4.95,
       driverTripsCount: 142,
@@ -551,6 +553,8 @@ const INITIAL_STATE = {
       id: 'ride-102',
       driverId: 'drv-02',
       driverName: 'Fernanda Costa',
+      driverCpf: '452.981.621-55',
+      driverPhone: '(81) 99112-3344',
       driverAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
       driverRating: 4.92,
       driverTripsCount: 98,
@@ -585,6 +589,8 @@ const INITIAL_STATE = {
       id: 'ride-103',
       driverId: 'drv-03',
       driverName: 'Rafael Guimarães',
+      driverCpf: '563.072.732-66',
+      driverPhone: '(71) 98765-1122',
       driverAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
       driverRating: 4.88,
       driverTripsCount: 65,
@@ -619,6 +625,8 @@ const INITIAL_STATE = {
       id: 'ride-104',
       driverId: 'drv-04',
       driverName: 'Juliana Mendes',
+      driverCpf: '674.183.843-77',
+      driverPhone: '(83) 99887-6655',
       driverAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
       driverRating: 5.0,
       driverTripsCount: 42,
@@ -656,6 +664,7 @@ const INITIAL_STATE = {
       rideId: 'ride-101',
       passengerId: 'user-001',
       passengerName: 'Carlos Oliveira',
+      passengerCpf: '123.456.789-00',
       passengerPhone: '(85) 98765-4321',
       seatsBooked: 1,
       totalAmount: 75.00,
@@ -722,6 +731,20 @@ class AppStore {
             ...DEFAULT_PLATFORM_SETTINGS,
             ...this.state.platformSettings,
           };
+        }
+        // Migração suave de CPFs em viagens e reservas
+        if (Array.isArray(this.state.rides)) {
+          const sampleCpfs = ['341.892.510-44', '452.981.621-55', '563.072.732-66', '674.183.843-77'];
+          this.state.rides.forEach((r, idx) => {
+            if (!r.driverCpf) r.driverCpf = sampleCpfs[idx % sampleCpfs.length];
+            if (!r.driverPhone) r.driverPhone = '(85) 98822-1144';
+          });
+        }
+        if (Array.isArray(this.state.bookings)) {
+          this.state.bookings.forEach(b => {
+            if (!b.passengerCpf) b.passengerCpf = this.state.currentUser.cpf || '123.456.789-00';
+            if (!b.passengerPhone) b.passengerPhone = this.state.currentUser.phone || '(85) 98765-4321';
+          });
         }
         // Migração suave para lista de veículos
         if (!Array.isArray(this.state.currentUser.vehicles) || this.state.currentUser.vehicles.length === 0) {
@@ -932,6 +955,7 @@ class AppStore {
       rideId,
       passengerId: this.state.currentUser.id,
       passengerName: this.state.currentUser.name,
+      passengerCpf: this.state.currentUser.cpf || '123.456.789-00',
       passengerPhone: this.state.currentUser.phone,
       passengerAvatar: this.state.currentUser.avatarUrl || DEFAULT_BLANK_AVATAR,
       seatsBooked: seats,
@@ -995,6 +1019,8 @@ class AppStore {
       id: 'ride-' + Math.floor(100 + Math.random() * 900),
       driverId: this.state.currentUser.id,
       driverName: this.state.currentUser.name,
+      driverCpf: this.state.currentUser.cpf || '123.456.789-00',
+      driverPhone: this.state.currentUser.phone || '(85) 98765-4321',
       driverAvatar: this.state.currentUser.avatarUrl,
       driverRating: this.state.currentUser.rating,
       driverTripsCount: this.state.currentUser.totalTrips,
@@ -2212,7 +2238,7 @@ function renderRideCard(ride) {
   return `
     <div
       onclick="window.location.hash = '#/viagem/${ride.id}'"
-      class="p-4 sm:p-5 flex flex-col gap-4 text-left border border-uber-border hover:border-uber-black hover:bg-uber-gray/30 rounded-xl transition-all bg-white cursor-pointer select-none active:scale-[0.99]"
+      class="p-4 sm:p-5 flex flex-col gap-4 text-left border border-uber-border hover:border-uber-black hover:bg-uber-gray/30 rounded-xl shadow-sm hover:shadow-md transition-all bg-white cursor-pointer select-none active:scale-[0.99]"
     >
       <!-- Route & Price Row -->
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -2808,6 +2834,55 @@ function getAvailableMonths(rides = []) {
   return Array.from(monthSet).sort().reverse();
 }
 
+function normalizeSearchTerm(str = '') {
+  return (str || '').toLowerCase().replace(/[.\-\s()/]/g, '');
+}
+
+function matchCpfOrText(targetStr = '', query = '') {
+  if (!query) return true;
+  const rawTarget = (targetStr || '').toLowerCase();
+  const rawQuery = (query || '').toLowerCase().trim();
+  if (rawTarget.includes(rawQuery)) return true;
+
+  const normTarget = normalizeSearchTerm(targetStr);
+  const normQuery = normalizeSearchTerm(query);
+  return normTarget.length >= 3 && normQuery.length >= 3 && normTarget.includes(normQuery);
+}
+
+let adminTripsViewMode = 'ALL'; // 'ALL' | 'DRIVERS' | 'PASSENGERS'
+let expandedDriverHistories = new Set();
+let expandedPassengerHistories = new Set();
+
+function toggleAdminDriverAccordion(driverKey) {
+  if (expandedDriverHistories.has(driverKey)) {
+    expandedDriverHistories.delete(driverKey);
+  } else {
+    expandedDriverHistories.add(driverKey);
+  }
+  updateAdminTripsLiveView();
+}
+
+function toggleAdminPassengerAccordion(passengerKey) {
+  if (expandedPassengerHistories.has(passengerKey)) {
+    expandedPassengerHistories.delete(passengerKey);
+  } else {
+    expandedPassengerHistories.add(passengerKey);
+  }
+  updateAdminTripsLiveView();
+}
+
+function switchAdminTripsToDriver(driverCpfOrName) {
+  adminTripsViewMode = 'DRIVERS';
+  adminTripsSearchQuery = driverCpfOrName;
+  renderApp();
+}
+
+function switchAdminTripsToPassenger(passengerCpfOrName) {
+  adminTripsViewMode = 'PASSENGERS';
+  adminTripsSearchQuery = passengerCpfOrName;
+  renderApp();
+}
+
 function getAdminFilteredRides(rides = [], bookings = [], monthFilter = 'ALL', statusFilter = 'ALL', searchQuery = '') {
   return rides.filter(ride => {
     // 1. Filtro Mensal
@@ -2830,13 +2905,19 @@ function getAdminFilteredRides(rides = [], bookings = [], monthFilter = 'ALL', s
       if (!hasCancelled) return false;
     }
 
-    // 3. Busca Textual Rápida
+    // 3. Busca Textual e por CPF Rápida
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       const matchRoute = `${ride.originCity} ${ride.destinationCity} ${ride.originSpot || ''} ${ride.destinationSpot || ''}`.toLowerCase().includes(q);
       const matchDriver = `${ride.driverName} ${ride.vehicle?.model || ''} ${ride.vehicle?.plate || ''}`.toLowerCase().includes(q);
-      const matchPassenger = rideBookings.some(b => `${b.passengerName} ${b.passengerPhone || ''} ${b.id}`.toLowerCase().includes(q));
-      if (!matchRoute && !matchDriver && !matchPassenger) return false;
+      const matchDriverCpf = matchCpfOrText(ride.driverCpf, q);
+      const matchDriverPhone = matchCpfOrText(ride.driverPhone, q);
+      const matchPassenger = rideBookings.some(b => 
+        `${b.passengerName} ${b.passengerPhone || ''} ${b.id}`.toLowerCase().includes(q) ||
+        matchCpfOrText(b.passengerCpf, q) ||
+        matchCpfOrText(b.passengerPhone, q)
+      );
+      if (!matchRoute && !matchDriver && !matchDriverCpf && !matchDriverPhone && !matchPassenger) return false;
     }
 
     return true;
@@ -2860,7 +2941,7 @@ function renderAdminTripsKpisHtml(filteredRides = [], bookings = []) {
   });
 
   return `
-    <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
+    <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-xs hover:shadow-md transition-shadow">
       <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Viagens no Mês</span>
       <div class="flex items-center gap-1.5 mt-1">
         ${icon('directions_car', { size: 'sm', className: 'text-uber-black' })}
@@ -2868,7 +2949,7 @@ function renderAdminTripsKpisHtml(filteredRides = [], bookings = []) {
       </div>
     </div>
 
-    <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
+    <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-xs hover:shadow-md transition-shadow">
       <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Passageiros no Mês</span>
       <div class="flex items-center gap-1.5 mt-1">
         ${icon('group', { size: 'sm', className: 'text-uber-black' })}
@@ -2876,7 +2957,7 @@ function renderAdminTripsKpisHtml(filteredRides = [], bookings = []) {
       </div>
     </div>
 
-    <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
+    <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-xs hover:shadow-md transition-shadow">
       <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Volume Transacionado</span>
       <div class="flex items-center gap-1 mt-1">
         <span class="text-xs font-bold text-uber-iron">R$</span>
@@ -2884,7 +2965,7 @@ function renderAdminTripsKpisHtml(filteredRides = [], bookings = []) {
       </div>
     </div>
 
-    <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
+    <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-xs hover:shadow-md transition-shadow">
       <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Sinais em Custódia</span>
       <div class="flex items-center gap-1 mt-1">
         <span class="text-xs font-bold text-emerald-700">R$</span>
@@ -2897,18 +2978,18 @@ function renderAdminTripsKpisHtml(filteredRides = [], bookings = []) {
 function renderAdminTripsListHtml(filteredRides = [], bookings = []) {
   if (filteredRides.length === 0) {
     return `
-      <div class="bg-white border border-uber-border rounded-xl p-8 sm:p-12 text-center space-y-2">
+      <div class="bg-white border border-uber-border rounded-xl p-8 sm:p-12 text-center space-y-2 shadow-xs">
         <div class="w-12 h-12 bg-uber-gray text-uber-iron rounded-xl flex items-center justify-center mx-auto mb-2">
           ${icon('search_off', { size: 'md' })}
         </div>
         <h3 class="text-base font-bold text-uber-black">Nenhuma viagem encontrada</h3>
         <p class="text-xs text-uber-iron max-w-sm mx-auto font-normal">
-          Não foram encontradas viagens para o mês de <strong>${formatMonthName(adminTripsMonthFilter)}</strong> com os filtros aplicados. Tente selecionar outro mês ou limpar a busca.
+          Não foram encontradas viagens para o mês de <strong>${formatMonthName(adminTripsMonthFilter)}</strong> com os filtros aplicados. Tente buscar pelo CPF, nome ou selecionar outro mês.
         </p>
         <button
           type="button"
           onclick="adminTripsMonthFilter = 'ALL'; adminTripsStatusFilter = 'ALL'; clearAdminTripsSearch(); renderApp();"
-          class="mt-2 px-4 py-2 bg-black text-white text-xs font-bold rounded-lg hover:bg-neutral-900 transition-transform active:scale-95 cursor-pointer"
+          class="mt-2 px-4 py-2 bg-black text-white text-xs font-bold rounded-lg hover:bg-neutral-900 transition-transform active:scale-95 cursor-pointer shadow-xs"
         >
           Exibir Todas as Viagens da Plataforma
         </button>
@@ -2924,7 +3005,7 @@ function renderAdminTripsListHtml(filteredRides = [], bookings = []) {
     const luggage = getLuggageInfo(ride);
 
     return `
-      <div class="border border-uber-border bg-white rounded-xl shadow-xs overflow-hidden transition-all hover:border-uber-charcoal">
+      <div class="border border-uber-border bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
         
         <!-- Topo do Card: Trajeto, Horário, Vagas e Tarifa -->
         <div class="p-4 bg-neutral-50/70 border-b border-uber-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
@@ -2960,12 +3041,15 @@ function renderAdminTripsListHtml(filteredRides = [], bookings = []) {
               <img src="${getVehicleImage(ride.vehicle)}" alt="${ride.vehicle.model}" class="w-full h-full object-contain drop-shadow-2xs" />
             </div>
             <div>
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="font-bold text-sm text-uber-black">${ride.driverName}</span>
                 <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded flex items-center gap-0.5">
                   ${icon('verified', { size: 'xs' })} Motorista
                 </span>
-                <span class="flex items-center gap-0.5 font-bold text-uber-black ml-1">
+                <span class="font-mono text-[11px] text-uber-iron bg-uber-gray border border-uber-border px-1.5 py-0.2 rounded" title="CPF do Motorista">
+                  CPF: ${ride.driverCpf || '341.892.510-44'}
+                </span>
+                <span class="flex items-center gap-0.5 font-bold text-uber-black ml-0.5">
                   ${icon('star', { size: 'xs', fill: true, className: 'star-gold' })}
                   ${ride.driverRating.toFixed(1)}
                 </span>
@@ -2987,15 +3071,24 @@ function renderAdminTripsListHtml(filteredRides = [], bookings = []) {
             </div>
           </div>
 
-          <!-- Botão de Suporte Direto ao Motorista -->
+          <!-- Botões de Suporte e Histórico do Motorista -->
           <div class="flex items-center gap-2 self-start sm:self-center shrink-0">
             <button
               type="button"
-              onclick="openAdminContactSupportModal('${ride.driverName}', '${ride.driverPhone || '(85) 98765-4321'}', 'Motorista', '${ride.id}')"
-              class="px-3 py-1.5 bg-uber-gray hover:bg-neutral-200 text-uber-black font-bold rounded-lg transition-colors flex items-center gap-1.5 text-xs cursor-pointer active:scale-95"
+              onclick="switchAdminTripsToDriver('${ride.driverCpf || ride.driverName}')"
+              class="px-2.5 py-1.5 bg-uber-gray hover:bg-neutral-200 text-uber-black font-semibold rounded-lg transition-colors flex items-center gap-1 text-xs cursor-pointer"
+              title="Ver todas as viagens publicadas por este motorista"
             >
-              ${icon('support_agent', { size: 'sm', className: 'text-uber-black' })}
-              <span>Suporte Motorista</span>
+              ${icon('person_search', { size: 'xs' })}
+              <span class="hidden sm:inline">Histórico</span>
+            </button>
+            <button
+              type="button"
+              onclick="openAdminContactSupportModal('${ride.driverName}', '${ride.driverPhone || '(85) 98765-4321'}', 'Motorista', '${ride.id}')"
+              class="px-3 py-1.5 bg-black hover:bg-neutral-900 text-white font-bold rounded-lg transition-colors flex items-center gap-1.5 text-xs cursor-pointer active:scale-95 shadow-2xs"
+            >
+              ${icon('support_agent', { size: 'sm' })}
+              <span>Suporte</span>
             </button>
             <a
               href="#/viagem/${ride.id}"
@@ -3028,12 +3121,15 @@ function renderAdminTripsListHtml(filteredRides = [], bookings = []) {
                 return `
                   <div class="p-3 bg-white border border-uber-border rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
                     
-                    <!-- Perfil do Passageiro -->
+                    <!-- Perfil do Passageiro com CPF -->
                     <div class="flex items-center gap-2.5 min-w-0">
                       <img src="${bk.passengerAvatar || DEFAULT_BLANK_AVATAR}" class="w-8 h-8 rounded-full object-cover bg-uber-gray border border-uber-border shrink-0" />
                       <div class="min-w-0">
                         <div class="flex items-center gap-1.5 flex-wrap">
                           <span class="font-bold text-uber-black text-xs sm:text-sm">${bk.passengerName}</span>
+                          <span class="font-mono text-[10px] text-uber-iron bg-uber-gray border border-uber-border px-1.5 py-0.2 rounded" title="CPF do Passageiro">
+                            CPF: ${bk.passengerCpf || '123.456.789-00'}
+                          </span>
                           <span class="font-mono text-uber-iron text-[10px]">(${bk.id})</span>
                           <span class="text-[10px] font-bold text-uber-charcoal bg-uber-gray border border-uber-border px-1.5 py-0.2 rounded">
                             ${bk.seatsBooked} ${bk.seatsBooked === 1 ? 'lugar' : 'lugares'}
@@ -3085,6 +3181,16 @@ function renderAdminTripsListHtml(filteredRides = [], bookings = []) {
 
                     <!-- Ações Administrativas de Suporte por Reserva -->
                     <div class="flex items-center gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-uber-border shrink-0 flex-wrap justify-end">
+                      <button
+                        type="button"
+                        onclick="switchAdminTripsToPassenger('${bk.passengerCpf || bk.passengerName}')"
+                        class="px-2.5 py-1.5 bg-uber-gray hover:bg-neutral-200 text-uber-black font-semibold rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                        title="Ver todas as viagens reservadas por este passageiro"
+                      >
+                        ${icon('person_search', { size: 'xs' })}
+                        <span>Histórico</span>
+                      </button>
+
                       ${isSignalPaid ? `
                         <button
                           type="button"
@@ -3145,18 +3251,362 @@ function renderAdminTripsListHtml(filteredRides = [], bookings = []) {
   }).join('');
 }
 
+// Renderizador da Sub-Aba: "Por Motorista"
+function renderAdminDriversViewHtml(rides = [], bookings = [], searchQuery = '') {
+  // Consolidar motoristas únicos
+  const driverMap = new Map();
+  rides.forEach(r => {
+    const key = r.driverId || r.driverName;
+    if (!driverMap.has(key)) {
+      driverMap.set(key, {
+        id: r.driverId,
+        name: r.driverName,
+        cpf: r.driverCpf || '341.892.510-44',
+        phone: r.driverPhone || '(85) 98822-1144',
+        avatar: r.driverAvatar,
+        rating: r.driverRating || 4.9,
+        tripsCount: r.driverTripsCount || 0,
+        vehicle: r.vehicle,
+        publishedRides: []
+      });
+    }
+    driverMap.get(key).publishedRides.push(r);
+  });
+
+  let drivers = Array.from(driverMap.values());
+
+  if (searchQuery.trim()) {
+    const q = searchQuery.toLowerCase().trim();
+    drivers = drivers.filter(d => 
+      d.name.toLowerCase().includes(q) ||
+      matchCpfOrText(d.cpf, q) ||
+      matchCpfOrText(d.phone, q) ||
+      `${d.vehicle?.brand || ''} ${d.vehicle?.model || ''} ${d.vehicle?.plate || ''}`.toLowerCase().includes(q)
+    );
+  }
+
+  if (drivers.length === 0) {
+    return `
+      <div class="bg-white border border-uber-border rounded-xl p-8 sm:p-12 text-center space-y-2 shadow-xs">
+        <div class="w-12 h-12 bg-uber-gray text-uber-iron rounded-xl flex items-center justify-center mx-auto mb-2">
+          ${icon('search_off', { size: 'md' })}
+        </div>
+        <h3 class="text-base font-bold text-uber-black">Nenhum motorista encontrado</h3>
+        <p class="text-xs text-uber-iron max-w-sm mx-auto font-normal">
+          Não foram localizados motoristas com o CPF ou nome <strong>"${searchQuery}"</strong>.
+        </p>
+        <button
+          type="button"
+          onclick="clearAdminTripsSearch()"
+          class="mt-2 px-4 py-2 bg-black text-white text-xs font-bold rounded-lg hover:bg-neutral-900 transition-transform active:scale-95 cursor-pointer shadow-xs"
+        >
+          Limpar Filtro de Busca
+        </button>
+      </div>
+    `;
+  }
+
+  return drivers.map(d => {
+    const totalPublished = d.publishedRides.length;
+    const allDriverBookings = bookings.filter(b => d.publishedRides.some(r => r.id === b.rideId));
+    const activeDriverBookings = allDriverBookings.filter(b => b.status !== 'CANCELLED' && b.status !== 'REJECTED_BY_DRIVER');
+    const totalPassengers = activeDriverBookings.reduce((sum, b) => sum + (b.seatsBooked || 1), 0);
+    const totalRevenue = activeDriverBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+    const isExpanded = expandedDriverHistories.has(d.id || d.name);
+
+    return `
+      <div class="border border-uber-border bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+        <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <img src="${d.avatar || DEFAULT_BLANK_AVATAR}" class="w-12 h-12 rounded-full object-cover bg-uber-gray border border-uber-border shrink-0 shadow-2xs" />
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="font-extrabold text-base text-uber-black">${d.name}</h3>
+                <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded flex items-center gap-0.5">
+                  ${icon('verified', { size: 'xs' })} Motorista
+                </span>
+                <span class="flex items-center gap-0.5 font-bold text-uber-black text-xs">
+                  ${icon('star', { size: 'xs', fill: true, className: 'star-gold' })}
+                  ${d.rating.toFixed(1)}
+                </span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-uber-iron mt-1 flex-wrap font-normal">
+                <span class="font-mono font-bold text-uber-black bg-uber-gray border border-uber-border px-1.5 py-0.5 rounded text-[11px]">
+                  CPF: ${d.cpf}
+                </span>
+                <span>•</span>
+                <span>Tel: <strong>${d.phone}</strong></span>
+                <span>•</span>
+                <span class="text-uber-charcoal">${d.vehicle ? `${d.vehicle.brand} ${d.vehicle.model} (${d.vehicle.plate})` : 'Veículo Ativo'}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ações e KPIs Rápidos do Motorista -->
+          <div class="flex items-center gap-3 shrink-0 self-start sm:self-center">
+            <div class="text-left sm:text-right text-xs">
+              <span class="font-extrabold text-sm text-uber-black block">${totalPublished} ${totalPublished === 1 ? 'viagem' : 'viagens'}</span>
+              <span class="text-[11px] text-uber-iron">${totalPassengers} passageiros transportados</span>
+            </div>
+            <button
+              type="button"
+              onclick="toggleAdminDriverAccordion('${d.id || d.name}')"
+              class="px-3.5 py-2 bg-uber-gray hover:bg-neutral-200 text-uber-black font-bold rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+            >
+              <span>${isExpanded ? 'Ocultar Viagens' : 'Ver Viagens'}</span>
+              ${icon(isExpanded ? 'expand_less' : 'expand_more', { size: 'sm' })}
+            </button>
+          </div>
+        </div>
+
+        <!-- Gaveta Expansível com Todas as Viagens do Motorista -->
+        ${isExpanded ? `
+          <div class="p-4 bg-neutral-50/70 border-t border-uber-border space-y-3 animate-fade-in">
+            <div class="flex justify-between items-center text-xs pb-1">
+              <span class="font-bold text-uber-black uppercase tracking-wider text-[11px]">
+                Histórico Completo de Viagens Publicadas (${d.publishedRides.length}):
+              </span>
+              <span class="text-xs font-bold text-emerald-800">
+                Faturamento Total: R$ ${totalRevenue.toFixed(2).replace('.', ',')}
+              </span>
+            </div>
+
+            <div class="space-y-3">
+              ${d.publishedRides.map(ride => {
+                const rBookings = bookings.filter(b => b.rideId === ride.id);
+                return `
+                  <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs space-y-2.5 text-xs">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-uber-border pb-2">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-mono font-bold text-uber-iron bg-uber-gray px-1.5 py-0.5 rounded text-[10px]">${ride.id}</span>
+                        <h4 class="font-bold text-sm text-uber-black">${ride.originCity} ➔ ${ride.destinationCity}</h4>
+                        <span class="text-uber-iron font-normal">• ${ride.departureDate} às ${ride.departureTime}</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="font-extrabold text-uber-black">R$ ${ride.pricePerSeat.toFixed(2).replace('.', ',')} / assento</span>
+                        <a href="#/viagem/${ride.id}" class="p-1 text-uber-iron hover:text-uber-black" title="Abrir viagem">${icon('visibility', { size: 'sm' })}</a>
+                      </div>
+                    </div>
+
+                    <!-- Lista de Passageiros desta Viagem -->
+                    <div class="space-y-1.5">
+                      <span class="text-[11px] font-bold text-uber-iron block uppercase">Passageiros desta saída (${rBookings.length}):</span>
+                      ${rBookings.length > 0 ? rBookings.map(bk => `
+                        <div class="p-2.5 bg-neutral-50 rounded-lg border border-uber-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div class="flex items-center gap-2 min-w-0">
+                            <span class="font-bold text-uber-black">${bk.passengerName}</span>
+                            <span class="font-mono text-[10px] text-uber-iron">CPF: ${bk.passengerCpf || '123.456.789-00'}</span>
+                            <span class="text-uber-iron">(${bk.passengerPhone || 'Sem tel'})</span>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <span class="font-bold text-uber-black">R$ ${bk.totalAmount.toFixed(2).replace('.', ',')}</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${bk.status === 'SIGNAL_CONFIRMED' ? 'bg-blue-50 text-blue-900 border border-blue-200' : bk.status === 'FULLY_PAID' ? 'bg-green-50 text-green-900 border border-green-200' : 'bg-neutral-100 text-neutral-700'}">
+                              ${bk.status === 'SIGNAL_CONFIRMED' ? 'Sinal PIX Pago' : bk.status === 'FULLY_PAID' ? 'Concluído' : bk.status}
+                            </span>
+                          </div>
+                        </div>
+                      `).join('') : `
+                        <span class="text-xs text-uber-iron font-normal">Nenhum passageiro reservou esta viagem ainda.</span>
+                      `}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// Renderizador da Sub-Aba: "Por Passageiro"
+function renderAdminPassengersViewHtml(rides = [], bookings = [], searchQuery = '') {
+  // Consolidar passageiros únicos a partir de bookings e currentUser
+  const passengerMap = new Map();
+  bookings.forEach(b => {
+    const key = b.passengerId || b.passengerName;
+    if (!passengerMap.has(key)) {
+      passengerMap.set(key, {
+        id: b.passengerId,
+        name: b.passengerName,
+        cpf: b.passengerCpf || '123.456.789-00',
+        phone: b.passengerPhone || '(85) 98765-4321',
+        avatar: b.passengerAvatar,
+        bookingsList: []
+      });
+    }
+    passengerMap.get(key).bookingsList.push(b);
+  });
+
+  let passengers = Array.from(passengerMap.values());
+
+  if (searchQuery.trim()) {
+    const q = searchQuery.toLowerCase().trim();
+    passengers = passengers.filter(p => 
+      p.name.toLowerCase().includes(q) ||
+      matchCpfOrText(p.cpf, q) ||
+      matchCpfOrText(p.phone, q) ||
+      p.bookingsList.some(bk => bk.id.toLowerCase().includes(q))
+    );
+  }
+
+  if (passengers.length === 0) {
+    return `
+      <div class="bg-white border border-uber-border rounded-xl p-8 sm:p-12 text-center space-y-2 shadow-xs">
+        <div class="w-12 h-12 bg-uber-gray text-uber-iron rounded-xl flex items-center justify-center mx-auto mb-2">
+          ${icon('search_off', { size: 'md' })}
+        </div>
+        <h3 class="text-base font-bold text-uber-black">Nenhum passageiro encontrado</h3>
+        <p class="text-xs text-uber-iron max-w-sm mx-auto font-normal">
+          Não foram localizados passageiros com o CPF ou nome <strong>"${searchQuery}"</strong>.
+        </p>
+        <button
+          type="button"
+          onclick="clearAdminTripsSearch()"
+          class="mt-2 px-4 py-2 bg-black text-white text-xs font-bold rounded-lg hover:bg-neutral-900 transition-transform active:scale-95 cursor-pointer shadow-xs"
+        >
+          Limpar Filtro de Busca
+        </button>
+      </div>
+    `;
+  }
+
+  return passengers.map(p => {
+    const totalBookings = p.bookingsList.length;
+    const totalSpent = p.bookingsList.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+    const totalSignals = p.bookingsList.reduce((sum, b) => sum + (b.amountPaidSignal || 0), 0);
+    const isExpanded = expandedPassengerHistories.has(p.id || p.name);
+
+    return `
+      <div class="border border-uber-border bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+        <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <img src="${p.avatar || DEFAULT_BLANK_AVATAR}" class="w-12 h-12 rounded-full object-cover bg-uber-gray border border-uber-border shrink-0 shadow-2xs" />
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="font-extrabold text-base text-uber-black">${p.name}</h3>
+                <span class="text-[11px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded flex items-center gap-0.5">
+                  ${icon('person', { size: 'xs' })} Passageiro
+                </span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-uber-iron mt-1 flex-wrap font-normal">
+                <span class="font-mono font-bold text-uber-black bg-uber-gray border border-uber-border px-1.5 py-0.5 rounded text-[11px]">
+                  CPF: ${p.cpf}
+                </span>
+                <span>•</span>
+                <span>Tel: <strong>${p.phone}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ações e KPIs Rápidos do Passageiro -->
+          <div class="flex items-center gap-3 shrink-0 self-start sm:self-center">
+            <div class="text-left sm:text-right text-xs">
+              <span class="font-extrabold text-sm text-uber-black block">${totalBookings} ${totalBookings === 1 ? 'reserva' : 'reservas'}</span>
+              <span class="text-[11px] text-uber-iron">Total em Sinais: R$ ${totalSignals.toFixed(2).replace('.', ',')}</span>
+            </div>
+            <button
+              type="button"
+              onclick="toggleAdminPassengerAccordion('${p.id || p.name}')"
+              class="px-3.5 py-2 bg-uber-gray hover:bg-neutral-200 text-uber-black font-bold rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+            >
+              <span>${isExpanded ? 'Ocultar Reservas' : 'Ver Reservas'}</span>
+              ${icon(isExpanded ? 'expand_less' : 'expand_more', { size: 'sm' })}
+            </button>
+          </div>
+        </div>
+
+        <!-- Gaveta Expansível com Todas as Reservas do Passageiro -->
+        ${isExpanded ? `
+          <div class="p-4 bg-neutral-50/70 border-t border-uber-border space-y-3 animate-fade-in">
+            <div class="flex justify-between items-center text-xs pb-1">
+              <span class="font-bold text-uber-black uppercase tracking-wider text-[11px]">
+                Histórico Completo de Reservas (${p.bookingsList.length}):
+              </span>
+              <span class="text-xs font-bold text-uber-black">
+                Total Geral: R$ ${totalSpent.toFixed(2).replace('.', ',')}
+              </span>
+            </div>
+
+            <div class="space-y-3">
+              ${p.bookingsList.map(bk => {
+                const ride = rides.find(r => r.id === bk.rideId);
+                const isSignalPaid = bk.status === 'SIGNAL_CONFIRMED';
+                const isFullyPaid = bk.status === 'FULLY_PAID';
+                const isCancelled = bk.status === 'CANCELLED';
+
+                return `
+                  <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs space-y-2.5 text-xs">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-uber-border pb-2">
+                      <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="font-mono font-bold text-uber-iron bg-uber-gray px-1.5 py-0.5 rounded text-[10px]">${bk.id}</span>
+                          <h4 class="font-bold text-sm text-uber-black">${ride ? `${ride.originCity} ➔ ${ride.destinationCity}` : 'Viagem ' + bk.rideId}</h4>
+                        </div>
+                        <p class="text-uber-iron text-[11px] mt-0.5">
+                          ${ride ? `Data: ${ride.departureDate} às ${ride.departureTime} • Motorista: ${ride.driverName} (CPF: ${ride.driverCpf || '341.892.510-44'})` : ''}
+                        </p>
+                      </div>
+
+                      <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${isSignalPaid ? 'bg-blue-50 text-blue-900 border border-blue-200' : isFullyPaid ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : isCancelled ? 'bg-red-50 text-red-900 border border-red-200' : 'bg-neutral-100 text-neutral-800'}">
+                          ${isSignalPaid ? 'Sinal Pago (Custódia)' : isFullyPaid ? 'Repasse Concluído' : isCancelled ? 'Cancelada' : bk.status}
+                        </span>
+                        <button onclick="openReceiptModalById('${bk.id}')" class="px-2 py-1 bg-uber-gray hover:bg-neutral-200 text-uber-black font-semibold rounded text-[11px] flex items-center gap-0.5 cursor-pointer">
+                          ${icon('receipt_long', { size: 'xs' })} Recibo
+                        </button>
+                        ${!isCancelled ? `
+                          <button onclick="openAdminCancelBookingModal('${bk.id}')" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-semibold rounded text-[11px] flex items-center gap-0.5 cursor-pointer">
+                            ${icon('cancel', { size: 'xs' })} Estornar
+                          </button>
+                        ` : ''}
+                      </div>
+                    </div>
+
+                    <div class="flex justify-between items-center text-xs text-uber-charcoal">
+                      <span>Lugares: <strong>${bk.seatsBooked}</strong></span>
+                      <span>Sinal: <strong>R$ ${bk.amountPaidSignal.toFixed(2).replace('.', ',')}</strong></span>
+                      <span>Valor Total: <strong>R$ ${bk.totalAmount.toFixed(2).replace('.', ',')}</strong></span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
 function updateAdminTripsLiveView() {
   const { bookings, rides } = store.state;
-  const filtered = getAdminFilteredRides(rides, bookings, adminTripsMonthFilter, adminTripsStatusFilter, adminTripsSearchQuery);
   
-  const kpisContainer = document.getElementById('admin-trips-kpis-container');
-  const listContainer = document.getElementById('admin-trips-list-container');
-  
-  if (kpisContainer && listContainer) {
-    kpisContainer.innerHTML = renderAdminTripsKpisHtml(filtered, bookings);
-    listContainer.innerHTML = renderAdminTripsListHtml(filtered, bookings);
-  } else {
-    renderApp();
+  if (adminTripsViewMode === 'ALL') {
+    const filtered = getAdminFilteredRides(rides, bookings, adminTripsMonthFilter, adminTripsStatusFilter, adminTripsSearchQuery);
+    const kpisContainer = document.getElementById('admin-trips-kpis-container');
+    const listContainer = document.getElementById('admin-trips-list-container');
+    if (kpisContainer && listContainer) {
+      kpisContainer.innerHTML = renderAdminTripsKpisHtml(filtered, bookings);
+      listContainer.innerHTML = renderAdminTripsListHtml(filtered, bookings);
+    } else {
+      renderApp();
+    }
+  } else if (adminTripsViewMode === 'DRIVERS') {
+    const driversContainer = document.getElementById('admin-trips-drivers-container');
+    if (driversContainer) {
+      driversContainer.innerHTML = renderAdminDriversViewHtml(rides, bookings, adminTripsSearchQuery);
+    } else {
+      renderApp();
+    }
+  } else if (adminTripsViewMode === 'PASSENGERS') {
+    const passengersContainer = document.getElementById('admin-trips-passengers-container');
+    if (passengersContainer) {
+      passengersContainer.innerHTML = renderAdminPassengersViewHtml(rides, bookings, adminTripsSearchQuery);
+    } else {
+      renderApp();
+    }
   }
 }
 
@@ -3216,7 +3666,7 @@ function viewMyTrips() {
           </div>
           <p class="text-xs text-uber-iron font-normal mt-1">
             ${isAdmin 
-              ? 'Gestão operacional, suporte a motoristas e passageiros e acompanhamento financeiro em tempo real.' 
+              ? 'Gestão operacional, busca por CPF, suporte a motoristas e passageiros e acompanhamento financeiro em tempo real.' 
               : role === 'DRIVER' 
               ? 'Gerencie suas viagens publicadas, aceite passageiros e inicie conversas.' 
               : 'Acompanhe suas viagens reservadas, realize pagamentos e acesse comprovantes.'}
@@ -3244,41 +3694,73 @@ function viewMyTrips() {
       ${isAdmin ? `
         <div class="space-y-5">
           
-          <!-- Barra de Filtros e Busca Administrativa -->
+          <!-- Sub-Abas de Navegação Rápida: Todas as Viagens | Por Motorista | Por Passageiro -->
+          <div class="flex items-center gap-2 border-b border-uber-border pb-3 overflow-x-auto">
+            <button
+              type="button"
+              onclick="adminTripsViewMode = 'ALL'; renderApp();"
+              class="px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shrink-0 cursor-pointer ${adminTripsViewMode === 'ALL' ? 'bg-black text-white shadow-xs' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
+            >
+              ${icon('route', { size: 'xs' })}
+              <span>Todas as Viagens</span>
+            </button>
+            <button
+              type="button"
+              onclick="adminTripsViewMode = 'DRIVERS'; renderApp();"
+              class="px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shrink-0 cursor-pointer ${adminTripsViewMode === 'DRIVERS' ? 'bg-black text-white shadow-xs' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
+            >
+              ${icon('directions_car', { size: 'xs' })}
+              <span>Por Motorista</span>
+            </button>
+            <button
+              type="button"
+              onclick="adminTripsViewMode = 'PASSENGERS'; renderApp();"
+              class="px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shrink-0 cursor-pointer ${adminTripsViewMode === 'PASSENGERS' ? 'bg-black text-white shadow-xs' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
+            >
+              ${icon('group', { size: 'xs' })}
+              <span>Por Passageiro</span>
+            </button>
+          </div>
+
+          <!-- Barra de Filtros e Busca Administrativa por CPF / Nome / Rota -->
           <div class="p-4 bg-white border border-uber-border rounded-xl shadow-xs space-y-3.5">
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               
-              <!-- Seletor de Mês -->
-              <div class="flex items-center gap-2 min-w-0 flex-1 sm:max-w-xs">
-                <div class="text-uber-black shrink-0">
-                  ${icon('calendar_month', { size: 'sm' })}
+              <!-- Seletor de Mês (Exibido na visão geral de viagens) -->
+              ${adminTripsViewMode === 'ALL' ? `
+                <div class="flex items-center gap-2 min-w-0 flex-1 sm:max-w-xs">
+                  <div class="text-uber-black shrink-0">
+                    ${icon('calendar_month', { size: 'sm' })}
+                  </div>
+                  <div class="w-full">
+                    <label class="block text-[10px] font-bold text-uber-iron uppercase tracking-wider mb-0.5">Mês de Referência</label>
+                    <select
+                      id="admin-month-filter"
+                      onchange="adminTripsMonthFilter = this.value; renderApp();"
+                      class="w-full h-10 bg-uber-gray border border-uber-border rounded-lg px-3 text-xs font-bold text-uber-black focus:outline-none focus:border-uber-black cursor-pointer"
+                    >
+                      ${availableMonths.map(m => `
+                        <option value="${m}" ${adminTripsMonthFilter === m ? 'selected' : ''}>
+                          ${formatMonthName(m)} ${m === currentMonthStr ? '(Mês Atual)' : ''}
+                        </option>
+                      `).join('')}
+                      <option value="ALL" ${adminTripsMonthFilter === 'ALL' ? 'selected' : ''}>Todos os Meses</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="w-full">
-                  <label class="block text-[10px] font-bold text-uber-iron uppercase tracking-wider mb-0.5">Mês de Referência</label>
-                  <select
-                    id="admin-month-filter"
-                    onchange="adminTripsMonthFilter = this.value; renderApp();"
-                    class="w-full h-10 bg-uber-gray border border-uber-border rounded-lg px-3 text-xs font-bold text-uber-black focus:outline-none focus:border-uber-black cursor-pointer"
-                  >
-                    ${availableMonths.map(m => `
-                      <option value="${m}" ${adminTripsMonthFilter === m ? 'selected' : ''}>
-                        ${formatMonthName(m)} ${m === currentMonthStr ? '(Mês Atual)' : ''}
-                      </option>
-                    `).join('')}
-                    <option value="ALL" ${adminTripsMonthFilter === 'ALL' ? 'selected' : ''}>Todos os Meses</option>
-                  </select>
-                </div>
-              </div>
+              ` : ''}
 
-              <!-- Campo de Busca Textual -->
+              <!-- Campo de Busca por CPF / Nome / Rota -->
               <div class="flex-1 min-w-0">
-                <label class="block text-[10px] font-bold text-uber-iron uppercase tracking-wider mb-0.5">Busca Rápida</label>
+                <label class="block text-[10px] font-bold text-uber-iron uppercase tracking-wider mb-0.5">
+                  ${adminTripsViewMode === 'DRIVERS' ? 'Buscar Motorista (CPF, Nome, Telefone ou Placa)' : adminTripsViewMode === 'PASSENGERS' ? 'Buscar Passageiro (CPF, Nome, Telefone ou Reserva)' : 'Busca Rápida por CPF, Nome, Código ou Cidade'}
+                </label>
                 <div class="relative">
                   <input
                     id="admin-trips-search-input"
                     type="text"
                     value="${adminTripsSearchQuery}"
-                    placeholder="Buscar motorista, passageiro, cidade ou código..."
+                    placeholder="${adminTripsViewMode === 'DRIVERS' ? 'Digite o CPF do motorista (ex: 341.892... ou 341892), nome ou placa...' : adminTripsViewMode === 'PASSENGERS' ? 'Digite o CPF do passageiro (ex: 123.456... ou 123456), nome ou telefone...' : 'Buscar CPF do motorista/passageiro, nome, rota ou código...'}"
                     oninput="handleAdminTripsSearchInput(this.value)"
                     class="w-full h-10 bg-uber-gray border border-uber-border focus:border-uber-black focus:bg-white text-xs font-semibold rounded-lg pl-9 pr-8 focus:outline-none transition-all"
                   />
@@ -3298,49 +3780,64 @@ function viewMyTrips() {
               </div>
             </div>
 
-            <!-- Filtros de Status (Botões Estruturados) -->
-            <div class="flex items-center gap-2 overflow-x-auto pt-1 border-t border-uber-border text-xs">
-              <span class="text-[11px] font-bold text-uber-iron uppercase tracking-wider shrink-0 mr-1">Filtrar:</span>
-              <button
-                type="button"
-                onclick="adminTripsStatusFilter = 'ALL'; renderApp();"
-                class="px-3 py-1.5 rounded-lg font-bold transition-all shrink-0 cursor-pointer ${adminTripsStatusFilter === 'ALL' ? 'bg-black text-white' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
-              >
-                Todas as Viagens
-              </button>
-              <button
-                type="button"
-                onclick="adminTripsStatusFilter = 'WITH_BOOKINGS'; renderApp();"
-                class="px-3 py-1.5 rounded-lg font-bold transition-all shrink-0 cursor-pointer ${adminTripsStatusFilter === 'WITH_BOOKINGS' ? 'bg-black text-white' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
-              >
-                Com Passageiros
-              </button>
-              <button
-                type="button"
-                onclick="adminTripsStatusFilter = 'PAID'; renderApp();"
-                class="px-3 py-1.5 rounded-lg font-bold transition-all shrink-0 cursor-pointer ${adminTripsStatusFilter === 'PAID' ? 'bg-black text-white' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
-              >
-                Sinal / Pagas
-              </button>
-              <button
-                type="button"
-                onclick="adminTripsStatusFilter = 'CANCELLED'; renderApp();"
-                class="px-3 py-1.5 rounded-lg font-bold transition-all shrink-0 cursor-pointer ${adminTripsStatusFilter === 'CANCELLED' ? 'bg-black text-white' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
-              >
-                Canceladas
-              </button>
+            <!-- Filtros de Status (Exibido na visão geral) -->
+            ${adminTripsViewMode === 'ALL' ? `
+              <div class="flex items-center gap-2 overflow-x-auto pt-1 border-t border-uber-border text-xs">
+                <span class="text-[11px] font-bold text-uber-iron uppercase tracking-wider shrink-0 mr-1">Filtrar:</span>
+                <button
+                  type="button"
+                  onclick="adminTripsStatusFilter = 'ALL'; renderApp();"
+                  class="px-3 py-1.5 rounded-lg font-bold transition-all shrink-0 cursor-pointer ${adminTripsStatusFilter === 'ALL' ? 'bg-black text-white' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
+                >
+                  Todas as Viagens
+                </button>
+                <button
+                  type="button"
+                  onclick="adminTripsStatusFilter = 'WITH_BOOKINGS'; renderApp();"
+                  class="px-3 py-1.5 rounded-lg font-bold transition-all shrink-0 cursor-pointer ${adminTripsStatusFilter === 'WITH_BOOKINGS' ? 'bg-black text-white' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
+                >
+                  Com Passageiros
+                </button>
+                <button
+                  type="button"
+                  onclick="adminTripsStatusFilter = 'PAID'; renderApp();"
+                  class="px-3 py-1.5 rounded-lg font-bold transition-all shrink-0 cursor-pointer ${adminTripsStatusFilter === 'PAID' ? 'bg-black text-white' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
+                >
+                  Sinal / Pagas
+                </button>
+                <button
+                  type="button"
+                  onclick="adminTripsStatusFilter = 'CANCELLED'; renderApp();"
+                  class="px-3 py-1.5 rounded-lg font-bold transition-all shrink-0 cursor-pointer ${adminTripsStatusFilter === 'CANCELLED' ? 'bg-black text-white' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
+                >
+                  Canceladas
+                </button>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- RENDERIZAÇÃO DA ABA 1: TODAS AS VIAGENS -->
+          ${adminTripsViewMode === 'ALL' ? `
+            <!-- Resumo e Indicadores do Período Filtrado -->
+            <div id="admin-trips-kpis-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              ${renderAdminTripsKpisHtml(adminFilteredRides, bookings)}
             </div>
-          </div>
 
-          <!-- Resumo e Indicadores do Período Filtrado -->
-          <div id="admin-trips-kpis-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            ${renderAdminTripsKpisHtml(adminFilteredRides, bookings)}
-          </div>
-
-          <!-- Lista Detalhada de Viagens da Plataforma -->
-          <div id="admin-trips-list-container" class="space-y-4">
-            ${renderAdminTripsListHtml(adminFilteredRides, bookings)}
-          </div>
+            <!-- Lista Detalhada de Viagens da Plataforma -->
+            <div id="admin-trips-list-container" class="space-y-4">
+              ${renderAdminTripsListHtml(adminFilteredRides, bookings)}
+            </div>
+          ` : adminTripsViewMode === 'DRIVERS' ? `
+            <!-- RENDERIZAÇÃO DA ABA 2: POR MOTORISTA -->
+            <div id="admin-trips-drivers-container" class="space-y-4">
+              ${renderAdminDriversViewHtml(rides, bookings, adminTripsSearchQuery)}
+            </div>
+          ` : `
+            <!-- RENDERIZAÇÃO DA ABA 3: POR PASSAGEIRO -->
+            <div id="admin-trips-passengers-container" class="space-y-4">
+              ${renderAdminPassengersViewHtml(rides, bookings, adminTripsSearchQuery)}
+            </div>
+          `}
 
         </div>
       ` : ''}
