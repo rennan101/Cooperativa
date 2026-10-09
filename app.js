@@ -742,7 +742,7 @@ class AppStore {
     renderHeader();
   }
 
-  addVehicle({ brand, model, plate, renavam, year, color, hasAC, hasUSB, isPrimary }) {
+  addVehicle({ brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, isPrimary }) {
     if (!Array.isArray(this.state.currentUser.vehicles)) {
       this.state.currentUser.vehicles = [];
     }
@@ -764,6 +764,8 @@ class AppStore {
       year: parseInt(year, 10) || new Date().getFullYear(),
       hasAC: !!hasAC,
       hasUSB: !!hasUSB,
+      noSmoking: !!noSmoking,
+      noPets: !!noPets,
       isPrimary: shouldBePrimary,
     };
 
@@ -775,7 +777,7 @@ class AppStore {
     renderApp();
   }
 
-  updateVehicle(vehicleId, { brand, model, plate, renavam, year, color, hasAC, hasUSB, isPrimary }) {
+  updateVehicle(vehicleId, { brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, isPrimary }) {
     if (!Array.isArray(this.state.currentUser.vehicles)) return;
     const idx = this.state.currentUser.vehicles.findIndex(v => v.id === vehicleId);
     if (idx === -1) return;
@@ -794,6 +796,8 @@ class AppStore {
       year: parseInt(year, 10) || this.state.currentUser.vehicles[idx].year,
       hasAC: !!hasAC,
       hasUSB: !!hasUSB,
+      noSmoking: !!noSmoking,
+      noPets: !!noPets,
       isPrimary: isPrimary !== undefined ? !!isPrimary : this.state.currentUser.vehicles[idx].isPrimary,
     };
 
@@ -1754,7 +1758,218 @@ document.addEventListener('click', (e) => {
     const d3 = document.getElementById('veh-model-dropdown');
     if (d3) d3.classList.add('hidden');
   }
+  if (!e.target.closest('.pub-autocomplete-container')) {
+    document.querySelectorAll('.pub-autocomplete-dropdown').forEach(el => el.classList.add('hidden'));
+  }
 });
+
+// ==========================================
+// 7.1 AUTOCOMPLETE PARA PUBLICAÇÃO DE VIAGEM (CIDADES E PONTOS)
+// ==========================================
+
+function handlePublishCityFocus(inputId, dropdownId, role) {
+  handlePublishCityInput(inputId, dropdownId, role);
+}
+
+function handlePublishCityInput(inputId, dropdownId, role) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  if (!input || !dropdown) return;
+
+  const query = (input.value || '').toLowerCase().trim();
+  let matches = [];
+
+  if (!query) {
+    matches = NORDESTE_CITIES.slice(0, 12);
+  } else {
+    matches = NORDESTE_CITIES.filter(city => 
+      city.toLowerCase().includes(query)
+    ).slice(0, 15);
+  }
+
+  if (matches.length === 0) {
+    dropdown.innerHTML = `
+      <div class="p-3.5 text-center text-xs text-uber-iron font-medium">
+        Nenhuma cidade encontrada no Nordeste.
+      </div>
+    `;
+    dropdown.classList.remove('hidden');
+    return;
+  }
+
+  dropdown.innerHTML = matches.map(cityName => {
+    const safeCity = cityName.replace(/'/g, "\\'");
+    return `
+      <div
+        onmousedown="selectPublishCity('${inputId}', '${dropdownId}', '${safeCity}', '${role}')"
+        class="flex items-center gap-3 p-3 hover:bg-uber-gray cursor-pointer transition-colors text-left group select-none"
+      >
+        <div class="w-8 h-8 rounded-lg bg-uber-gray group-hover:bg-uber-border flex items-center justify-center text-uber-black shrink-0 transition-colors">
+          ${icon('location_city', { size: 'sm', className: 'text-uber-black' })}
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="font-bold text-xs sm:text-sm text-uber-black truncate group-hover:text-black">${cityName}</p>
+          <p class="text-[11px] font-medium text-uber-iron">Nordeste • Brasil</p>
+        </div>
+        <div class="text-uber-iron group-hover:text-uber-black shrink-0">
+          ${icon('north_west', { size: 'sm' })}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  dropdown.classList.remove('hidden');
+}
+
+function selectPublishCity(inputId, dropdownId, cityName, role) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  if (input) {
+    input.value = cityName;
+    if (role === 'origin') {
+      publishWizardState.originCity = cityName;
+      const defaultSpot = NORDESTE_LOCATIONS.find(l => l.city.toLowerCase() === cityName.toLowerCase());
+      if (defaultSpot) {
+        const spotInput = document.getElementById('pub-origin-spot');
+        if (spotInput && (!spotInput.value || spotInput.value.includes('Shopping') || spotInput.value.includes('Centro') || spotInput.value.includes('Rodoviária'))) {
+          spotInput.value = defaultSpot.spot;
+          publishWizardState.originSpot = defaultSpot.spot;
+        }
+      }
+    } else if (role === 'dest') {
+      publishWizardState.destinationCity = cityName;
+      const defaultSpot = NORDESTE_LOCATIONS.find(l => l.city.toLowerCase() === cityName.toLowerCase());
+      if (defaultSpot) {
+        const spotInput = document.getElementById('pub-dest-spot');
+        if (spotInput && (!spotInput.value || spotInput.value.includes('Shopping') || spotInput.value.includes('Centro') || spotInput.value.includes('Rodoviária'))) {
+          spotInput.value = defaultSpot.spot;
+          publishWizardState.destinationSpot = defaultSpot.spot;
+        }
+      }
+    }
+    updatePublishRouteMetrics();
+  }
+  if (dropdown) dropdown.classList.add('hidden');
+}
+
+function handlePublishSpotFocus(inputId, dropdownId, role) {
+  handlePublishSpotInput(inputId, dropdownId, role);
+}
+
+function handlePublishSpotInput(inputId, dropdownId, role) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  if (!input || !dropdown) return;
+
+  const currentCity = (role === 'origin' ? (document.getElementById('pub-origin-city')?.value || publishWizardState.originCity) : (document.getElementById('pub-dest-city')?.value || publishWizardState.destinationCity) || '').toLowerCase().trim();
+  const query = (input.value || '').toLowerCase().trim();
+
+  let matches = [];
+
+  // Filtrar primeiro por locais da cidade selecionada
+  const cityLocations = NORDESTE_LOCATIONS.filter(l => currentCity && l.city.toLowerCase().includes(currentCity.split(',')[0].trim().toLowerCase()));
+
+  if (cityLocations.length > 0) {
+    if (!query) {
+      matches = cityLocations;
+    } else {
+      matches = cityLocations.filter(l => l.spot.toLowerCase().includes(query) || l.city.toLowerCase().includes(query));
+      if (matches.length === 0) {
+        matches = NORDESTE_LOCATIONS.filter(l => l.spot.toLowerCase().includes(query) || l.city.toLowerCase().includes(query)).slice(0, 10);
+      }
+    }
+  } else {
+    if (!query) {
+      matches = NORDESTE_LOCATIONS.slice(0, 10);
+    } else {
+      matches = NORDESTE_LOCATIONS.filter(l => l.spot.toLowerCase().includes(query) || l.city.toLowerCase().includes(query)).slice(0, 12);
+    }
+  }
+
+  if (matches.length === 0) {
+    dropdown.innerHTML = `
+      <div class="p-3.5 text-center text-xs text-uber-iron font-medium">
+        Ponto não listado. Você pode digitar livremente o local desejado.
+      </div>
+    `;
+    dropdown.classList.remove('hidden');
+    return;
+  }
+
+  dropdown.innerHTML = matches.map(loc => {
+    const safeSpot = loc.spot.replace(/'/g, "\\'");
+    const safeCity = loc.city.replace(/'/g, "\\'");
+    return `
+      <div
+        onmousedown="selectPublishSpot('${inputId}', '${dropdownId}', '${safeSpot}', '${safeCity}', '${role}')"
+        class="flex items-center gap-3 p-3 hover:bg-uber-gray cursor-pointer transition-colors text-left group select-none"
+      >
+        <div class="w-8 h-8 rounded-lg bg-uber-gray group-hover:bg-uber-border flex items-center justify-center text-uber-black shrink-0 transition-colors">
+          ${icon('pin_drop', { size: 'sm', className: 'text-uber-black' })}
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="font-bold text-xs sm:text-sm text-uber-black truncate group-hover:text-black">${loc.spot}</p>
+          <p class="text-[11px] font-medium text-uber-iron truncate">${loc.city}</p>
+        </div>
+        <div class="text-uber-iron group-hover:text-uber-black shrink-0">
+          ${icon('north_west', { size: 'sm' })}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  dropdown.classList.remove('hidden');
+}
+
+function selectPublishSpot(inputId, dropdownId, spotName, cityName, role) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  if (input) {
+    input.value = spotName;
+    if (role === 'origin') {
+      publishWizardState.originSpot = spotName;
+      const cityInput = document.getElementById('pub-origin-city');
+      if (cityInput && (!cityInput.value || !cityInput.value.trim())) {
+        cityInput.value = cityName;
+        publishWizardState.originCity = cityName;
+        updatePublishRouteMetrics();
+      }
+    } else if (role === 'dest') {
+      publishWizardState.destinationSpot = spotName;
+      const cityInput = document.getElementById('pub-dest-city');
+      if (cityInput && (!cityInput.value || !cityInput.value.trim())) {
+        cityInput.value = cityName;
+        publishWizardState.destinationCity = cityName;
+        updatePublishRouteMetrics();
+      }
+    }
+  }
+  if (dropdown) dropdown.classList.add('hidden');
+}
+
+function swapPublishCities() {
+  const origCityInput = document.getElementById('pub-origin-city');
+  const origSpotInput = document.getElementById('pub-origin-spot');
+  const destCityInput = document.getElementById('pub-dest-city');
+  const destSpotInput = document.getElementById('pub-dest-spot');
+
+  const oldOrigCity = origCityInput?.value || publishWizardState.originCity;
+  const oldOrigSpot = origSpotInput?.value || publishWizardState.originSpot;
+  const oldDestCity = destCityInput?.value || publishWizardState.destinationCity;
+  const oldDestSpot = destSpotInput?.value || publishWizardState.destinationSpot;
+
+  if (origCityInput) origCityInput.value = oldDestCity;
+  if (origSpotInput) origSpotInput.value = oldDestSpot;
+  if (destCityInput) destCityInput.value = oldOrigCity;
+  if (destSpotInput) destSpotInput.value = oldOrigSpot;
+
+  publishWizardState.originCity = oldDestCity;
+  publishWizardState.originSpot = oldDestSpot;
+  publishWizardState.destinationCity = oldOrigCity;
+  publishWizardState.destinationSpot = oldOrigSpot;
+
+  updatePublishRouteMetrics();
+}
 
 function renderHeroSearchBar() {
   const { origin, destination, date, seats } = store.state.searchParams;
@@ -1774,7 +1989,7 @@ function renderHeroSearchBar() {
                 type="text"
                 autocomplete="off"
                 value="${origin}"
-                placeholder="Origem (Ex: Fortaleza, CE)"
+                placeholder="Cidade de partida"
                 class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
                 onfocus="handleLocationFocus('search-origin', 'autocomplete-origin-dropdown', 'origin')"
                 oninput="handleLocationInput('search-origin', 'autocomplete-origin-dropdown', 'origin')"
@@ -1800,7 +2015,7 @@ function renderHeroSearchBar() {
                 type="text"
                 autocomplete="off"
                 value="${destination}"
-                placeholder="Destino (Ex: Juazeiro, CE)"
+                placeholder="Cidade de destino"
                 class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
                 onfocus="handleLocationFocus('search-dest', 'autocomplete-dest-dropdown', 'dest')"
                 oninput="handleLocationInput('search-dest', 'autocomplete-dest-dropdown', 'dest')"
@@ -1929,9 +2144,11 @@ function renderRideCard(ride) {
           </div>
         </div>
 
-        <div class="flex items-center gap-2.5 text-uber-iron shrink-0">
+        <div class="flex items-center gap-2 text-uber-iron shrink-0">
           ${ride.vehicle.hasAC ? `<span title="Ar-condicionado" class="flex items-center">${icon('ac_unit', { size: 'sm', className: 'text-uber-iron' })}</span>` : ''}
           ${ride.vehicle.hasUSB ? `<span title="Carregador USB" class="flex items-center">${icon('usb', { size: 'sm', className: 'text-uber-iron' })}</span>` : ''}
+          ${ride.vehicle.noSmoking ? `<span title="Cigarro não, por favor" class="flex items-center">${icon('smoke_free', { size: 'sm', className: 'text-uber-iron' })}</span>` : ''}
+          ${ride.vehicle.noPets ? `<span title="Prefiro não viajar com animais" class="flex items-center">${icon('pets', { size: 'sm', className: 'text-uber-iron' })}</span>` : ''}
           <div class="flex items-center gap-1.5 bg-uber-gray px-2.5 py-1 rounded-md border border-uber-border">
             <img src="${getVehicleImage(ride.vehicle)}" alt="${ride.vehicle.model}" class="w-8 h-5 object-contain shrink-0" />
             <span title="${ride.vehicle.model} • ${getVehicleColorName(ride.vehicle.color)}" class="text-xs text-uber-black font-semibold hidden sm:inline truncate max-w-[140px]">
@@ -2330,9 +2547,11 @@ function viewRideDetails(rideId) {
             </div>
           </div>
 
-          <div class="flex items-center gap-2 text-xs font-semibold text-uber-charcoal w-full sm:w-auto justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-uber-border">
+          <div class="flex items-center gap-2 text-xs font-semibold text-uber-charcoal w-full sm:w-auto justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-uber-border flex-wrap">
             ${ride.vehicle.hasAC ? `<span class="inline-flex items-center gap-1 bg-uber-gray px-2.5 py-1 rounded-md text-[11px] border border-uber-border">${icon('ac_unit', { size: 'sm' })} Ar-condicionado</span>` : ''}
             ${ride.vehicle.hasUSB ? `<span class="inline-flex items-center gap-1 bg-uber-gray px-2.5 py-1 rounded-md text-[11px] border border-uber-border">${icon('usb', { size: 'sm' })} USB</span>` : ''}
+            ${ride.vehicle.noSmoking ? `<span class="inline-flex items-center gap-1 bg-uber-gray px-2.5 py-1 rounded-md text-[11px] border border-uber-border">${icon('smoke_free', { size: 'sm' })} Cigarro não</span>` : ''}
+            ${ride.vehicle.noPets ? `<span class="inline-flex items-center gap-1 bg-uber-gray px-2.5 py-1 rounded-md text-[11px] border border-uber-border">${icon('pets', { size: 'sm' })} Sem animais</span>` : ''}
           </div>
         </div>
 
@@ -2706,6 +2925,150 @@ function calculateSmartPrice(distanceKm) {
   return { suggested, minPrice, maxPrice, distanceKm: km };
 }
 
+// ==========================================
+// CONTROLE DE ANTECEDÊNCIA TEMPORAL (MÍNIMO 2 HORAS)
+// ==========================================
+
+function getAdvanceDateTime(hoursAhead = 2) {
+  const d = new Date(Date.now() + hoursAhead * 60 * 60 * 1000);
+  // Arredondar para os próximos 5 minutos para um horário limpo e profissional
+  const remainder = d.getMinutes() % 5;
+  if (remainder !== 0) {
+    d.setMinutes(d.getMinutes() + (5 - remainder));
+  }
+  d.setSeconds(0);
+  d.setMilliseconds(0);
+
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+
+  return {
+    dateStr: `${year}-${month}-${day}`,
+    timeStr: `${hours}:${minutes}`,
+    dateObj: d,
+    formattedDate: `${day}/${month}/${year}`,
+    formattedTime: `${hours}:${minutes}`
+  };
+}
+
+function checkDepartureAdvance(dateStr, timeStr) {
+  if (!dateStr || !timeStr) {
+    return {
+      isValid: false,
+      message: 'Informe a data e o horário de saída da viagem.',
+      minValid: getAdvanceDateTime(2)
+    };
+  }
+
+  const selectedDate = new Date(`${dateStr}T${timeStr}:00`);
+  const now = new Date();
+
+  if (isNaN(selectedDate.getTime())) {
+    return {
+      isValid: false,
+      message: 'Data ou horário com formato inválido.',
+      minValid: getAdvanceDateTime(2)
+    };
+  }
+
+  const diffMs = selectedDate.getTime() - now.getTime();
+  const diffMinutes = Math.floor(diffMs / (60 * 1000));
+
+  if (diffMinutes < 120) {
+    const minValid = getAdvanceDateTime(2);
+    const isToday = dateStr === new Date().toISOString().split('T')[0];
+    
+    let fixAdvice = '';
+    if (isToday) {
+      fixAdvice = `Para viagens hoje (${minValid.formattedDate}), o primeiro horário permitido é a partir das ${minValid.formattedTime}.`;
+    } else {
+      fixAdvice = `Selecione uma data/horário a partir das ${minValid.formattedTime} de ${minValid.formattedDate}.`;
+    }
+
+    return {
+      isValid: false,
+      diffMinutes,
+      isToday,
+      message: `A viagem precisa ser agendada com no mínimo 2 horas de antecedência. ${fixAdvice}`,
+      minValid
+    };
+  }
+
+  return {
+    isValid: true,
+    diffMinutes,
+    minValid: getAdvanceDateTime(2)
+  };
+}
+
+function validatePublishDepartureDateTime() {
+  const dateInput = document.getElementById('pub-date');
+  const timeInput = document.getElementById('pub-time');
+  const container = document.getElementById('pub-datetime-feedback-container');
+  if (!dateInput || !timeInput || !container) return;
+
+  const dateVal = dateInput.value;
+  const timeVal = timeInput.value;
+  const check = checkDepartureAdvance(dateVal, timeVal);
+
+  if (check.isValid) {
+    container.innerHTML = `
+      <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-3 text-xs font-semibold text-emerald-950">
+        <div class="flex items-center gap-2.5">
+          ${icon('check_circle', { size: 'sm', className: 'text-emerald-700 shrink-0' })}
+          <span>Horário confirmado com antecedência mínima de 2 horas garantida.</span>
+        </div>
+        <span class="text-[11px] font-bold text-emerald-800 bg-emerald-100/60 px-2 py-0.5 rounded-md shrink-0">Válido</span>
+      </div>
+    `;
+    dateInput.classList.remove('border-red-500', 'bg-red-50/20');
+    timeInput.classList.remove('border-red-500', 'bg-red-50/20');
+  } else {
+    container.innerHTML = `
+      <div class="p-3.5 bg-rose-50 border border-rose-300 rounded-xl space-y-2.5 text-xs font-semibold text-rose-950 animate-fade-in">
+        <div class="flex items-start gap-2.5">
+          ${icon('error', { size: 'sm', className: 'text-rose-700 shrink-0 mt-0.5' })}
+          <div class="flex-1">
+            <span class="font-bold block text-rose-900">Horário indisponível (menos de 2 horas de antecedência)</span>
+            <span class="font-normal text-rose-800 mt-0.5 block leading-relaxed">${check.message}</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-end pt-1">
+          <button
+            type="button"
+            onclick="applyMinValidDepartureTime()"
+            class="px-3 py-1.5 bg-rose-900 hover:bg-black text-white font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs active:scale-95"
+          >
+            ${icon('schedule', { size: 'sm' })}
+            <span>Ajustar para ${check.minValid.formattedTime} (+2h)</span>
+          </button>
+        </div>
+      </div>
+    `;
+    dateInput.classList.add('border-red-500', 'bg-red-50/20');
+    timeInput.classList.add('border-red-500', 'bg-red-50/20');
+  }
+}
+
+function applyMinValidDepartureTime() {
+  const minValid = getAdvanceDateTime(2);
+  const dateInput = document.getElementById('pub-date');
+  const timeInput = document.getElementById('pub-time');
+  if (dateInput) {
+    dateInput.value = minValid.dateStr;
+    publishWizardState.departureDate = minValid.dateStr;
+  }
+  if (timeInput) {
+    timeInput.value = minValid.timeStr;
+    publishWizardState.departureTime = minValid.timeStr;
+  }
+  validatePublishDepartureDateTime();
+  showToast(`Horário ajustado para ${minValid.formattedTime} (${minValid.formattedDate}) com antecedência de 2 horas.`, 'success');
+}
+
 // Estado em memória do Wizard de Publicação
 let publishWizardState = {
   step: 1, // 1: Trajeto, 2: Data/Hora, 3: Veículo/Vagas/Preço, 4: Volta (opcional), 5: Resumo
@@ -2713,14 +3076,14 @@ let publishWizardState = {
   originSpot: 'Shopping Iguatemi Bosque',
   destinationCity: 'Juazeiro do Norte, CE',
   destinationSpot: 'Cariri Garden Shopping',
-  departureDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-  departureTime: '08:00',
+  departureDate: getAdvanceDateTime(2).dateStr,
+  departureTime: getAdvanceDateTime(2).timeStr,
   vehicleId: '',
   seats: 4,
   pricePerSeat: 75.00,
   hasReturn: false,
-  returnDate: new Date(Date.now() + 172800000).toISOString().split('T')[0],
-  returnTime: '17:00',
+  returnDate: getAdvanceDateTime(6).dateStr,
+  returnTime: getAdvanceDateTime(6).timeStr,
   returnSeats: 4,
   returnPrice: 75.00,
   notes: '',
@@ -2735,6 +3098,14 @@ function initPublishWizardState() {
   
   if (!publishWizardState.vehicleId && primaryVeh) {
     publishWizardState.vehicleId = primaryVeh.id;
+  }
+
+  // Garantir que a data e horário de partida estejam sempre com pelo menos 2h de antecedência
+  const currentDepCheck = checkDepartureAdvance(publishWizardState.departureDate, publishWizardState.departureTime);
+  if (!currentDepCheck.isValid) {
+    const minValid = getAdvanceDateTime(2);
+    publishWizardState.departureDate = minValid.dateStr;
+    publishWizardState.departureTime = minValid.timeStr;
   }
   
   const metrics = getRouteMetrics(publishWizardState.originCity, publishWizardState.destinationCity);
@@ -2804,15 +3175,10 @@ function setPublishWizardStep(newStep) {
       const depDate = document.getElementById('pub-date')?.value;
       const depTime = document.getElementById('pub-time')?.value;
 
-      if (!depDate || !depTime) {
-        showToast('Informe a data e o horário de saída da viagem.', 'error');
-        return;
-      }
-
-      const targetDate = new Date(`${depDate}T${depTime}:00`);
-      const minValid = new Date(Date.now() + 2 * 60 * 60 * 1000);
-      if (targetDate < minValid) {
-        showToast('A viagem deve ser agendada com pelo menos 2 horas de antecedência.', 'error');
+      const advanceCheck = checkDepartureAdvance(depDate, depTime);
+      if (!advanceCheck.isValid) {
+        showToast(advanceCheck.message, 'error');
+        validatePublishDepartureDateTime();
         return;
       }
 
@@ -3076,56 +3442,101 @@ function viewPublishRide() {
       ${currentStep === 1 ? `
         <div class="p-4 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
-            <div class="min-w-0 w-full">
+            
+            <!-- Cidade de Partida (Origem) -->
+            <div class="min-w-0 w-full pub-autocomplete-container relative overflow-visible">
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Cidade de Partida (Origem)</label>
-              <input
-                id="pub-origin-city"
-                type="text"
-                list="nordeste-cities-list"
-                required
-                value="${publishWizardState.originCity}"
-                placeholder="Ex: Fortaleza, CE"
-                onchange="updatePublishRouteMetrics()"
-                class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none transition-all"
-              />
+              <div class="flex items-center gap-2.5 px-3.5 h-12 bg-uber-gray rounded-xl border border-transparent focus-within:border-uber-black focus-within:bg-white transition-all">
+                <div class="w-2.5 h-2.5 rounded-full bg-uber-black shrink-0"></div>
+                <input
+                  id="pub-origin-city"
+                  type="text"
+                  autocomplete="off"
+                  required
+                  value="${publishWizardState.originCity}"
+                  placeholder="Cidade de partida"
+                  onfocus="handlePublishCityFocus('pub-origin-city', 'pub-origin-city-dropdown', 'origin')"
+                  oninput="handlePublishCityInput('pub-origin-city', 'pub-origin-city-dropdown', 'origin')"
+                  class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
+                />
+              </div>
+              <div id="pub-origin-city-dropdown" class="pub-autocomplete-dropdown hidden absolute top-full left-0 right-0 mt-1 bg-white border border-uber-border rounded-xl shadow-2xl z-[100] max-h-60 overflow-y-auto divide-y divide-uber-gray"></div>
             </div>
-            <div class="min-w-0 w-full">
+
+            <!-- Ponto de Encontro -->
+            <div class="min-w-0 w-full pub-autocomplete-container relative overflow-visible">
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Ponto de Encontro</label>
-              <input
-                id="pub-origin-spot"
-                type="text"
-                required
-                value="${publishWizardState.originSpot}"
-                placeholder="Ex: Shopping Iguatemi / Rodoviária"
-                class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none transition-all"
-              />
+              <div class="flex items-center gap-2.5 px-3.5 h-12 bg-uber-gray rounded-xl border border-transparent focus-within:border-uber-black focus-within:bg-white transition-all">
+                <div class="text-uber-black shrink-0">${icon('pin_drop', { size: 'sm' })}</div>
+                <input
+                  id="pub-origin-spot"
+                  type="text"
+                  autocomplete="off"
+                  required
+                  value="${publishWizardState.originSpot}"
+                  placeholder="Ponto de encontro (Ex: Shopping / Rodoviária)"
+                  onfocus="handlePublishSpotFocus('pub-origin-spot', 'pub-origin-spot-dropdown', 'origin')"
+                  oninput="handlePublishSpotInput('pub-origin-spot', 'pub-origin-spot-dropdown', 'origin')"
+                  class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
+                />
+              </div>
+              <div id="pub-origin-spot-dropdown" class="pub-autocomplete-dropdown hidden absolute top-full left-0 right-0 mt-1 bg-white border border-uber-border rounded-xl shadow-2xl z-[100] max-h-60 overflow-y-auto divide-y divide-uber-gray"></div>
             </div>
           </div>
 
+          <!-- Inverter Trajeto Button -->
+          <div class="flex items-center justify-center -my-1">
+            <button
+              type="button"
+              onclick="swapPublishCities()"
+              title="Inverter Origem e Destino"
+              class="h-8 px-3 text-xs font-bold text-uber-black bg-uber-gray hover:bg-neutral-200 border border-uber-border rounded-lg flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-2xs"
+            >
+              ${icon('swap_vert', { size: 'sm', className: 'text-uber-black' })}
+              <span>Inverter Origem e Destino</span>
+            </button>
+          </div>
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
-            <div class="min-w-0 w-full">
+            
+            <!-- Cidade de Destino (Chegada) -->
+            <div class="min-w-0 w-full pub-autocomplete-container relative overflow-visible">
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Cidade de Destino (Chegada)</label>
-              <input
-                id="pub-dest-city"
-                type="text"
-                list="nordeste-cities-list"
-                required
-                value="${publishWizardState.destinationCity}"
-                placeholder="Ex: Juazeiro do Norte, CE"
-                onchange="updatePublishRouteMetrics()"
-                class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none transition-all"
-              />
+              <div class="flex items-center gap-2.5 px-3.5 h-12 bg-uber-gray rounded-xl border border-transparent focus-within:border-uber-black focus-within:bg-white transition-all">
+                <div class="w-2.5 h-2.5 bg-uber-black shrink-0"></div>
+                <input
+                  id="pub-dest-city"
+                  type="text"
+                  autocomplete="off"
+                  required
+                  value="${publishWizardState.destinationCity}"
+                  placeholder="Cidade de destino"
+                  onfocus="handlePublishCityFocus('pub-dest-city', 'pub-dest-city-dropdown', 'dest')"
+                  oninput="handlePublishCityInput('pub-dest-city', 'pub-dest-city-dropdown', 'dest')"
+                  class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
+                />
+              </div>
+              <div id="pub-dest-city-dropdown" class="pub-autocomplete-dropdown hidden absolute top-full left-0 right-0 mt-1 bg-white border border-uber-border rounded-xl shadow-2xl z-[100] max-h-60 overflow-y-auto divide-y divide-uber-gray"></div>
             </div>
-            <div class="min-w-0 w-full">
+
+            <!-- Ponto de Desembarque -->
+            <div class="min-w-0 w-full pub-autocomplete-container relative overflow-visible">
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Ponto de Desembarque</label>
-              <input
-                id="pub-dest-spot"
-                type="text"
-                required
-                value="${publishWizardState.destinationSpot}"
-                placeholder="Ex: Cariri Garden Shopping / Praça Central"
-                class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none transition-all"
-              />
+              <div class="flex items-center gap-2.5 px-3.5 h-12 bg-uber-gray rounded-xl border border-transparent focus-within:border-uber-black focus-within:bg-white transition-all">
+                <div class="text-uber-black shrink-0">${icon('location_on', { size: 'sm' })}</div>
+                <input
+                  id="pub-dest-spot"
+                  type="text"
+                  autocomplete="off"
+                  required
+                  value="${publishWizardState.destinationSpot}"
+                  placeholder="Ponto de desembarque (Ex: Shopping / Centro)"
+                  onfocus="handlePublishSpotFocus('pub-dest-spot', 'pub-dest-spot-dropdown', 'dest')"
+                  oninput="handlePublishSpotInput('pub-dest-spot', 'pub-dest-spot-dropdown', 'dest')"
+                  class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
+                />
+              </div>
+              <div id="pub-dest-spot-dropdown" class="pub-autocomplete-dropdown hidden absolute top-full left-0 right-0 mt-1 bg-white border border-uber-border rounded-xl shadow-2xl z-[100] max-h-60 overflow-y-auto divide-y divide-uber-gray"></div>
             </div>
           </div>
 
@@ -3152,7 +3563,9 @@ function viewPublishRide() {
       ` : ''}
 
       <!-- STEP 2: DATA E HORÁRIO -->
-      ${currentStep === 2 ? `
+      ${currentStep === 2 ? (() => {
+        const check = checkDepartureAdvance(publishWizardState.departureDate, publishWizardState.departureTime);
+        return `
         <div class="p-4 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
             <div class="min-w-0 w-full">
@@ -3163,7 +3576,9 @@ function viewPublishRide() {
                 required
                 min="${new Date().toISOString().split('T')[0]}"
                 value="${publishWizardState.departureDate}"
-                class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none cursor-pointer transition-all"
+                oninput="validatePublishDepartureDateTime()"
+                onchange="validatePublishDepartureDateTime()"
+                class="w-full max-w-full box-border bg-uber-gray border ${check.isValid ? 'border-transparent' : 'border-red-500 bg-red-50/20'} focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none cursor-pointer transition-all"
               />
             </div>
             <div class="min-w-0 w-full">
@@ -3173,14 +3588,44 @@ function viewPublishRide() {
                 type="time"
                 required
                 value="${publishWizardState.departureTime}"
-                class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none cursor-pointer transition-all"
+                oninput="validatePublishDepartureDateTime()"
+                onchange="validatePublishDepartureDateTime()"
+                class="w-full max-w-full box-border bg-uber-gray border ${check.isValid ? 'border-transparent' : 'border-red-500 bg-red-50/20'} focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none cursor-pointer transition-all"
               />
             </div>
           </div>
 
-          <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-emerald-900">
-            ${icon('check_circle', { size: 'sm', className: 'text-emerald-700 shrink-0' })}
-            <span>Aviso Preventivo: A saída deve ter antecedência mínima de 2 horas para conforto dos passageiros.</span>
+          <!-- Dynamic 2-Hour Advance Feedback Container -->
+          <div id="pub-datetime-feedback-container">
+            ${check.isValid ? `
+              <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-3 text-xs font-semibold text-emerald-950">
+                <div class="flex items-center gap-2.5">
+                  ${icon('check_circle', { size: 'sm', className: 'text-emerald-700 shrink-0' })}
+                  <span>Horário confirmado com antecedência mínima de 2 horas garantida.</span>
+                </div>
+                <span class="text-[11px] font-bold text-emerald-800 bg-emerald-100/60 px-2 py-0.5 rounded-md shrink-0">Válido</span>
+              </div>
+            ` : `
+              <div class="p-3.5 bg-rose-50 border border-rose-300 rounded-xl space-y-2.5 text-xs font-semibold text-rose-950 animate-fade-in">
+                <div class="flex items-start gap-2.5">
+                  ${icon('error', { size: 'sm', className: 'text-rose-700 shrink-0 mt-0.5' })}
+                  <div class="flex-1">
+                    <span class="font-bold block text-rose-900">Horário indisponível (menos de 2 horas de antecedência)</span>
+                    <span class="font-normal text-rose-800 mt-0.5 block leading-relaxed">${check.message}</span>
+                  </div>
+                </div>
+                <div class="flex items-center justify-end pt-1">
+                  <button
+                    type="button"
+                    onclick="applyMinValidDepartureTime()"
+                    class="px-3 py-1.5 bg-rose-900 hover:bg-black text-white font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs active:scale-95"
+                  >
+                    ${icon('schedule', { size: 'sm' })}
+                    <span>Ajustar para ${check.minValid.formattedTime} (+2h)</span>
+                  </button>
+                </div>
+              </div>
+            `}
           </div>
 
           <div class="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
@@ -3201,7 +3646,8 @@ function viewPublishRide() {
             </button>
           </div>
         </div>
-      ` : ''}
+      `;
+    })() : ''}
 
       <!-- STEP 3: VEÍCULO, VAGAS E PRECIFICAÇÃO INTELIGENTE -->
       ${currentStep === 3 ? `
@@ -3253,13 +3699,15 @@ function viewPublishRide() {
                           <span class="font-bold text-xs text-uber-black truncate">${veh.brand} ${veh.model}</span>
                           ${isSelected ? `<span class="text-black font-bold text-xs">${icon('check_circle', { size: 'sm' })}</span>` : ''}
                         </div>
-                        <div class="flex items-center gap-1.5 text-[11px] text-uber-iron mt-0.5">
+                        <div class="flex items-center gap-1.5 text-[11px] text-uber-iron mt-0.5 flex-wrap">
                           <span class="font-mono font-semibold">${veh.plate}</span>
                           <span>•</span>
                           <span class="inline-flex items-center gap-1">
                             <span class="w-2 h-2 rounded-xs border ${colorObj.border}" style="background-color: ${colorObj.hex}"></span>
                             <span>${colorObj.name}</span>
                           </span>
+                          ${veh.noSmoking ? `<span title="Cigarro não" class="inline-flex items-center text-uber-charcoal">${icon('smoke_free', { size: 'sm' })}</span>` : ''}
+                          ${veh.noPets ? `<span title="Sem animais" class="inline-flex items-center text-uber-charcoal">${icon('pets', { size: 'sm' })}</span>` : ''}
                         </div>
                       </div>
                     </div>
@@ -4310,7 +4758,9 @@ function viewProfile() {
                         <div class="flex items-center gap-1.5 mt-0.5 text-uber-black font-semibold text-[11px] flex-wrap">
                           ${veh.hasAC ? `<span title="Ar-condicionado" class="inline-flex items-center gap-0.5">${icon('ac_unit', { size: 'sm', className: 'text-uber-charcoal' })} Ar</span>` : ''}
                           ${veh.hasUSB ? `<span title="Entrada USB" class="inline-flex items-center gap-0.5">${icon('usb', { size: 'sm', className: 'text-uber-charcoal' })} USB</span>` : ''}
-                          ${!veh.hasAC && !veh.hasUSB ? '<span class="text-uber-iron font-normal">Básico</span>' : ''}
+                          ${veh.noSmoking ? `<span title="Cigarro não, por favor" class="inline-flex items-center gap-0.5">${icon('smoke_free', { size: 'sm', className: 'text-uber-charcoal' })} Sem Cigarro</span>` : ''}
+                          ${veh.noPets ? `<span title="Prefiro não viajar com animais" class="inline-flex items-center gap-0.5">${icon('pets', { size: 'sm', className: 'text-uber-charcoal' })} Sem Animais</span>` : ''}
+                          ${!veh.hasAC && !veh.hasUSB && !veh.noSmoking && !veh.noPets ? '<span class="text-uber-iron font-normal">Básico</span>' : ''}
                         </div>
                       </div>
                     </div>
@@ -4539,7 +4989,7 @@ function openVehicleModal(vehicleId = null) {
             </select>
           </div>
 
-          <!-- Recursos do Carro (Checkboxes) -->
+          <!-- Recursos e Regras do Carro (Checkboxes) -->
           <div>
             <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-2">Recursos Disponíveis no Carro</label>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -4568,7 +5018,34 @@ function openVehicleModal(vehicleId = null) {
                   <span>Carregador USB</span>
                 </div>
               </label>
+
+              <label class="flex items-center gap-3 p-3 bg-uber-gray border border-uber-border rounded-xl cursor-pointer hover:bg-neutral-100 transition-colors">
+                <input
+                  type="checkbox"
+                  id="veh-form-no-smoking"
+                  ${veh ? (veh.noSmoking ? 'checked' : '') : 'checked'}
+                  class="w-4 h-4 rounded text-black focus:ring-black cursor-pointer"
+                />
+                <div class="flex items-center gap-2 text-xs font-semibold text-uber-black">
+                  ${icon('smoke_free', { size: 'sm', className: 'text-uber-charcoal' })}
+                  <span>Cigarro não, por favor</span>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-3 p-3 bg-uber-gray border border-uber-border rounded-xl cursor-pointer hover:bg-neutral-100 transition-colors">
+                <input
+                  type="checkbox"
+                  id="veh-form-no-pets"
+                  ${veh ? (veh.noPets ? 'checked' : '') : 'checked'}
+                  class="w-4 h-4 rounded text-black focus:ring-black cursor-pointer"
+                />
+                <div class="flex items-center gap-2 text-xs font-semibold text-uber-black">
+                  ${icon('pets', { size: 'sm', className: 'text-uber-charcoal' })}
+                  <span>Prefiro não viajar com animais</span>
+                </div>
+              </label>
             </div>
+            <span class="text-[10px] text-uber-iron mt-1.5 block">Essas opções ficam salvas no padrão do veículo e serão aplicadas automaticamente em todas as corridas que você criar com este carro.</span>
           </div>
 
           <!-- Checkbox: Tornar veículo principal -->
@@ -4618,6 +5095,8 @@ function handleSaveVehicle(e, vehicleId = null) {
   const year = parseInt(document.getElementById('veh-form-year').value, 10);
   const hasAC = document.getElementById('veh-form-has-ac').checked;
   const hasUSB = document.getElementById('veh-form-has-usb').checked;
+  const noSmoking = document.getElementById('veh-form-no-smoking').checked;
+  const noPets = document.getElementById('veh-form-no-pets').checked;
   const isPrimary = document.getElementById('veh-form-is-primary').checked;
 
   if (!plate) {
@@ -4638,10 +5117,10 @@ function handleSaveVehicle(e, vehicleId = null) {
   }
 
   if (vehicleId) {
-    store.updateVehicle(vehicleId, { brand, model, plate, renavam, year, color, hasAC, hasUSB, isPrimary });
+    store.updateVehicle(vehicleId, { brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, isPrimary });
     showToast('Veículo atualizado com sucesso!', 'success');
   } else {
-    store.addVehicle({ brand, model, plate, renavam, year, color, hasAC, hasUSB, isPrimary });
+    store.addVehicle({ brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, isPrimary });
     showToast('Novo veículo cadastrado com sucesso!', 'success');
   }
 
