@@ -4008,10 +4008,17 @@ function viewMyTrips() {
                 </div>
 
                 <div class="pt-2 border-t border-uber-border flex justify-end gap-2 text-xs">
-                  <a href="#/chat/${ride.id}" class="font-semibold text-uber-black hover:bg-uber-border flex items-center gap-1.5 px-3 py-1.5 bg-uber-gray rounded-lg transition-colors active:scale-95">
-                    ${icon('chat', { size: 'sm' })}
-                    <span>Abrir Chat</span>
-                  </a>
+                  ${rideBookings.length > 0 ? `
+                    <a href="#/chat/${ride.id}" class="font-semibold text-uber-black hover:bg-uber-border flex items-center gap-1.5 px-3 py-1.5 bg-uber-gray rounded-lg transition-colors active:scale-95">
+                      ${icon('chat', { size: 'sm' })}
+                      <span>Abrir Chat</span>
+                    </a>
+                  ` : `
+                    <span title="O chat será ativado quando um passageiro solicitar esta viagem" class="text-xs text-uber-iron flex items-center gap-1 px-3 py-1.5 bg-uber-gray/60 rounded-lg cursor-not-allowed">
+                      ${icon('chat_bubble_outline', { size: 'sm', className: 'text-uber-iron' })}
+                      <span>Chat (aguardando passageiro)</span>
+                    </span>
+                  `}
                   <a href="#/viagem/${ride.id}" class="font-bold text-uber-black hover:underline flex items-center gap-1.5 px-3 py-1.5">
                     ${icon('visibility', { size: 'sm' })}
                     <span>Ver Detalhes</span>
@@ -4787,16 +4794,16 @@ function viewPublishRide() {
             </div>
           </div>
 
-          <!-- Inverter Trajeto Button -->
+          <!-- Inverter Trajeto Button (Apenas Ícone) -->
           <div class="flex items-center justify-center -my-1">
             <button
               type="button"
               onclick="swapPublishCities()"
               title="Inverter Origem e Destino"
-              class="h-8 px-3 text-xs font-bold text-uber-black bg-uber-gray hover:bg-neutral-200 border border-uber-border rounded-lg flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-2xs"
+              aria-label="Inverter Origem e Destino"
+              class="w-9 h-9 text-uber-black bg-uber-gray hover:bg-neutral-200 border border-uber-border rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-2xs"
             >
               ${icon('swap_vert', { size: 'sm', className: 'text-uber-black' })}
-              <span>Inverter Origem e Destino</span>
             </button>
           </div>
 
@@ -4822,11 +4829,11 @@ function viewPublishRide() {
               <div id="pub-dest-city-dropdown" class="pub-autocomplete-dropdown hidden absolute top-full left-0 right-0 mt-1 bg-white border border-uber-border rounded-xl shadow-2xl z-[100] max-h-60 overflow-y-auto divide-y divide-uber-gray"></div>
             </div>
 
-            <!-- Ponto de Desembarque -->
+            <!-- Ponto de Desembarque (Padronizado com pin_drop) -->
             <div class="min-w-0 w-full pub-autocomplete-container relative overflow-visible">
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Ponto de Desembarque</label>
               <div class="flex items-center gap-2.5 px-3.5 h-12 bg-uber-gray rounded-xl border border-transparent focus-within:border-uber-black focus-within:bg-white transition-all">
-                <div class="text-uber-black shrink-0">${icon('location_on', { size: 'sm' })}</div>
+                <div class="text-uber-black shrink-0">${icon('pin_drop', { size: 'sm' })}</div>
                 <input
                   id="pub-dest-spot"
                   type="text"
@@ -5331,36 +5338,149 @@ function viewPublishRide() {
   `;
 }
 
+// ==========================================
+// CONTROLE DE ACESSO E VALIDADE DO CHAT (5 HORAS PÓS-CORRIDA)
+// ==========================================
+
+function isRideExpiredForChat(ride) {
+  if (!ride) return false;
+  
+  // 1. Se tem data de conclusão explícita salva na viagem
+  if (ride.completedAt) {
+    const completedTime = new Date(ride.completedAt).getTime();
+    if (!isNaN(completedTime)) {
+      return (Date.now() - completedTime) > (5 * 60 * 60 * 1000);
+    }
+  }
+
+  // 2. Se a viagem está com status 'COMPLETED' ou 'FINISHED'
+  if (ride.status === 'COMPLETED' || ride.status === 'FINISHED') {
+    const arrTime = ride.estimatedArrivalTime || ride.departureTime || '12:00';
+    const d = new Date(`${ride.departureDate}T${arrTime}:00`);
+    const completedTime = !isNaN(d.getTime()) ? d.getTime() : (Date.now() - (6 * 60 * 60 * 1000));
+    return (Date.now() - completedTime) > (5 * 60 * 60 * 1000);
+  }
+
+  // 3. Verificação em tempo real pela data e horário de chegada estimada
+  if (ride.departureDate) {
+    const arrTime = ride.estimatedArrivalTime || ride.departureTime || '23:59';
+    const estimatedArrival = new Date(`${ride.departureDate}T${arrTime}:00`);
+    if (!isNaN(estimatedArrival.getTime())) {
+      const msSinceArrival = Date.now() - estimatedArrival.getTime();
+      if (msSinceArrival > (5 * 60 * 60 * 1000)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 // View: Chat em Tela Cheia (Fullscreen)
 function viewChat(rideId) {
   const ride = store.state.rides.find(r => r.id === rideId);
   const rideMessages = store.state.messages.filter(m => m.rideId === rideId);
   const myId = store.state.currentUser.id;
-  const isDriver = store.state.role === 'DRIVER';
+  const isDriver = store.state.role === 'DRIVER' || (ride && ride.driverId === myId);
+  const rideBookings = store.state.bookings.filter(b => b.rideId === rideId && b.status !== 'CANCELLED' && b.status !== 'REJECTED_BY_DRIVER');
   const myBooking = store.state.bookings.find(b => b.rideId === rideId && b.passengerId === myId);
 
-  // Se for passageiro e a reserva ainda não foi aceita pelo motorista
-  if (!isDriver && myBooking && myBooking.status === 'AWAITING_DRIVER') {
+  if (!ride) {
     return `
       <div class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-        <div class="w-16 h-16 bg-amber-50 text-amber-700 rounded-2xl flex items-center justify-center mb-4 border border-amber-200">
-          ${icon('hourglass_top', { size: 'lg' })}
+        <div class="w-16 h-16 bg-neutral-100 text-uber-black rounded-2xl flex items-center justify-center mb-4 border border-uber-border">
+          ${icon('error_outline', { size: 'lg' })}
         </div>
-        <h2 class="text-xl font-bold text-uber-black">Aguardando Confirmação do Motorista</h2>
-        <p class="text-uber-iron text-xs sm:text-sm font-normal mt-1.5 max-w-sm">
-          O chat em tela cheia com o motorista será liberado assim que o motorista aceitar sua solicitação de reserva.
-        </p>
-        <div class="mt-6 flex flex-col sm:flex-row gap-2 w-full max-w-xs">
-          <button onclick="window.history.back()" class="w-full h-11 bg-uber-gray text-uber-black font-semibold rounded-xl text-sm">
+        <h2 class="text-xl font-bold text-uber-black">Viagem não encontrada</h2>
+        <div class="mt-6 w-full max-w-xs">
+          <button onclick="window.history.back()" class="w-full h-11 bg-black text-white font-bold rounded-xl text-sm cursor-pointer">
             Voltar
           </button>
-          <a href="#/minhas-viagens" class="w-full h-11 bg-black text-white font-bold rounded-xl text-sm flex items-center justify-center">
-            Minhas Reservas
+        </div>
+      </div>
+    `;
+  }
+
+  // Se for MOTORISTA: só consegue abrir chat se pelo menos 1 passageiro tiver solicitado/reservado a viagem
+  if (isDriver && rideBookings.length === 0) {
+    return `
+      <div class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+        <div class="w-16 h-16 bg-neutral-100 text-uber-black rounded-2xl flex items-center justify-center mb-4 border border-uber-border">
+          ${icon('group', { size: 'lg' })}
+        </div>
+        <h2 class="text-xl font-bold text-uber-black">Aguardando Solicitações de Passageiros</h2>
+        <p class="text-uber-iron text-xs sm:text-sm font-normal mt-1.5 max-w-sm leading-relaxed">
+          O canal de chat desta viagem só estará disponível após um passageiro solicitar ou reservar uma vaga.
+        </p>
+        <div class="mt-6 flex flex-col sm:flex-row gap-2 w-full max-w-xs">
+          <button onclick="window.history.back()" class="w-full h-11 bg-uber-gray hover:bg-neutral-200 text-uber-black font-semibold rounded-xl text-sm transition-colors cursor-pointer">
+            Voltar
+          </button>
+          <a href="#/minhas-viagens" class="w-full h-11 bg-black text-white font-bold rounded-xl text-sm flex items-center justify-center hover:bg-neutral-900 transition-colors">
+            Minhas Viagens
           </a>
         </div>
       </div>
     `;
   }
+
+  // Se for PASSAGEIRO: precisa ter reserva válida
+  if (!isDriver) {
+    if (!myBooking || myBooking.status === 'CANCELLED' || myBooking.status === 'REJECTED_BY_DRIVER') {
+      return `
+        <div class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+          <div class="w-16 h-16 bg-neutral-100 text-uber-black rounded-2xl flex items-center justify-center mb-4 border border-uber-border">
+            ${icon('payments', { size: 'lg' })}
+          </div>
+          <h2 class="text-xl font-bold text-uber-black">Reserva Necessária</h2>
+          <p class="text-uber-iron text-xs sm:text-sm font-normal mt-1.5 max-w-sm leading-relaxed">
+            Você precisa solicitar ou confirmar uma reserva nesta viagem para conversar com o motorista.
+          </p>
+          <div class="mt-6 flex flex-col sm:flex-row gap-2 w-full max-w-xs">
+            <button onclick="window.history.back()" class="w-full h-11 bg-uber-gray hover:bg-neutral-200 text-uber-black font-semibold rounded-xl text-sm transition-colors cursor-pointer">
+              Voltar
+            </button>
+            <a href="#/viagem/${rideId}" class="w-full h-11 bg-black text-white font-bold rounded-xl text-sm flex items-center justify-center hover:bg-neutral-900 transition-colors">
+              Ver Viagem
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    if (myBooking.status === 'AWAITING_DRIVER') {
+      return `
+        <div class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+          <div class="w-16 h-16 bg-amber-50 text-amber-700 rounded-2xl flex items-center justify-center mb-4 border border-amber-200">
+            ${icon('hourglass_top', { size: 'lg' })}
+          </div>
+          <h2 class="text-xl font-bold text-uber-black">Aguardando Confirmação do Motorista</h2>
+          <p class="text-uber-iron text-xs sm:text-sm font-normal mt-1.5 max-w-sm leading-relaxed">
+            O chat em tela cheia com o motorista será liberado assim que o motorista aceitar sua solicitação de reserva.
+          </p>
+          <div class="mt-6 flex flex-col sm:flex-row gap-2 w-full max-w-xs">
+            <button onclick="window.history.back()" class="w-full h-11 bg-uber-gray hover:bg-neutral-200 text-uber-black font-semibold rounded-xl text-sm transition-colors cursor-pointer">
+              Voltar
+            </button>
+            <a href="#/minhas-viagens" class="w-full h-11 bg-black text-white font-bold rounded-xl text-sm flex items-center justify-center hover:bg-neutral-900 transition-colors">
+              Minhas Reservas
+            </a>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Verificação de expiração de 5 horas após corrida finalizada
+  const isExpired = isRideExpiredForChat(ride);
+
+  // Avatar e Nome do Interlocutor
+  const counterpartName = isDriver 
+    ? (rideBookings.length === 1 ? rideBookings[0].passengerName : `${rideBookings.length} Passageiros`)
+    : ride.driverName;
+  const counterpartAvatar = isDriver
+    ? (rideBookings.length === 1 ? (rideBookings[0].passengerAvatar || DEFAULT_BLANK_AVATAR) : DEFAULT_BLANK_AVATAR)
+    : (ride.driverAvatar || DEFAULT_BLANK_AVATAR);
 
   return `
     <div class="fixed inset-0 z-50 bg-white flex flex-col h-screen w-full animate-fade-in overflow-hidden">
@@ -5368,17 +5488,17 @@ function viewChat(rideId) {
       <!-- Fullscreen Top Bar -->
       <div class="bg-white border-b border-uber-border px-4 py-3 flex items-center justify-between shrink-0 shadow-xs">
         <div class="flex items-center gap-3 min-w-0">
-          <button onclick="window.history.back()" class="p-2 hover:bg-uber-gray rounded-xl transition-colors text-uber-black shrink-0" aria-label="Voltar">
+          <button onclick="window.history.back()" class="p-2 hover:bg-uber-gray rounded-xl transition-colors text-uber-black shrink-0 cursor-pointer" aria-label="Voltar">
             ${icon('arrow_back', { size: 'md' })}
           </button>
-          <img src="${ride ? ride.driverAvatar : DEFAULT_BLANK_AVATAR}" alt="${ride ? ride.driverName : 'Motorista'}" class="w-10 h-10 rounded-full object-cover border border-uber-border bg-uber-gray shrink-0" />
+          <img src="${counterpartAvatar}" alt="${counterpartName}" class="w-10 h-10 rounded-full object-cover border border-uber-border bg-uber-gray shrink-0" />
           <div class="text-left min-w-0">
             <div class="flex items-center gap-1.5">
-              <h1 class="text-sm font-bold text-uber-black leading-tight truncate">${ride ? ride.driverName : 'Motorista'}</h1>
-              <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Online"></span>
+              <h1 class="text-sm font-bold text-uber-black leading-tight truncate">${counterpartName}</h1>
+              ${!isExpired ? `<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Canal Ativo"></span>` : `<span class="inline-block w-2 h-2 rounded-full bg-neutral-400 shrink-0" title="Chat Encerrado"></span>`}
             </div>
             <p class="text-[11px] font-medium text-uber-iron truncate">
-              ${ride ? `${ride.originCity} ➔ ${ride.destinationCity}` : 'Chat Direto'}
+              ${ride.originCity} ➔ ${ride.destinationCity}
             </p>
           </div>
         </div>
@@ -5389,6 +5509,14 @@ function viewChat(rideId) {
           </a>
         </div>
       </div>
+
+      <!-- Tarja de Aviso de Chat Encerrado (+5h) -->
+      ${isExpired ? `
+        <div class="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center justify-center gap-2 text-xs font-semibold text-amber-900 shrink-0">
+          ${icon('lock_clock', { size: 'sm', className: 'text-amber-800 shrink-0' })}
+          <span>Viagem finalizada há mais de 5 horas. O canal de mensagens foi arquivado.</span>
+        </div>
+      ` : ''}
 
       <!-- Fullscreen Messages Stream -->
       <div id="chat-box" class="flex-1 p-4 bg-uber-gray/40 overflow-y-auto flex flex-col gap-3">
@@ -5410,38 +5538,56 @@ function viewChat(rideId) {
               ${icon('chat', { size: 'md' })}
             </div>
             <p class="font-semibold text-uber-black text-sm">Inicie a conversa!</p>
-            <p class="mt-1 text-uber-iron leading-relaxed">Combine ponto de encontro, bagagens e horários diretamente com o motorista.</p>
+            <p class="mt-1 text-uber-iron leading-relaxed">Combine ponto de encontro, bagagens e horários diretamente.</p>
           </div>
         `}
       </div>
 
-      <!-- Sticky Input Form (Icon only for submit, NO 'Enviar' text) -->
-      <div class="p-3 bg-white border-t border-uber-border shrink-0">
-        <form onsubmit="handleSendChat(event, '${rideId}')" class="max-w-3xl mx-auto flex items-center gap-2">
-          <input
-            id="chat-input"
-            type="text"
-            placeholder="Digite sua mensagem para o motorista..."
-            required
-            autocomplete="off"
-            class="flex-1 h-12 bg-uber-gray border border-uber-border focus:border-uber-black focus:bg-white text-uber-black font-medium px-4 rounded-xl focus:outline-none text-xs sm:text-sm transition-all"
-          />
-          <button
-            type="submit"
-            aria-label="Enviar Mensagem"
-            title="Enviar"
-            class="w-12 h-12 shrink-0 font-bold bg-black text-white hover:bg-neutral-900 rounded-xl flex items-center justify-center transition-transform active:scale-90 shadow-md"
-          >
-            ${icon('send', { size: 'sm' })}
-          </button>
-        </form>
-      </div>
+      <!-- Sticky Footer: Formulário de Envio ou Aviso de Chat Encerrado -->
+      ${isExpired ? `
+        <div class="p-4 bg-uber-gray border-t border-uber-border shrink-0 text-center">
+          <div class="max-w-md mx-auto flex items-center justify-center gap-2 text-xs font-semibold text-uber-iron">
+            ${icon('lock', { size: 'sm', className: 'text-uber-charcoal' })}
+            <span>Envio de mensagens encerrado (limite de 5h após a corrida finalizada excedido).</span>
+          </div>
+        </div>
+      ` : `
+        <div class="p-3 bg-white border-t border-uber-border shrink-0">
+          <form onsubmit="handleSendChat(event, '${rideId}')" class="max-w-3xl mx-auto flex items-center gap-2">
+            <input
+              id="chat-input"
+              type="text"
+              placeholder="Digite sua mensagem..."
+              required
+              autocomplete="off"
+              class="flex-1 h-12 bg-uber-gray border border-uber-border focus:border-uber-black focus:bg-white text-uber-black font-medium px-4 rounded-xl focus:outline-none text-xs sm:text-sm transition-all"
+            />
+            <button
+              type="submit"
+              aria-label="Enviar Mensagem"
+              title="Enviar"
+              class="w-12 h-12 shrink-0 font-bold bg-black text-white hover:bg-neutral-900 rounded-xl flex items-center justify-center transition-transform active:scale-90 shadow-md cursor-pointer"
+            >
+              ${icon('send', { size: 'sm' })}
+            </button>
+          </form>
+        </div>
+      `}
     </div>
   `;
 }
 
 function handleSendChat(e, rideId) {
   e.preventDefault();
+  const ride = store.state.rides.find(r => r.id === rideId);
+  if (!ride) return;
+
+  if (isRideExpiredForChat(ride)) {
+    showToast('Este canal de chat foi encerrado (limite de 5 horas após a viagem excedido).', 'warning');
+    renderApp();
+    return;
+  }
+
   const input = document.getElementById('chat-input');
   if (!input || !input.value.trim()) return;
 
@@ -5460,12 +5606,12 @@ function handleSendChat(e, rideId) {
       ? 'Perfeito! Ponto de encontro combinado. Qualquer dúvida nos falamos aqui.'
       : 'Mensagem recebida! Te aguardo no horário combinado.';
     
-    const ride = store.state.rides.find(r => r.id === rideId);
+    const r = store.state.rides.find(rd => rd.id === rideId);
     store.addSimulatedReply(
       rideId,
       replyText,
-      ride ? ride.driverName : 'Motorista',
-      ride ? ride.driverAvatar : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+      r ? r.driverName : 'Motorista',
+      r ? r.driverAvatar : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
     );
   }, 1500);
 }
