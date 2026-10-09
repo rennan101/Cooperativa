@@ -1057,6 +1057,37 @@ class AppStore {
     this.state.messages.push(newMsg);
     this.saveState();
     SoundEngine.play('message');
+
+    // Notifications for Chat
+    const ride = this.state.rides.find(r => r.id === rideId);
+    if (ride) {
+      if (this.state.currentUser.id === ride.driverId) {
+        // Driver sent a message, notify passengers
+        const bookings = this.state.bookings.filter(b => b.rideId === rideId && ['SIGNAL_CONFIRMED', 'AWAITING_DRIVER'].includes(b.status));
+        bookings.forEach(b => {
+          pushNotification({
+            title: `Nova mensagem de ${this.state.currentUser.name}`,
+            body: `"${text.substring(0, 30)}${text.length > 30 ? '...' : ''}"`,
+            icon: 'chat',
+            href: `#/chat/${rideId}`,
+            category: 'message',
+            role: 'PASSENGER',
+            userId: b.passengerId
+          });
+        });
+      } else {
+        // Passenger sent a message, notify driver
+        pushNotification({
+          title: `Nova mensagem de ${this.state.currentUser.name}`,
+          body: `"${text.substring(0, 30)}${text.length > 30 ? '...' : ''}"`,
+          icon: 'chat',
+          href: `#/chat/${rideId}`,
+          category: 'message',
+          role: 'DRIVER',
+          userId: ride.driverId
+        });
+      }
+    }
   }
 
   addSimulatedReply(rideId, text, name, avatar) {
@@ -1236,16 +1267,19 @@ function showToast(message, type = 'info') {
 // ==========================================
 // NOTIFICAÇÕES: store methods + dropdown
 // ==========================================
-function pushNotification({ title, body, icon = 'notifications', href = null, category = 'system' }) {
+function pushNotification({ title, body, icon = 'notifications', href = null, category = 'system', userId = null, role = null, priority = 'normal' }) {
   if (!Array.isArray(store.state.notifications)) store.state.notifications = [];
   const n = {
     id: 'notif-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+    userId,
+    role,
     category,
     title,
     body: body || '',
     icon,
     href,
     read: false,
+    priority,
     createdAt: new Date().toISOString(),
   };
   store.state.notifications.unshift(n);
@@ -1268,7 +1302,7 @@ function loadNotifications() {
 }
 
 function unreadCount() {
-  return store.state.notifications.filter(n => !n.read).length;
+  return store.state.notifications.filter(n => !n.read && (!n.userId || n.userId === store.state.currentUser.id) && (!n.role || n.role === store.state.role)).length;
 }
 
 function updateNotificationBadge() {
@@ -4345,10 +4379,33 @@ function handleExecuteAdminCancelBooking(bookingId) {
 
 function handleDriverAcceptBooking(bookingId) {
   store.acceptBooking(bookingId);
+  const b = store.state.bookings.find(x => x.id === bookingId);
+  if (b) {
+    pushNotification({
+      title: 'Reserva confirmada',
+      body: `Sua reserva foi aceita pelo motorista!`,
+      icon: 'check_circle',
+      href: `#/chat/${b.rideId}`,
+      category: 'booking',
+      role: 'PASSENGER',
+      userId: b.passengerId
+    });
+  }
   showToast('Reserva aceita com sucesso! O chat foi liberado para o passageiro.', 'success');
 }
 
 function handleDriverRejectBooking(bookingId) {
+  const b = store.state.bookings.find(x => x.id === bookingId);
+  if (b) {
+    pushNotification({
+      title: 'Reserva recusada',
+      body: `O motorista não pôde aceitar sua reserva.`,
+      icon: 'cancel',
+      category: 'booking',
+      role: 'PASSENGER',
+      userId: b.passengerId
+    });
+  }
   store.rejectBooking(bookingId);
   showToast('Reserva recusada.', 'warning');
 }
@@ -6588,6 +6645,17 @@ function viewAdmin() {
 }
 
 function handleApproveDriver(id) {
+  const req = store.state.driverRequests.find(r => r.id === id);
+  if (req) {
+    pushNotification({
+      title: 'Cadastro aprovado',
+      body: 'Seu perfil de motorista foi aprovado. Você já pode publicar viagens!',
+      icon: 'verified',
+      category: 'system',
+      role: 'DRIVER',
+      userId: req.userId
+    });
+  }
   store.approveDriverRequest(id);
   showToast('Motorista aprovado com sucesso!', 'success');
   renderApp();
@@ -6595,12 +6663,37 @@ function handleApproveDriver(id) {
 
 function handleRejectDriver(id) {
   const reason = prompt('Informe o motivo da recusa:') || 'Documentação ilegível';
+  const req = store.state.driverRequests.find(r => r.id === id);
+  if (req) {
+    pushNotification({
+      title: 'Cadastro rejeitado',
+      body: `Seu perfil de motorista não foi aprovado: ${reason}`,
+      icon: 'cancel',
+      category: 'system',
+      role: 'PASSENGER',
+      userId: req.userId
+    });
+  }
   store.rejectDriverRequest(id, reason);
   showToast('Solicitação recusada e notificada.', 'info');
   renderApp();
 }
 
 function handleReleaseCustodyAdmin(id, amount) {
+  const b = store.state.bookings.find(bk => bk.id === id);
+  if (b) {
+    const ride = store.state.rides.find(r => r.id === b.rideId);
+    if (ride) {
+      pushNotification({
+        title: 'Repasse Liberado',
+        body: `O valor de R$ ${amount.toFixed(2).replace('.', ',')} da reserva ${id} foi liberado para sua conta.`,
+        icon: 'payments',
+        category: 'payment',
+        role: 'DRIVER',
+        userId: ride.driverId
+      });
+    }
+  }
   store.releaseCustody(id);
   showToast(`Repasse de R$ ${amount.toFixed(2).replace('.', ',')} liberado com sucesso!`, 'success');
   renderApp();
@@ -7444,6 +7537,35 @@ function copyPixCode() {
 
 function confirmPixPaymentModal(bookingId) {
   closeModal();
+  const b = store.state.bookings.find(x => x.id === bookingId);
+  if (b) {
+    const ride = store.state.rides.find(r => r.id === b.rideId);
+    pushNotification({
+      title: 'Pagamento Confirmado',
+      body: 'Seu pagamento via PIX foi identificado. Vaga garantida!',
+      icon: 'check_circle',
+      category: 'payment',
+      role: 'PASSENGER',
+      userId: b.passengerId
+    });
+    if (ride) {
+      pushNotification({
+        title: 'Novo passageiro confirmado',
+        body: `O passageiro ${b.passengerName} pagou o sinal para a viagem a ${ride.destinationCity}.`,
+        icon: 'payments',
+        category: 'payment',
+        role: 'DRIVER',
+        userId: ride.driverId
+      });
+      pushNotification({
+        title: 'Sinal recebido em custódia',
+        body: `PIX de ${b.passengerName} (Reserva ${bookingId}) foi recebido.`,
+        icon: 'account_balance',
+        category: 'payment',
+        role: 'ADMIN'
+      });
+    }
+  }
   showToast('Pagamento do sinal confirmado com sucesso! Vaga garantida.', 'success');
   window.location.hash = '#/minhas-viagens';
 }
