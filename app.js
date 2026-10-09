@@ -1490,10 +1490,9 @@ function renderHeader() {
           <span class="hidden sm:inline">${store.state.currentUser.name.split(' ')[0]}</span>
         </a>
 
-        <button onclick="toggleRole()" title="Alternar Perfil para Teste" aria-label="Alternar perfil: ${role === 'DRIVER' ? 'Motorista' : role === 'ADMIN' ? 'Admin' : 'Passageiro'}"
-          class="h-8 px-2 sm:px-3 flex items-center gap-1 sm:gap-1.5 text-xs font-semibold text-white bg-uber-charcoal hover:bg-uber-iron/30 rounded-lg transition-colors active:scale-95">
+        <button onclick="toggleRole()" title="Alternar Perfil para Teste" aria-label="Alternar perfil"
+          class="h-8 w-8 flex items-center justify-center text-white bg-uber-charcoal hover:bg-uber-iron/30 rounded-lg transition-colors active:scale-95">
           ${icon('swap_horiz', { size: 'sm', className: 'text-uber-slate' })}
-          <span class="header-role-label text-[11px] font-bold hidden xs:inline">${role === 'DRIVER' ? 'Motorista' : role === 'ADMIN' ? 'Admin' : 'Passageiro'}</span>
         </button>
       </div>
     </div>
