@@ -1329,6 +1329,8 @@ function markNotificationRead(id) {
   const n = store.state.notifications.find(x => x.id === id);
   if (n && !n.read) { n.read = true; saveNotifications(); }
   updateNotificationBadge();
+  const panel = document.getElementById('notification-panel');
+  if (panel) panel.style.display = 'none';
   renderNotificationPanel();
 }
 
@@ -4385,7 +4387,7 @@ function handleDriverAcceptBooking(bookingId) {
       title: 'Reserva confirmada',
       body: `Sua reserva foi aceita pelo motorista!`,
       icon: 'check_circle',
-      href: `#/chat/${b.rideId}`,
+      href: `#/viagem/${b.rideId}`,
       category: 'booking',
       role: 'PASSENGER',
       userId: b.passengerId
@@ -4401,6 +4403,7 @@ function handleDriverRejectBooking(bookingId) {
       title: 'Reserva recusada',
       body: `O motorista não pôde aceitar sua reserva.`,
       icon: 'cancel',
+      href: '#/minhas-viagens',
       category: 'booking',
       role: 'PASSENGER',
       userId: b.passengerId
@@ -6651,6 +6654,7 @@ function handleApproveDriver(id) {
       title: 'Cadastro aprovado',
       body: 'Seu perfil de motorista foi aprovado. Você já pode publicar viagens!',
       icon: 'verified',
+      href: '#/perfil',
       category: 'system',
       role: 'DRIVER',
       userId: req.userId
@@ -6669,6 +6673,7 @@ function handleRejectDriver(id) {
       title: 'Cadastro rejeitado',
       body: `Seu perfil de motorista não foi aprovado: ${reason}`,
       icon: 'cancel',
+      href: '#/perfil',
       category: 'system',
       role: 'PASSENGER',
       userId: req.userId
@@ -6688,6 +6693,7 @@ function handleReleaseCustodyAdmin(id, amount) {
         title: 'Repasse Liberado',
         body: `O valor de R$ ${amount.toFixed(2).replace('.', ',')} da reserva ${id} foi liberado para sua conta.`,
         icon: 'payments',
+        href: '#/perfil',
         category: 'payment',
         role: 'DRIVER',
         userId: ride.driverId
@@ -7544,6 +7550,7 @@ function confirmPixPaymentModal(bookingId) {
       title: 'Pagamento Confirmado',
       body: 'Seu pagamento via PIX foi identificado. Vaga garantida!',
       icon: 'check_circle',
+      href: '#/minhas-viagens',
       category: 'payment',
       role: 'PASSENGER',
       userId: b.passengerId
@@ -7553,6 +7560,7 @@ function confirmPixPaymentModal(bookingId) {
         title: 'Novo passageiro confirmado',
         body: `O passageiro ${b.passengerName} pagou o sinal para a viagem a ${ride.destinationCity}.`,
         icon: 'payments',
+        href: `#/viagem/${ride.id}`,
         category: 'payment',
         role: 'DRIVER',
         userId: ride.driverId
@@ -7561,6 +7569,7 @@ function confirmPixPaymentModal(bookingId) {
         title: 'Sinal recebido em custódia',
         body: `PIX de ${b.passengerName} (Reserva ${bookingId}) foi recebido.`,
         icon: 'account_balance',
+        href: '#/admin',
         category: 'payment',
         role: 'ADMIN'
       });
@@ -7977,9 +7986,9 @@ window.addEventListener('DOMContentLoaded', () => {
   loadNotifications();
   // Semear notificações de exemplo na primeira visita (badge + dropdown)
   if (!localStorage.getItem('coop.notif.seeded')) {
-    pushNotification({ title: 'Nova mensagem de Marcos Silva', body: '"Chego em 5 minutos no ponto de embarque."', icon: 'chat_bubble', href: '#/minhas-viagens', category: 'message' });
+    pushNotification({ title: 'Nova mensagem de Marcos Silva', body: '"Chego em 5 minutos no ponto de embarque."', icon: 'chat_bubble', href: '#/chat/ride-101', category: 'message' });
     pushNotification({ title: 'Pagamento do sinal confirmado', body: 'R$ 37,50 · PIX identificado', icon: 'payments', href: '#/minhas-viagens', category: 'payment' });
-    pushNotification({ title: 'Reserva confirmada', body: 'Fortaleza → Juazeiro do Norte · 06:30', icon: 'event_available', href: '#/minhas-viagens', category: 'booking' });
+    pushNotification({ title: 'Reserva confirmada', body: 'Fortaleza → Juazeiro do Norte · 06:30', icon: 'event_available', href: '#/viagem/ride-101', category: 'booking' });
     localStorage.setItem('coop.notif.seeded', '1');
   }
   renderFooter();
