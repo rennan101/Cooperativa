@@ -471,6 +471,9 @@ const INITIAL_STATE = {
         year: 2023,
         hasAC: true,
         hasUSB: true,
+        noSmoking: true,
+        noPets: false,
+        luggagePolicy: '1_MEDIUM',
         isPrimary: true,
       }
     ],
@@ -485,6 +488,9 @@ const INITIAL_STATE = {
       year: 2023,
       hasAC: true,
       hasUSB: true,
+      noSmoking: true,
+      noPets: false,
+      luggagePolicy: '1_MEDIUM',
       isPrimary: true,
     }
   },
@@ -513,6 +519,7 @@ const INITIAL_STATE = {
       pricePerSeat: 75.00,
       totalSeats: 4,
       availableSeats: 3,
+      luggagePolicy: '1_MEDIUM',
       vehicle: {
         brand: 'Toyota',
         model: 'Corolla 2.0',
@@ -521,6 +528,9 @@ const INITIAL_STATE = {
         year: 2023,
         hasAC: true,
         hasUSB: true,
+        noSmoking: true,
+        noPets: false,
+        luggagePolicy: '1_MEDIUM',
       },
       status: 'PUBLISHED',
       notes: 'Saída pontual. Parada para lanche em Quixadá.',
@@ -543,6 +553,7 @@ const INITIAL_STATE = {
       pricePerSeat: 35.00,
       totalSeats: 4,
       availableSeats: 2,
+      luggagePolicy: '1_LARGE',
       vehicle: {
         brand: 'Honda',
         model: 'Civic Touring',
@@ -551,6 +562,9 @@ const INITIAL_STATE = {
         year: 2023,
         hasAC: true,
         hasUSB: true,
+        noSmoking: true,
+        noPets: true,
+        luggagePolicy: '1_LARGE',
       },
       status: 'PUBLISHED',
       notes: 'Carro espaçoso e ar-condicionado duplo.',
@@ -573,6 +587,7 @@ const INITIAL_STATE = {
       pricePerSeat: 30.00,
       totalSeats: 4,
       availableSeats: 4,
+      luggagePolicy: '1_MEDIUM',
       vehicle: {
         brand: 'Volkswagen',
         model: 'T-Cross',
@@ -581,6 +596,9 @@ const INITIAL_STATE = {
         year: 2022,
         hasAC: true,
         hasUSB: true,
+        noSmoking: false,
+        noPets: false,
+        luggagePolicy: '1_MEDIUM',
       },
       status: 'PUBLISHED',
       notes: 'Direto pela BR-324, sem desvios.',
@@ -603,6 +621,7 @@ const INITIAL_STATE = {
       pricePerSeat: 32.00,
       totalSeats: 3,
       availableSeats: 2,
+      luggagePolicy: 'HAND',
       vehicle: {
         brand: 'Jeep',
         model: 'Renegade Longitude',
@@ -611,6 +630,9 @@ const INITIAL_STATE = {
         year: 2023,
         hasAC: true,
         hasUSB: true,
+        noSmoking: true,
+        noPets: false,
+        luggagePolicy: 'HAND',
       },
       status: 'PUBLISHED',
       notes: 'Porta-malas livre para bagagens médias.',
@@ -742,7 +764,7 @@ class AppStore {
     renderHeader();
   }
 
-  addVehicle({ brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, isPrimary }) {
+  addVehicle({ brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, luggagePolicy, isPrimary }) {
     if (!Array.isArray(this.state.currentUser.vehicles)) {
       this.state.currentUser.vehicles = [];
     }
@@ -766,6 +788,7 @@ class AppStore {
       hasUSB: !!hasUSB,
       noSmoking: !!noSmoking,
       noPets: !!noPets,
+      luggagePolicy: luggagePolicy || '1_MEDIUM',
       isPrimary: shouldBePrimary,
     };
 
@@ -777,7 +800,7 @@ class AppStore {
     renderApp();
   }
 
-  updateVehicle(vehicleId, { brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, isPrimary }) {
+  updateVehicle(vehicleId, { brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, luggagePolicy, isPrimary }) {
     if (!Array.isArray(this.state.currentUser.vehicles)) return;
     const idx = this.state.currentUser.vehicles.findIndex(v => v.id === vehicleId);
     if (idx === -1) return;
@@ -798,6 +821,7 @@ class AppStore {
       hasUSB: !!hasUSB,
       noSmoking: !!noSmoking,
       noPets: !!noPets,
+      luggagePolicy: luggagePolicy || this.state.currentUser.vehicles[idx].luggagePolicy || '1_MEDIUM',
       isPrimary: isPrimary !== undefined ? !!isPrimary : this.state.currentUser.vehicles[idx].isPrimary,
     };
 
@@ -1746,6 +1770,79 @@ function getVehicleImage(vehicleOrBrand, model = '', color = '') {
   return `assets/vehicles/${category}.svg`;
 }
 
+// Resolução e Formatação de Preferências de Bagagem / Malas
+function getLuggageInfo(vehOrRide) {
+  let policy = '1_MEDIUM';
+  if (typeof vehOrRide === 'string') {
+    policy = vehOrRide;
+  } else if (vehOrRide && typeof vehOrRide === 'object') {
+    policy = vehOrRide.luggagePolicy || vehOrRide.vehicle?.luggagePolicy || (vehOrRide.acceptsLuggage === false ? 'NONE' : '1_MEDIUM');
+  }
+
+  switch (policy) {
+    case 'NONE':
+      return {
+        key: 'NONE',
+        label: 'Sem malas (apenas mochila de mão no colo)',
+        shortLabel: 'Sem malas',
+        badgeText: 'Sem malas',
+        iconName: 'backpack',
+        accepts: false,
+        quantity: 0
+      };
+    case 'HAND':
+      return {
+        key: 'HAND',
+        label: 'Bagagem de mão pequena (até 10kg)',
+        shortLabel: 'Mala de mão',
+        badgeText: 'Mala de mão',
+        iconName: 'work',
+        accepts: true,
+        quantity: 1
+      };
+    case '1_MEDIUM':
+      return {
+        key: '1_MEDIUM',
+        label: '1 mala média por passageiro (até 15kg)',
+        shortLabel: '1 mala média',
+        badgeText: '1 mala média',
+        iconName: 'luggage',
+        accepts: true,
+        quantity: 1
+      };
+    case '1_LARGE':
+      return {
+        key: '1_LARGE',
+        label: '1 mala grande por passageiro (até 23kg)',
+        shortLabel: '1 mala grande',
+        badgeText: '1 mala grande',
+        iconName: 'luggage',
+        accepts: true,
+        quantity: 1
+      };
+    case '2_BAGS':
+      return {
+        key: '2_BAGS',
+        label: 'Até 2 malas por passageiro',
+        shortLabel: 'Até 2 malas',
+        badgeText: 'Até 2 malas',
+        iconName: 'luggage',
+        accepts: true,
+        quantity: 2
+      };
+    default:
+      return {
+        key: '1_MEDIUM',
+        label: '1 mala média por passageiro',
+        shortLabel: '1 mala média',
+        badgeText: '1 mala média',
+        iconName: 'luggage',
+        accepts: true,
+        quantity: 1
+      };
+  }
+}
+
 // Fechar autocompletes ao clicar fora
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#hero-search-form')) {
@@ -2149,6 +2246,7 @@ function renderRideCard(ride) {
           ${ride.vehicle.hasUSB ? `<span title="Carregador USB" class="flex items-center">${icon('usb', { size: 'sm', className: 'text-uber-iron' })}</span>` : ''}
           ${ride.vehicle.noSmoking ? `<span title="Cigarro não, por favor" class="flex items-center">${icon('smoke_free', { size: 'sm', className: 'text-uber-iron' })}</span>` : ''}
           ${ride.vehicle.noPets ? `<span title="Prefiro não viajar com animais" class="flex items-center">${icon('pets', { size: 'sm', className: 'text-uber-iron' })}</span>` : ''}
+          <span title="${getLuggageInfo(ride).label}" class="flex items-center">${icon(getLuggageInfo(ride).iconName, { size: 'sm', className: 'text-uber-iron' })}</span>
           <div class="flex items-center gap-1.5 bg-uber-gray px-2.5 py-1 rounded-md border border-uber-border">
             <img src="${getVehicleImage(ride.vehicle)}" alt="${ride.vehicle.model}" class="w-8 h-5 object-contain shrink-0" />
             <span title="${ride.vehicle.model} • ${getVehicleColorName(ride.vehicle.color)}" class="text-xs text-uber-black font-semibold hidden sm:inline truncate max-w-[140px]">
@@ -2552,6 +2650,7 @@ function viewRideDetails(rideId) {
             ${ride.vehicle.hasUSB ? `<span class="inline-flex items-center gap-1 bg-uber-gray px-2.5 py-1 rounded-md text-[11px] border border-uber-border">${icon('usb', { size: 'sm' })} USB</span>` : ''}
             ${ride.vehicle.noSmoking ? `<span class="inline-flex items-center gap-1 bg-uber-gray px-2.5 py-1 rounded-md text-[11px] border border-uber-border">${icon('smoke_free', { size: 'sm' })} Cigarro não</span>` : ''}
             ${ride.vehicle.noPets ? `<span class="inline-flex items-center gap-1 bg-uber-gray px-2.5 py-1 rounded-md text-[11px] border border-uber-border">${icon('pets', { size: 'sm' })} Sem animais</span>` : ''}
+            <span class="inline-flex items-center gap-1 bg-uber-gray px-2.5 py-1 rounded-md text-[11px] border border-uber-border">${icon(getLuggageInfo(ride).iconName, { size: 'sm' })} ${getLuggageInfo(ride).label}</span>
           </div>
         </div>
 
@@ -2633,28 +2732,525 @@ function handleStartBooking(rideId) {
   }
 }
 
-// View: My Trips
+// Estado Administrativo de Filtros de Viagens da Plataforma
+let adminTripsMonthFilter = new Date().toISOString().slice(0, 7); // Padrão: Mês atual 'YYYY-MM'
+let adminTripsStatusFilter = 'ALL'; // 'ALL' | 'WITH_BOOKINGS' | 'PAID' | 'CANCELLED'
+let adminTripsSearchQuery = '';
+
+function formatMonthName(monthStr) {
+  if (!monthStr || monthStr === 'ALL') return 'Todos os Meses';
+  const [year, month] = monthStr.split('-');
+  const months = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+  const mIndex = parseInt(month, 10) - 1;
+  return `${months[mIndex] || month} de ${year}`;
+}
+
+function getAvailableMonths(rides = []) {
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const monthSet = new Set();
+  monthSet.add(currentMonth);
+
+  const now = new Date();
+  const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const nextDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  monthSet.add(prevDate.toISOString().slice(0, 7));
+  monthSet.add(nextDate.toISOString().slice(0, 7));
+
+  rides.forEach(r => {
+    if (r.departureDate) {
+      monthSet.add(r.departureDate.slice(0, 7));
+    }
+  });
+
+  return Array.from(monthSet).sort().reverse();
+}
+
+// View: My Trips / Viagens da Plataforma
 function viewMyTrips() {
   const { bookings, rides, currentUser, role } = store.state;
+  const isAdmin = role === 'ADMIN' || role === 'MANAGER';
   const myPublished = rides.filter(r => r.driverId === currentUser.id);
 
+  // Filtros administrativos para a visão de Admin / Gestor
+  let adminFilteredRides = [];
+  let totalMonthPassengers = 0;
+  let totalMonthVolume = 0;
+  let totalMonthCustody = 0;
+
+  if (isAdmin) {
+    adminFilteredRides = rides.filter(ride => {
+      // 1. Filtro Mensal
+      if (adminTripsMonthFilter !== 'ALL') {
+        const rideMonth = ride.departureDate ? ride.departureDate.slice(0, 7) : '';
+        if (rideMonth !== adminTripsMonthFilter) return false;
+      }
+
+      // 2. Filtro de Status
+      const rideBookings = bookings.filter(b => b.rideId === ride.id);
+      if (adminTripsStatusFilter === 'WITH_BOOKINGS' && rideBookings.length === 0) {
+        return false;
+      }
+      if (adminTripsStatusFilter === 'PAID') {
+        const hasPaid = rideBookings.some(b => b.status === 'FULLY_PAID' || b.status === 'SIGNAL_CONFIRMED');
+        if (!hasPaid) return false;
+      }
+      if (adminTripsStatusFilter === 'CANCELLED') {
+        const hasCancelled = rideBookings.some(b => b.status === 'CANCELLED' || b.status === 'REJECTED_BY_DRIVER');
+        if (!hasCancelled) return false;
+      }
+
+      // 3. Busca Textual Rápida
+      if (adminTripsSearchQuery.trim()) {
+        const q = adminTripsSearchQuery.toLowerCase().trim();
+        const matchRoute = `${ride.originCity} ${ride.destinationCity} ${ride.originSpot || ''} ${ride.destinationSpot || ''}`.toLowerCase().includes(q);
+        const matchDriver = `${ride.driverName} ${ride.vehicle?.model || ''} ${ride.vehicle?.plate || ''}`.toLowerCase().includes(q);
+        const matchPassenger = rideBookings.some(b => `${b.passengerName} ${b.passengerPhone || ''} ${b.id}`.toLowerCase().includes(q));
+        if (!matchRoute && !matchDriver && !matchPassenger) return false;
+      }
+
+      return true;
+    });
+
+    // Calcular KPIs do período filtrado
+    adminFilteredRides.forEach(ride => {
+      const rBookings = bookings.filter(b => b.rideId === ride.id && b.status !== 'CANCELLED' && b.status !== 'REJECTED_BY_DRIVER');
+      rBookings.forEach(b => {
+        totalMonthPassengers += b.seatsBooked || 1;
+        totalMonthVolume += b.totalAmount || 0;
+        if (b.status === 'SIGNAL_CONFIRMED') {
+          totalMonthCustody += b.amountPaidSignal || 0;
+        }
+      });
+    });
+  }
+
+  const currentMonthStr = new Date().toISOString().slice(0, 7);
+  const availableMonths = getAvailableMonths(rides);
+
   return `
-    <div class="max-w-3xl mx-auto px-4 py-6 text-left pb-24 md:pb-12 animate-fade-in">
+    <div class="max-w-4xl mx-auto px-4 py-6 text-left pb-24 md:pb-12 animate-fade-in">
       
-      <div class="flex justify-between items-center gap-3 mb-6 h-10">
-        <h1 class="text-xl sm:text-2xl font-bold text-uber-black">
-          ${role === 'DRIVER' ? 'Minhas Viagens' : 'Minhas Reservas'}
-        </h1>
+      <!-- Cabeçalho Principal -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-uber-border">
+        <div>
+          <div class="flex items-center gap-2.5">
+            ${isAdmin ? `
+              <div class="w-8 h-8 bg-black text-white rounded-lg flex items-center justify-center font-bold shrink-0">
+                ${icon('shield', { size: 'sm' })}
+              </div>
+            ` : ''}
+            <h1 class="text-xl sm:text-2xl font-extrabold text-uber-black">
+              ${isAdmin ? 'Viagens da Plataforma' : role === 'DRIVER' ? 'Minhas Viagens' : 'Minhas Reservas'}
+            </h1>
+          </div>
+          <p class="text-xs text-uber-iron font-normal mt-1">
+            ${isAdmin 
+              ? 'Gestão operacional, suporte a motoristas e passageiros e acompanhamento financeiro em tempo real.' 
+              : role === 'DRIVER' 
+              ? 'Gerencie suas viagens publicadas, aceite passageiros e inicie conversas.' 
+              : 'Acompanhe suas viagens reservadas, realize pagamentos e acesse comprovantes.'}
+          </p>
+        </div>
 
         ${role === 'PASSENGER' ? `
-          <a href="#/buscar" class="h-9 px-3.5 text-xs font-semibold rounded-full bg-uber-gray hover:bg-uber-border flex items-center gap-1.5 text-uber-black">
+          <a href="#/buscar" class="h-9 px-3.5 text-xs font-semibold rounded-lg bg-uber-gray hover:bg-uber-border flex items-center gap-1.5 text-uber-black self-start sm:self-center">
             ${icon('search', { size: 'sm' })}
-            <span>Buscar</span>
+            <span>Buscar Viagens</span>
           </a>
+        ` : ''}
+
+        ${isAdmin ? `
+          <div class="flex items-center gap-2 self-start sm:self-center">
+            <span class="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-2xs">
+              ${icon('support_agent', { size: 'sm', className: 'text-emerald-700' })}
+              <span>Central de Suporte & Gestão</span>
+            </span>
+          </div>
         ` : ''}
       </div>
 
-      <!-- Passenger Section -->
+      <!-- SEÇÃO EXCLUSIVA DO ADMINISTRADOR: VIAGENS DA PLATAFORMA -->
+      ${isAdmin ? `
+        <div class="space-y-5">
+          
+          <!-- Barra de Filtros e Busca Administrativa -->
+          <div class="p-4 bg-white border border-uber-border rounded-xl shadow-xs space-y-3.5">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              
+              <!-- Seletor de Mês -->
+              <div class="flex items-center gap-2 min-w-0 flex-1 sm:max-w-xs">
+                <div class="text-uber-black shrink-0">
+                  ${icon('calendar_month', { size: 'sm' })}
+                </div>
+                <div class="w-full">
+                  <label class="block text-[10px] font-bold text-uber-iron uppercase tracking-wider mb-0.5">Mês de Referência</label>
+                  <select
+                    id="admin-month-filter"
+                    onchange="adminTripsMonthFilter = this.value; renderApp();"
+                    class="w-full h-10 bg-uber-gray border border-uber-border rounded-lg px-3 text-xs font-bold text-uber-black focus:outline-none focus:border-uber-black cursor-pointer"
+                  >
+                    ${availableMonths.map(m => `
+                      <option value="${m}" ${adminTripsMonthFilter === m ? 'selected' : ''}>
+                        ${formatMonthName(m)} ${m === currentMonthStr ? '(Mês Atual)' : ''}
+                      </option>
+                    `).join('')}
+                    <option value="ALL" ${adminTripsMonthFilter === 'ALL' ? 'selected' : ''}>Todos os Meses</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Campo de Busca Textual -->
+              <div class="flex-1 min-w-0">
+                <label class="block text-[10px] font-bold text-uber-iron uppercase tracking-wider mb-0.5">Busca Rápida</label>
+                <div class="relative">
+                  <input
+                    type="text"
+                    value="${adminTripsSearchQuery}"
+                    placeholder="Buscar motorista, passageiro, cidade ou código..."
+                    oninput="adminTripsSearchQuery = this.value; renderApp();"
+                    class="w-full h-10 bg-uber-gray border border-uber-border focus:border-uber-black focus:bg-white text-xs font-semibold rounded-lg pl-9 pr-8 focus:outline-none transition-all"
+                  />
+                  <div class="absolute left-3 top-2.5 text-uber-iron pointer-events-none">
+                    ${icon('search', { size: 'sm' })}
+                  </div>
+                  ${adminTripsSearchQuery ? `
+                    <button
+                      type="button"
+                      onclick="adminTripsSearchQuery = ''; renderApp();"
+                      class="absolute right-2.5 top-2.5 text-uber-iron hover:text-uber-black"
+                      title="Limpar busca"
+                    >
+                      ${icon('close', { size: 'sm' })}
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+
+            <!-- Filtros de Status (Botões Estruturados) -->
+            <div class="flex items-center gap-2 overflow-x-auto pt-1 border-t border-uber-border text-xs">
+              <span class="text-[11px] font-bold text-uber-iron uppercase tracking-wider shrink-0 mr-1">Filtrar:</span>
+              <button
+                type="button"
+                onclick="adminTripsStatusFilter = 'ALL'; renderApp();"
+                class="px-3 py-1.5 rounded-lg font-bold transition-all shrink-0 cursor-pointer ${adminTripsStatusFilter === 'ALL' ? 'bg-black text-white' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
+              >
+                Todas as Viagens
+              </button>
+              <button
+                type="button"
+                onclick="adminTripsStatusFilter = 'WITH_BOOKINGS'; renderApp();"
+                class="px-3 py-1.5 rounded-lg font-bold transition-all shrink-0 cursor-pointer ${adminTripsStatusFilter === 'WITH_BOOKINGS' ? 'bg-black text-white' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
+              >
+                Com Passageiros
+              </button>
+              <button
+                type="button"
+                onclick="adminTripsStatusFilter = 'PAID'; renderApp();"
+                class="px-3 py-1.5 rounded-lg font-bold transition-all shrink-0 cursor-pointer ${adminTripsStatusFilter === 'PAID' ? 'bg-black text-white' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
+              >
+                Sinal / Pagas
+              </button>
+              <button
+                type="button"
+                onclick="adminTripsStatusFilter = 'CANCELLED'; renderApp();"
+                class="px-3 py-1.5 rounded-lg font-bold transition-all shrink-0 cursor-pointer ${adminTripsStatusFilter === 'CANCELLED' ? 'bg-black text-white' : 'bg-uber-gray hover:bg-neutral-200 text-uber-black border border-uber-border'}"
+              >
+                Canceladas
+              </button>
+            </div>
+          </div>
+
+          <!-- Resumo e Indicadores do Período Filtrado -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
+              <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Viagens no Mês</span>
+              <div class="flex items-center gap-1.5 mt-1">
+                ${icon('directions_car', { size: 'sm', className: 'text-uber-black' })}
+                <span class="text-xl font-extrabold text-uber-black">${adminFilteredRides.length}</span>
+              </div>
+            </div>
+
+            <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
+              <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Passageiros no Mês</span>
+              <div class="flex items-center gap-1.5 mt-1">
+                ${icon('group', { size: 'sm', className: 'text-uber-black' })}
+                <span class="text-xl font-extrabold text-uber-black">${totalMonthPassengers}</span>
+              </div>
+            </div>
+
+            <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
+              <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Volume Transacionado</span>
+              <div class="flex items-center gap-1 mt-1">
+                <span class="text-xs font-bold text-uber-iron">R$</span>
+                <span class="text-xl font-extrabold text-uber-black">${totalMonthVolume.toFixed(2).replace('.', ',')}</span>
+              </div>
+            </div>
+
+            <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
+              <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Sinais em Custódia</span>
+              <div class="flex items-center gap-1 mt-1">
+                <span class="text-xs font-bold text-emerald-700">R$</span>
+                <span class="text-xl font-extrabold text-emerald-800">${totalMonthCustody.toFixed(2).replace('.', ',')}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lista Detalhada de Viagens da Plataforma -->
+          <div class="space-y-4">
+            ${adminFilteredRides.length > 0 ? adminFilteredRides.map(ride => {
+              const rideBookings = bookings.filter(b => b.rideId === ride.id);
+              const activeBookings = rideBookings.filter(b => b.status !== 'CANCELLED' && b.status !== 'REJECTED_BY_DRIVER');
+              const occupiedSeats = activeBookings.reduce((sum, b) => sum + (b.seatsBooked || 1), 0);
+              const colorObj = getVehicleColorObj(ride.vehicle.color);
+              const luggage = getLuggageInfo(ride);
+
+              return `
+                <div class="border border-uber-border bg-white rounded-xl shadow-xs overflow-hidden transition-all hover:border-uber-charcoal">
+                  
+                  <!-- Topo do Card: Trajeto, Horário, Vagas e Tarifa -->
+                  <div class="p-4 bg-neutral-50/70 border-b border-uber-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div class="space-y-1">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-mono font-semibold text-uber-iron bg-white border border-uber-border px-1.5 py-0.5 rounded text-[10px]">${ride.id}</span>
+                        <h3 class="font-extrabold text-sm sm:text-base text-uber-black">${ride.originCity} ➔ ${ride.destinationCity}</h3>
+                      </div>
+                      <div class="flex items-center gap-2 text-uber-iron flex-wrap">
+                        <span class="flex items-center gap-1 font-semibold text-uber-black">
+                          ${icon('calendar_today', { size: 'xs' })}
+                          ${ride.departureDate} às ${ride.departureTime}
+                        </span>
+                        <span>•</span>
+                        <span>Duração: ~${ride.estimatedDuration || '2h 00m'}</span>
+                        <span>•</span>
+                        <span class="text-uber-charcoal truncate">Embarque: ${ride.originSpot || 'Centro'}</span>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 shrink-0">
+                      <div class="text-left sm:text-right">
+                        <span class="font-extrabold text-sm sm:text-base text-uber-black block">R$ ${ride.pricePerSeat.toFixed(2).replace('.', ',')} <span class="text-[10px] font-normal text-uber-iron">/ lugar</span></span>
+                        <span class="text-[11px] font-bold text-uber-charcoal">${occupiedSeats}/${ride.totalSeats} lugares ocupados (${ride.availableSeats} livres)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Bloco do Motorista e Veículo -->
+                  <div class="p-4 border-b border-uber-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs bg-white">
+                    <div class="flex items-center gap-3.5">
+                      <div class="w-16 h-12 flex items-center justify-center shrink-0">
+                        <img src="${getVehicleImage(ride.vehicle)}" alt="${ride.vehicle.model}" class="w-full h-full object-contain drop-shadow-2xs" />
+                      </div>
+                      <div>
+                        <div class="flex items-center gap-1.5">
+                          <span class="font-bold text-sm text-uber-black">${ride.driverName}</span>
+                          <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                            ${icon('verified', { size: 'xs' })} Motorista
+                          </span>
+                          <span class="flex items-center gap-0.5 font-bold text-uber-black ml-1">
+                            ${icon('star', { size: 'xs', fill: true, className: 'star-gold' })}
+                            ${ride.driverRating.toFixed(1)}
+                          </span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-[11px] text-uber-iron mt-0.5 flex-wrap">
+                          <span class="font-semibold text-uber-black">${ride.vehicle.brand} ${ride.vehicle.model}</span>
+                          <span>•</span>
+                          <span class="font-mono font-bold">${ride.vehicle.plate}</span>
+                          <span>•</span>
+                          <span class="inline-flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-xs border ${colorObj.border}" style="background-color: ${colorObj.hex}"></span>
+                            <span>${colorObj.name}</span>
+                          </span>
+                          <span>•</span>
+                          <span title="${luggage.label}" class="inline-flex items-center gap-0.5 font-semibold text-uber-charcoal">
+                            ${icon(luggage.iconName, { size: 'xs' })} ${luggage.shortLabel}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Botão de Suporte Direto ao Motorista -->
+                    <div class="flex items-center gap-2 self-start sm:self-center shrink-0">
+                      <button
+                        type="button"
+                        onclick="openAdminContactSupportModal('${ride.driverName}', '${ride.driverPhone || '(85) 98765-4321'}', 'Motorista', '${ride.id}')"
+                        class="px-3 py-1.5 bg-uber-gray hover:bg-neutral-200 text-uber-black font-bold rounded-lg transition-colors flex items-center gap-1.5 text-xs cursor-pointer active:scale-95"
+                      >
+                        ${icon('support_agent', { size: 'sm', className: 'text-uber-black' })}
+                        <span>Suporte Motorista</span>
+                      </button>
+                      <a
+                        href="#/viagem/${ride.id}"
+                        class="p-1.5 text-uber-iron hover:text-uber-black hover:bg-uber-gray rounded-lg transition-colors"
+                        title="Ver detalhes públicos da viagem"
+                      >
+                        ${icon('visibility', { size: 'sm' })}
+                      </a>
+                    </div>
+                  </div>
+
+                  <!-- Lista de Passageiros e Condições Financeiras -->
+                  <div class="p-4 bg-neutral-50/40 space-y-3">
+                    <div class="flex items-center justify-between text-xs pb-1">
+                      <span class="font-bold text-uber-black uppercase tracking-wider text-[11px] flex items-center gap-1">
+                        ${icon('group', { size: 'sm', className: 'text-uber-black' })}
+                        Passageiros e Condição de Pagamento (${rideBookings.length} ${rideBookings.length === 1 ? 'reserva' : 'reservas'}):
+                      </span>
+                    </div>
+
+                    ${rideBookings.length > 0 ? `
+                      <div class="space-y-2.5">
+                        ${rideBookings.map(bk => {
+                          const isSignalPaid = bk.status === 'SIGNAL_CONFIRMED';
+                          const isFullyPaid = bk.status === 'FULLY_PAID';
+                          const isAwaiting = bk.status === 'AWAITING_DRIVER';
+                          const isCancelled = bk.status === 'CANCELLED';
+                          const isRejected = bk.status === 'REJECTED_BY_DRIVER';
+
+                          return `
+                            <div class="p-3 bg-white border border-uber-border rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
+                              
+                              <!-- Perfil do Passageiro -->
+                              <div class="flex items-center gap-2.5 min-w-0">
+                                <img src="${bk.passengerAvatar || DEFAULT_BLANK_AVATAR}" class="w-8 h-8 rounded-full object-cover bg-uber-gray border border-uber-border shrink-0" />
+                                <div class="min-w-0">
+                                  <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-bold text-uber-black text-xs sm:text-sm">${bk.passengerName}</span>
+                                    <span class="font-mono text-uber-iron text-[10px]">(${bk.id})</span>
+                                    <span class="text-[10px] font-bold text-uber-charcoal bg-uber-gray border border-uber-border px-1.5 py-0.2 rounded">
+                                      ${bk.seatsBooked} ${bk.seatsBooked === 1 ? 'lugar' : 'lugares'}
+                                    </span>
+                                  </div>
+                                  <p class="text-uber-iron font-normal text-[11px] mt-0.5">
+                                    Tel: ${bk.passengerPhone || '(85) 98765-4321'}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <!-- Valores e Status Financeiro -->
+                              <div class="flex flex-col sm:items-end gap-1 shrink-0">
+                                <div class="flex items-center gap-2">
+                                  ${isSignalPaid ? `
+                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                                      ${icon('account_balance_wallet', { size: 'xs', className: 'text-blue-700' })}
+                                      <span>Sinal PIX 50% Pago (Custódia)</span>
+                                    </span>
+                                  ` : isFullyPaid ? `
+                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-900 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                                      ${icon('check_circle', { size: 'xs', className: 'text-emerald-700' })}
+                                      <span>Repasse 100% Concluído</span>
+                                    </span>
+                                  ` : isAwaiting ? `
+                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                                      ${icon('hourglass_top', { size: 'xs', className: 'text-amber-700' })}
+                                      <span>Aguardando Aceite</span>
+                                    </span>
+                                  ` : isCancelled ? `
+                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-red-900 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
+                                      ${icon('cancel', { size: 'xs', className: 'text-red-700' })}
+                                      <span>Cancelada (Estorno PIX)</span>
+                                    </span>
+                                  ` : isRejected ? `
+                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-neutral-800 bg-neutral-100 border border-neutral-300 px-2 py-0.5 rounded-md">
+                                      ${icon('cancel', { size: 'xs' })}
+                                      <span>Recusada (Estorno 100%)</span>
+                                    </span>
+                                  ` : ''}
+                                </div>
+
+                                <div class="text-[11px] text-uber-charcoal">
+                                  <span>Sinal: <strong>R$ ${bk.amountPaidSignal.toFixed(2).replace('.', ',')}</strong></span>
+                                  <span class="text-uber-border mx-1">•</span>
+                                  <span>Total: <strong>R$ ${bk.totalAmount.toFixed(2).replace('.', ',')}</strong></span>
+                                </div>
+                              </div>
+
+                              <!-- Ações Administrativas de Suporte por Reserva -->
+                              <div class="flex items-center gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-uber-border shrink-0 flex-wrap justify-end">
+                                ${isSignalPaid ? `
+                                  <button
+                                    type="button"
+                                    onclick="handleReleaseCustodyAdmin('${bk.id}', ${bk.amountPaidSignal})"
+                                    class="px-2.5 py-1.5 bg-black hover:bg-neutral-900 text-white font-bold rounded-lg text-xs flex items-center gap-1 transition-transform active:scale-95 shadow-2xs cursor-pointer"
+                                    title="Liberar repasse de sinal para a chave PIX do motorista"
+                                  >
+                                    ${icon('payments', { size: 'sm' })}
+                                    <span>Liberar PIX</span>
+                                  </button>
+                                ` : ''}
+
+                                <button
+                                  type="button"
+                                  onclick="openReceiptModalById('${bk.id}')"
+                                  class="px-2.5 py-1.5 bg-uber-gray hover:bg-neutral-200 text-uber-black font-semibold rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                                  title="Ver comprovante da transação"
+                                >
+                                  ${icon('receipt_long', { size: 'sm' })}
+                                  <span>Recibo</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onclick="openAdminContactSupportModal('${bk.passengerName}', '${bk.passengerPhone || '(85) 98765-4321'}', 'Passageiro', '${bk.id}')"
+                                  class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                                  title="Abrir canal de suporte com o passageiro"
+                                >
+                                  ${icon('support_agent', { size: 'sm' })}
+                                  <span>Suporte</span>
+                                </button>
+
+                                ${!isCancelled && !isRejected ? `
+                                  <button
+                                    type="button"
+                                    onclick="openAdminCancelBookingModal('${bk.id}')"
+                                    class="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-semibold rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                                    title="Cancelar reserva e processar estorno assistido"
+                                  >
+                                    ${icon('cancel', { size: 'sm' })}
+                                    <span>Estornar</span>
+                                  </button>
+                                ` : ''}
+                              </div>
+                            </div>
+                          `;
+                        }).join('')}
+                      </div>
+                    ` : `
+                      <div class="p-3 bg-white rounded-lg border border-dashed border-uber-border text-center text-xs text-uber-iron">
+                        Nenhum passageiro reservou esta viagem ainda. As ${ride.availableSeats} vagas continuam abertas na plataforma.
+                      </div>
+                    `}
+                  </div>
+
+                </div>
+              `;
+            }).join('') : `
+              <div class="bg-white border border-uber-border rounded-xl p-8 sm:p-12 text-center space-y-2">
+                <div class="w-12 h-12 bg-uber-gray text-uber-iron rounded-xl flex items-center justify-center mx-auto mb-2">
+                  ${icon('search_off', { size: 'md' })}
+                </div>
+                <h3 class="text-base font-bold text-uber-black">Nenhuma viagem encontrada</h3>
+                <p class="text-xs text-uber-iron max-w-sm mx-auto font-normal">
+                  Não foram encontradas viagens para o mês de <strong>${formatMonthName(adminTripsMonthFilter)}</strong> com os filtros aplicados. Tente selecionar outro mês ou limpar a busca.
+                </p>
+                <button
+                  type="button"
+                  onclick="adminTripsMonthFilter = 'ALL'; adminTripsStatusFilter = 'ALL'; adminTripsSearchQuery = ''; renderApp();"
+                  class="mt-2 px-4 py-2 bg-black text-white text-xs font-bold rounded-lg hover:bg-neutral-900 transition-transform active:scale-95"
+                >
+                  Exibir Todas as Viagens da Plataforma
+                </button>
+              </div>
+            `}
+          </div>
+
+        </div>
+      ` : ''}
+
+      <!-- SEÇÃO EXCLUSIVA DO PASSAGEIRO -->
       ${role === 'PASSENGER' ? `
         <div class="space-y-3">
           ${bookings.length > 0 ? bookings.map(b => {
@@ -2750,7 +3346,7 @@ function viewMyTrips() {
         </div>
       ` : ''}
 
-      <!-- Driver Section -->
+      <!-- SEÇÃO EXCLUSIVA DO MOTORISTA -->
       ${role === 'DRIVER' ? `
         <div class="space-y-4">
           ${myPublished.length > 0 ? myPublished.map(ride => {
@@ -2828,27 +3424,129 @@ function viewMyTrips() {
         </div>
       ` : ''}
 
-      <!-- Admin Section -->
-      ${(role === 'ADMIN' || role === 'MANAGER') ? `
-        <div class="space-y-3">
-          <p class="text-xs font-medium text-uber-iron mb-2">Visão geral administrativa das viagens cadastradas na plataforma:</p>
-          ${rides.map(r => `
-            <div class="p-4 border border-uber-border bg-white rounded-xl">
-              <div class="flex justify-between items-center pb-2.5 border-b border-uber-border text-xs">
-                <span class="font-bold text-uber-black">${r.originCity} ➔ ${r.destinationCity}</span>
-                <span class="font-medium text-uber-iron">Motorista: ${r.driverName}</span>
-              </div>
-              <div class="pt-2.5 flex justify-between items-center text-xs">
-                <span class="text-uber-iron font-normal">${r.departureDate} às ${r.departureTime}</span>
-                <span class="font-bold text-uber-black">R$ ${r.pricePerSeat.toFixed(2).replace('.', ',')}</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
-
     </div>
   `;
+}
+
+// Modais e Ações Administrativas de Suporte
+function openAdminContactSupportModal(targetName, targetPhone, roleLabel, bookingOrRideId = '') {
+  const modalRoot = document.getElementById('modal-root');
+  if (!modalRoot) return;
+
+  const cleanPhone = (targetPhone || '').replace(/\D/g, '');
+  const waLink = cleanPhone ? `https://wa.me/55${cleanPhone}` : '#';
+
+  modalRoot.innerHTML = `
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-uber-black/80 backdrop-blur-xs animate-fade-in">
+      <div class="bg-white rounded-2xl border border-uber-border shadow-2xl max-w-md w-full p-5 sm:p-6 text-left space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-uber-border">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 bg-emerald-50 text-emerald-800 rounded-xl flex items-center justify-center border border-emerald-200">
+              ${icon('support_agent', { size: 'md' })}
+            </div>
+            <div>
+              <h3 class="font-bold text-base text-uber-black">Canal de Suporte & Mediação</h3>
+              <p class="text-xs text-uber-iron font-normal">Atendimento direto pela administração da cooperativa</p>
+            </div>
+          </div>
+          <button onclick="closeModal()" class="p-1 text-uber-iron hover:text-uber-black rounded-lg hover:bg-uber-gray transition-colors cursor-pointer" aria-label="Fechar">
+            ${icon('close', { size: 'sm' })}
+          </button>
+        </div>
+
+        <div class="p-3.5 bg-uber-gray rounded-xl border border-uber-border space-y-2 text-xs">
+          <div class="flex justify-between items-center">
+            <span class="text-uber-iron font-medium uppercase tracking-wider text-[10px]">Contato (${roleLabel}):</span>
+            <span class="font-bold text-uber-black">${targetName}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-uber-iron font-medium uppercase tracking-wider text-[10px]">Telefone / WhatsApp:</span>
+            <span class="font-mono font-bold text-uber-black text-sm">${targetPhone || '(85) 98765-4321'}</span>
+          </div>
+          ${bookingOrRideId ? `
+            <div class="flex justify-between items-center pt-1 border-t border-uber-border text-[11px]">
+              <span class="text-uber-iron">Referência / Código:</span>
+              <span class="font-mono font-semibold text-uber-charcoal">${bookingOrRideId}</span>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <a
+            href="${waLink}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
+          >
+            ${icon('chat', { size: 'sm' })}
+            <span>Conversar via WhatsApp</span>
+          </a>
+
+          <a
+            href="tel:${cleanPhone || '85987654321'}"
+            class="w-full h-11 bg-uber-gray hover:bg-uber-border text-uber-black font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95"
+          >
+            ${icon('call', { size: 'sm' })}
+            <span>Ligar para ${targetName.split(' ')[0]}</span>
+          </a>
+        </div>
+
+        <div class="pt-2 border-t border-uber-border text-right">
+          <button onclick="closeModal()" class="px-4 py-2 bg-uber-gray text-uber-black hover:bg-uber-border rounded-lg text-xs font-bold transition-colors">
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function openAdminCancelBookingModal(bookingId) {
+  const modalRoot = document.getElementById('modal-root');
+  if (!modalRoot) return;
+  const booking = store.state.bookings.find(b => b.id === bookingId);
+  if (!booking) return;
+  const ride = store.state.rides.find(r => r.id === booking.rideId);
+
+  modalRoot.innerHTML = `
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-uber-black/80 backdrop-blur-xs animate-fade-in">
+      <div class="bg-white rounded-2xl border border-uber-border shadow-2xl max-w-md w-full p-5 sm:p-6 text-left space-y-4">
+        <div class="flex items-center gap-3 pb-3 border-b border-uber-border">
+          <div class="w-10 h-10 bg-red-50 text-red-600 rounded-xl flex items-center justify-center border border-red-200">
+            ${icon('warning', { size: 'md' })}
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-uber-black">Cancelamento & Estorno de Suporte</h3>
+            <p class="text-xs text-uber-iron font-normal">Mediação administrativa da cooperativa</p>
+          </div>
+        </div>
+
+        <div class="p-3.5 bg-uber-gray rounded-xl border border-uber-border space-y-1.5 text-xs">
+          <p><strong>Passageiro:</strong> ${booking.passengerName} (${booking.passengerPhone})</p>
+          <p><strong>Viagem:</strong> ${ride ? `${ride.originCity} ➔ ${ride.destinationCity}` : booking.rideId}</p>
+          <p><strong>Sinal Pago:</strong> R$ ${booking.amountPaidSignal.toFixed(2).replace('.', ',')}</p>
+          <p class="text-[11px] text-uber-iron pt-1">O cancelamento administrativo liberará o estorno integral para o passageiro e reabrirá as vagas no veículo.</p>
+        </div>
+
+        <div class="flex gap-2.5 pt-2 border-t border-uber-border">
+          <button onclick="closeModal()" class="flex-1 h-11 font-semibold bg-uber-gray text-uber-black rounded-lg hover:bg-uber-border text-xs">
+            Voltar
+          </button>
+          <button onclick="handleExecuteAdminCancelBooking('${booking.id}')" class="flex-1 h-11 font-bold bg-black text-white hover:bg-red-700 rounded-lg flex items-center justify-center gap-1.5 text-xs transition-colors">
+            ${icon('cancel', { size: 'sm' })}
+            <span>Confirmar Estorno</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function handleExecuteAdminCancelBooking(bookingId) {
+  const result = store.cancelBooking(bookingId);
+  closeModal();
+  showToast(`Reserva ${bookingId} cancelada pelo suporte. Estorno PIX registrado com sucesso.`, 'success');
+  renderApp();
 }
 
 function handleDriverAcceptBooking(bookingId) {
@@ -3330,6 +4028,7 @@ function handleFinishPublishRide() {
     pricePerSeat: publishWizardState.pricePerSeat,
     totalSeats: publishWizardState.seats,
     availableSeats: publishWizardState.seats,
+    luggagePolicy: selectedVeh.luggagePolicy || '1_MEDIUM',
     vehicle: selectedVeh,
     notes: publishWizardState.notes || 'Saída pontual no local combinado.',
     status: 'PUBLISHED',
@@ -3348,6 +4047,7 @@ function handleFinishPublishRide() {
       pricePerSeat: publishWizardState.returnPrice,
       totalSeats: publishWizardState.returnSeats,
       availableSeats: publishWizardState.returnSeats,
+      luggagePolicy: selectedVeh.luggagePolicy || '1_MEDIUM',
       vehicle: selectedVeh,
       notes: (publishWizardState.notes ? `${publishWizardState.notes} • ` : '') + 'Viagem de retorno.',
       status: 'PUBLISHED',
@@ -3708,6 +4408,7 @@ function viewPublishRide() {
                           </span>
                           ${veh.noSmoking ? `<span title="Cigarro não" class="inline-flex items-center text-uber-charcoal">${icon('smoke_free', { size: 'sm' })}</span>` : ''}
                           ${veh.noPets ? `<span title="Sem animais" class="inline-flex items-center text-uber-charcoal">${icon('pets', { size: 'sm' })}</span>` : ''}
+                          <span title="${getLuggageInfo(veh).label}" class="inline-flex items-center text-uber-charcoal">${icon(getLuggageInfo(veh).iconName, { size: 'sm' })}</span>
                         </div>
                       </div>
                     </div>
@@ -3957,6 +4658,7 @@ function viewPublishRide() {
                 <p><strong>Partida:</strong> ${publishWizardState.originSpot} (${publishWizardState.departureDate} às ${publishWizardState.departureTime})</p>
                 <p><strong>Chegada:</strong> ${publishWizardState.destinationSpot} (~${publishWizardState.duration})</p>
                 <p><strong>Vagas:</strong> ${publishWizardState.seats} assentos disponíveis</p>
+                <p><strong>Bagagem:</strong> ${getLuggageInfo(veh).label}</p>
               </div>
             </div>
 
@@ -3974,6 +4676,7 @@ function viewPublishRide() {
                   <p><strong>Partida:</strong> ${publishWizardState.destinationSpot} (${publishWizardState.returnDate} às ${publishWizardState.returnTime})</p>
                   <p><strong>Chegada:</strong> ${publishWizardState.originSpot}</p>
                   <p><strong>Vagas:</strong> ${publishWizardState.returnSeats} assentos disponíveis</p>
+                  <p><strong>Bagagem:</strong> ${getLuggageInfo(veh).label}</p>
                 </div>
               </div>
             ` : ''}
@@ -4754,13 +5457,13 @@ function viewProfile() {
                         <p class="font-bold text-uber-black mt-0.5 text-xs">${veh.year}</p>
                       </div>
                       <div class="p-2.5 bg-white border border-uber-border rounded-lg">
-                        <span class="font-medium text-uber-iron block text-[10px] uppercase tracking-wider">Recursos</span>
+                        <span class="font-medium text-uber-iron block text-[10px] uppercase tracking-wider">Regras / Malas</span>
                         <div class="flex items-center gap-1.5 mt-0.5 text-uber-black font-semibold text-[11px] flex-wrap">
                           ${veh.hasAC ? `<span title="Ar-condicionado" class="inline-flex items-center gap-0.5">${icon('ac_unit', { size: 'sm', className: 'text-uber-charcoal' })} Ar</span>` : ''}
                           ${veh.hasUSB ? `<span title="Entrada USB" class="inline-flex items-center gap-0.5">${icon('usb', { size: 'sm', className: 'text-uber-charcoal' })} USB</span>` : ''}
                           ${veh.noSmoking ? `<span title="Cigarro não, por favor" class="inline-flex items-center gap-0.5">${icon('smoke_free', { size: 'sm', className: 'text-uber-charcoal' })} Sem Cigarro</span>` : ''}
                           ${veh.noPets ? `<span title="Prefiro não viajar com animais" class="inline-flex items-center gap-0.5">${icon('pets', { size: 'sm', className: 'text-uber-charcoal' })} Sem Animais</span>` : ''}
-                          ${!veh.hasAC && !veh.hasUSB && !veh.noSmoking && !veh.noPets ? '<span class="text-uber-iron font-normal">Básico</span>' : ''}
+                          <span title="${getLuggageInfo(veh).label}" class="inline-flex items-center gap-0.5">${icon(getLuggageInfo(veh).iconName, { size: 'sm', className: 'text-uber-charcoal' })} ${getLuggageInfo(veh).shortLabel}</span>
                         </div>
                       </div>
                     </div>
@@ -4990,6 +5693,7 @@ function openVehicleModal(vehicleId = null) {
           </div>
 
           <!-- Recursos e Regras do Carro (Checkboxes) -->
+          <!-- Recursos e Regras do Carro (Checkboxes) -->
           <div>
             <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-2">Recursos Disponíveis no Carro</label>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -5045,7 +5749,44 @@ function openVehicleModal(vehicleId = null) {
                 </div>
               </label>
             </div>
-            <span class="text-[10px] text-uber-iron mt-1.5 block">Essas opções ficam salvas no padrão do veículo e serão aplicadas automaticamente em todas as corridas que você criar com este carro.</span>
+          </div>
+
+          <!-- Espaço para Malas e Bagagens (Preferências de Viagem) -->
+          <div class="p-3.5 bg-uber-gray border border-uber-border rounded-xl space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-uber-border">
+              <div class="flex items-center gap-2">
+                ${icon('luggage', { size: 'sm', className: 'text-uber-black' })}
+                <label class="block text-xs font-bold text-uber-black uppercase tracking-wider">Espaço para Malas e Bagagens</label>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-semibold text-uber-iron uppercase tracking-wider mb-1">Aceita malas no porta-malas?</label>
+                <select
+                  id="veh-form-accepts-luggage"
+                  onchange="toggleVehicleLuggageOptions(this.value)"
+                  class="w-full bg-white border border-uber-border text-xs sm:text-sm font-semibold rounded-lg h-11 px-3 focus:outline-none focus:border-uber-black cursor-pointer"
+                >
+                  <option value="YES" ${veh && veh.luggagePolicy === 'NONE' ? '' : 'selected'}>Sim, aceito levar malas</option>
+                  <option value="NO" ${veh && veh.luggagePolicy === 'NONE' ? 'selected' : ''}>Não (apenas mochila no colo)</option>
+                </select>
+              </div>
+
+              <div id="veh-form-luggage-qty-container" class="${veh && veh.luggagePolicy === 'NONE' ? 'opacity-40 pointer-events-none' : ''}">
+                <label class="block text-[11px] font-semibold text-uber-iron uppercase tracking-wider mb-1">Quantidade e Porte Permitido</label>
+                <select
+                  id="veh-form-luggage-policy"
+                  class="w-full bg-white border border-uber-border text-xs sm:text-sm font-semibold rounded-lg h-11 px-3 focus:outline-none focus:border-uber-black cursor-pointer"
+                >
+                  <option value="1_MEDIUM" ${!veh || veh.luggagePolicy === '1_MEDIUM' || !veh.luggagePolicy ? 'selected' : ''}>1 mala média por passageiro (até 15kg)</option>
+                  <option value="1_LARGE" ${veh && veh.luggagePolicy === '1_LARGE' ? 'selected' : ''}>1 mala grande por passageiro (até 23kg)</option>
+                  <option value="2_BAGS" ${veh && veh.luggagePolicy === '2_BAGS' ? 'selected' : ''}>Até 2 malas por passageiro</option>
+                  <option value="HAND" ${veh && veh.luggagePolicy === 'HAND' ? 'selected' : ''}>Apenas bagagem de mão pequena (10kg)</option>
+                </select>
+              </div>
+            </div>
+            <span class="text-[10px] text-uber-iron block font-normal leading-relaxed">Essas opções ficam salvas no padrão do veículo e serão aplicadas automaticamente em todas as viagens que você criar com este carro.</span>
           </div>
 
           <!-- Checkbox: Tornar veículo principal -->
@@ -5084,6 +5825,16 @@ function openVehicleModal(vehicleId = null) {
   `;
 }
 
+function toggleVehicleLuggageOptions(val) {
+  const qtyContainer = document.getElementById('veh-form-luggage-qty-container');
+  if (!qtyContainer) return;
+  if (val === 'NO') {
+    qtyContainer.classList.add('opacity-40', 'pointer-events-none');
+  } else {
+    qtyContainer.classList.remove('opacity-40', 'pointer-events-none');
+  }
+}
+
 function handleSaveVehicle(e, vehicleId = null) {
   e.preventDefault();
   const plate = document.getElementById('veh-form-plate').value.trim().toUpperCase();
@@ -5097,6 +5848,9 @@ function handleSaveVehicle(e, vehicleId = null) {
   const hasUSB = document.getElementById('veh-form-has-usb').checked;
   const noSmoking = document.getElementById('veh-form-no-smoking').checked;
   const noPets = document.getElementById('veh-form-no-pets').checked;
+  const acceptsLuggage = document.getElementById('veh-form-accepts-luggage')?.value === 'YES';
+  const selectedLuggagePolicy = document.getElementById('veh-form-luggage-policy')?.value || '1_MEDIUM';
+  const luggagePolicy = acceptsLuggage ? selectedLuggagePolicy : 'NONE';
   const isPrimary = document.getElementById('veh-form-is-primary').checked;
 
   if (!plate) {
@@ -5117,10 +5871,10 @@ function handleSaveVehicle(e, vehicleId = null) {
   }
 
   if (vehicleId) {
-    store.updateVehicle(vehicleId, { brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, isPrimary });
+    store.updateVehicle(vehicleId, { brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, luggagePolicy, isPrimary });
     showToast('Veículo atualizado com sucesso!', 'success');
   } else {
-    store.addVehicle({ brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, isPrimary });
+    store.addVehicle({ brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, luggagePolicy, isPrimary });
     showToast('Novo veículo cadastrado com sucesso!', 'success');
   }
 
@@ -5548,12 +6302,13 @@ function viewDriverProfile(driverId) {
                 <p class="font-mono font-bold text-uber-black mt-0.5 text-xs">${driver.vehicle.plate}</p>
               </div>
               <div class="p-2.5 bg-uber-gray border border-uber-border rounded-lg">
-                <span class="font-semibold text-uber-iron block text-[10px] uppercase tracking-wider">Regras / Conforto</span>
+                <span class="font-semibold text-uber-iron block text-[10px] uppercase tracking-wider">Regras / Malas</span>
                 <div class="flex items-center gap-1.5 mt-0.5 text-uber-charcoal">
                   ${driver.vehicle.hasAC ? `<span title="Ar-condicionado">${icon('ac_unit', { size: 'xs' })}</span>` : ''}
                   ${driver.vehicle.hasUSB ? `<span title="Carregador USB">${icon('usb', { size: 'xs' })}</span>` : ''}
                   ${driver.vehicle.noSmoking ? `<span title="Proibido fumar">${icon('smoke_free', { size: 'xs' })}</span>` : ''}
                   ${driver.vehicle.noPets ? `<span title="Sem animais de estimação">${icon('pets', { size: 'xs', className: 'line-through opacity-60' })}</span>` : ''}
+                  <span title="${getLuggageInfo(driver.vehicle).label}">${icon(getLuggageInfo(driver.vehicle).iconName, { size: 'xs' })}</span>
                 </div>
               </div>
             </div>
