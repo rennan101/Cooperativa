@@ -8124,6 +8124,810 @@ function viewDriverProfile(driverId) {
 }
 
 // ==========================================
+// 8.5. TELAS DE AUTENTICAÇÃO: LOGIN & CADASTRO
+// ==========================================
+
+let authLoginRole = 'PASSENGER'; // 'PASSENGER' | 'DRIVER'
+const authDriverUploads = {
+  cnh: null,           // { name, size, type, dataUrl }
+  criminalRecord: null // { name, size, type, dataUrl, isPdf }
+};
+
+/**
+ * Validação de CPF utilizando o algoritmo brasileiro padrão dos dígitos verificadores.
+ * Rejeita valores não numéricos, tamanho diferente de 11 e sequências repetidas.
+ */
+function isValidCPF(cpf) {
+  if (!cpf) return false;
+  const clean = cpf.replace(/\D/g, '');
+  if (clean.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(clean)) return false;
+
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(clean.charAt(i), 10) * (10 - i);
+  }
+  let rev = 11 - (sum % 11);
+  if (rev === 10 || rev === 11) rev = 0;
+  if (rev !== parseInt(clean.charAt(9), 10)) return false;
+
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(clean.charAt(i), 10) * (11 - i);
+  }
+  rev = 11 - (sum % 11);
+  if (rev === 10 || rev === 11) rev = 0;
+  if (rev !== parseInt(clean.charAt(10), 10)) return false;
+
+  return true;
+}
+
+/**
+ * Máscara em tempo real para CPF (000.000.000-00).
+ */
+function maskCPF(value) {
+  const digits = (value || '').replace(/\D/g, '').slice(0, 11);
+  return digits
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+}
+
+/**
+ * Máscara em tempo real para Telefone brasileiro (fixo ou celular).
+ */
+function maskPhone(value) {
+  const digits = (value || '').replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 10) {
+    return digits
+      .replace(/(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{4})(\d)/, '$1-$2');
+  }
+  return digits
+    .replace(/(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d)/, '$1-$2');
+}
+
+function handleCPFInput(e) {
+  if (e && e.target) {
+    e.target.value = maskCPF(e.target.value);
+  }
+}
+
+function handlePhoneInput(e) {
+  if (e && e.target) {
+    e.target.value = maskPhone(e.target.value);
+  }
+}
+
+function setLoginRole(role) {
+  authLoginRole = role;
+  const passBtn = document.getElementById('login-tab-passenger');
+  const drvBtn = document.getElementById('login-tab-driver');
+  const regLink = document.getElementById('login-register-link');
+  if (passBtn && drvBtn) {
+    if (role === 'PASSENGER') {
+      passBtn.className = 'flex-1 py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold bg-uber-black text-white flex items-center justify-center gap-1.5 transition-all shadow-xs';
+      drvBtn.className = 'flex-1 py-2.5 px-3 rounded-lg text-xs sm:text-sm font-medium bg-uber-gray text-uber-charcoal hover:bg-uber-border flex items-center justify-center gap-1.5 transition-all';
+    } else {
+      drvBtn.className = 'flex-1 py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold bg-uber-black text-white flex items-center justify-center gap-1.5 transition-all shadow-xs';
+      passBtn.className = 'flex-1 py-2.5 px-3 rounded-lg text-xs sm:text-sm font-medium bg-uber-gray text-uber-charcoal hover:bg-uber-border flex items-center justify-center gap-1.5 transition-all';
+    }
+  }
+  if (regLink) {
+    regLink.href = role === 'DRIVER' ? '#/cadastro-motorista' : '#/cadastro';
+  }
+}
+
+function renderAuthLogo() {
+  return `
+    <div class="flex items-center justify-center gap-2.5 mb-6">
+      <div class="bg-uber-black text-white w-9 h-9 rounded-lg flex items-center justify-center font-bold">
+        ${icon('directions_car', { size: 'sm' })}
+      </div>
+      <div class="flex flex-col text-left">
+        <span class="font-extrabold text-xl tracking-tight text-uber-black leading-none">Cooperativa</span>
+        <span class="text-[10px] font-semibold text-uber-iron uppercase tracking-wider">Nordeste</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderGoogleAuthButton(label = 'Continuar com Google') {
+  return `
+    <!-- TODO(auth): integrar OAuth Google (definir provider: Firebase/Supabase) -->
+    <button type="button"
+      onclick="showToast('Autenticação com Google estará disponível em breve.', 'info')"
+      class="w-full py-3 px-4 rounded-xl border border-uber-border text-uber-charcoal font-bold hover:bg-uber-gray flex items-center justify-center gap-2.5 transition-colors active:scale-[0.99] text-xs sm:text-sm"
+      data-auth-provider="google"
+      title="Continuar com sua conta Google">
+      <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+      </svg>
+      <span>${label}</span>
+    </button>
+  `;
+}
+
+// --------------------------------------------------
+// 8.5.1 VIEW: LOGIN (Passageiro / Motorista)
+// --------------------------------------------------
+function viewLogin() {
+  const isDriver = authLoginRole === 'DRIVER';
+  return `
+    <div class="min-h-[calc(100vh-10rem)] flex items-center justify-center px-4 py-8 animate-fade-in">
+      <div class="w-full max-w-md bg-white rounded-2xl border border-uber-border shadow-2xl p-6 sm:p-8 text-center">
+        ${renderAuthLogo()}
+
+        <h1 class="text-2xl font-extrabold text-uber-black tracking-tight">Entrar</h1>
+        <p class="text-xs sm:text-sm text-uber-iron mt-1 mb-6">Acesse sua conta na Cooperativa</p>
+
+        <!-- Seletor de Perfil (Tabs) -->
+        <div class="mb-6 p-1 bg-uber-gray rounded-xl flex items-center gap-1 border border-uber-border">
+          <button type="button" id="login-tab-passenger" onclick="setLoginRole('PASSENGER')"
+            class="flex-1 py-2.5 px-3 rounded-lg text-xs sm:text-sm ${!isDriver ? 'font-bold bg-uber-black text-white shadow-xs' : 'font-medium text-uber-charcoal hover:bg-uber-border'} flex items-center justify-center gap-1.5 transition-all">
+            ${icon('person', { size: 'sm' })}
+            <span>Passageiro</span>
+          </button>
+          <button type="button" id="login-tab-driver" onclick="setLoginRole('DRIVER')"
+            class="flex-1 py-2.5 px-3 rounded-lg text-xs sm:text-sm ${isDriver ? 'font-bold bg-uber-black text-white shadow-xs' : 'font-medium text-uber-charcoal hover:bg-uber-border'} flex items-center justify-center gap-1.5 transition-all">
+            ${icon('directions_car', { size: 'sm' })}
+            <span>Motorista</span>
+          </button>
+        </div>
+
+        <!-- Formulário de Login -->
+        <form id="login-form" onsubmit="handleLoginSubmit(event)" novalidate class="flex flex-col gap-4 text-left">
+          <div>
+            <label for="login-email" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">E-mail</label>
+            <input type="email" id="login-email" placeholder="seu.email@exemplo.com" autocomplete="email"
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="login-email-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="login-password" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide">Senha</label>
+              <button type="button" onclick="showToast('Recuperação de senha estará disponível em breve.', 'info')"
+                class="text-xs font-semibold text-uber-iron hover:text-uber-black transition-colors">
+                Esqueci minha senha
+              </button>
+            </div>
+            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="login-password-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <button type="submit"
+            class="w-full bg-uber-black text-white rounded-xl py-3 font-bold hover:bg-neutral-900 active:scale-[0.98] transition-all text-sm mt-2">
+            Entrar
+          </button>
+
+          <!-- Divisor -->
+          <div class="relative flex items-center my-2">
+            <div class="flex-grow border-t border-uber-border"></div>
+            <span class="shrink-0 px-3 text-xs uppercase font-bold text-uber-iron bg-white">ou</span>
+            <div class="flex-grow border-t border-uber-border"></div>
+          </div>
+
+          <!-- Botão Google -->
+          ${renderGoogleAuthButton('Continuar com Google')}
+        </form>
+
+        <p class="mt-6 text-xs sm:text-sm text-uber-iron">
+          Não tem conta?
+          <a id="login-register-link" href="${isDriver ? '#/cadastro-motorista' : '#/cadastro'}"
+            class="font-bold text-uber-black underline hover:text-neutral-700 transition-colors">
+            Cadastre-se
+          </a>
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+function handleLoginSubmit(e) {
+  e.preventDefault();
+  const emailInput = document.getElementById('login-email');
+  const passInput = document.getElementById('login-password');
+  const emailErr = document.getElementById('login-email-error');
+  const passErr = document.getElementById('login-password-error');
+
+  let hasError = false;
+
+  const email = (emailInput?.value || '').trim();
+  if (!email) {
+    if (emailErr) { emailErr.textContent = 'Informe o seu e-mail.'; emailErr.classList.remove('hidden'); }
+    if (emailInput) emailInput.classList.add('border-red-500');
+    hasError = true;
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (emailErr) { emailErr.textContent = 'Informe um endereço de e-mail válido.'; emailErr.classList.remove('hidden'); }
+    if (emailInput) emailInput.classList.add('border-red-500');
+    hasError = true;
+  } else {
+    if (emailErr) emailErr.classList.add('hidden');
+    if (emailInput) emailInput.classList.remove('border-red-500');
+  }
+
+  const pass = passInput?.value || '';
+  if (!pass) {
+    if (passErr) { passErr.textContent = 'Informe a sua senha.'; passErr.classList.remove('hidden'); }
+    if (passInput) passInput.classList.add('border-red-500');
+    hasError = true;
+  } else if (pass.length < 6) {
+    if (passErr) { passErr.textContent = 'A senha deve conter no mínimo 6 caracteres.'; passErr.classList.remove('hidden'); }
+    if (passInput) passInput.classList.add('border-red-500');
+    hasError = true;
+  } else {
+    if (passErr) passErr.classList.add('hidden');
+    if (passInput) passInput.classList.remove('border-red-500');
+  }
+
+  if (hasError) return;
+
+  // Sem backend real
+  showToast('Login será habilitado em breve.', 'info');
+}
+
+// --------------------------------------------------
+// 8.5.2 VIEW: CADASTRO PASSAGEIRO
+// --------------------------------------------------
+function viewRegisterPassenger() {
+  return `
+    <div class="min-h-[calc(100vh-10rem)] flex items-center justify-center px-4 py-8 animate-fade-in">
+      <div class="w-full max-w-md bg-white rounded-2xl border border-uber-border shadow-2xl p-6 sm:p-8 text-center">
+        ${renderAuthLogo()}
+
+        <h1 class="text-2xl font-extrabold text-uber-black tracking-tight">Criar Conta de Passageiro</h1>
+        <p class="text-xs sm:text-sm text-uber-iron mt-1 mb-6">Viaje com conforto, segurança e economia</p>
+
+        <form id="register-passenger-form" onsubmit="handleRegisterPassengerSubmit(event)" novalidate class="flex flex-col gap-4 text-left">
+          <!-- Nome Completo -->
+          <div>
+            <label for="reg-pass-name" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">Nome completo</label>
+            <input type="text" id="reg-pass-name" placeholder="Ex: Maria dos Santos" autocomplete="name"
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="reg-pass-name-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <!-- CPF -->
+          <div>
+            <label for="reg-pass-cpf" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">CPF</label>
+            <input type="text" id="reg-pass-cpf" placeholder="000.000.000-00" maxlength="14" oninput="handleCPFInput(event)"
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="reg-pass-cpf-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <!-- E-mail -->
+          <div>
+            <label for="reg-pass-email" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">E-mail</label>
+            <input type="email" id="reg-pass-email" placeholder="seu.email@exemplo.com" autocomplete="email"
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="reg-pass-email-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <!-- Telefone -->
+          <div>
+            <label for="reg-pass-phone" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">Telefone / WhatsApp</label>
+            <input type="tel" id="reg-pass-phone" placeholder="(85) 90000-0000" maxlength="15" oninput="handlePhoneInput(event)" autocomplete="tel"
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="reg-pass-phone-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <!-- Senha -->
+          <div>
+            <label for="reg-pass-password" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">Senha</label>
+            <input type="password" id="reg-pass-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="reg-pass-password-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <!-- Confirmar Senha -->
+          <div>
+            <label for="reg-pass-password-confirm" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">Confirmar senha</label>
+            <input type="password" id="reg-pass-password-confirm" placeholder="Repita sua senha" autocomplete="new-password"
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="reg-pass-password-confirm-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <!-- Checkbox Termos -->
+          <div class="mt-1">
+            <label class="flex items-start gap-2.5 cursor-pointer">
+              <input type="checkbox" id="reg-pass-terms"
+                class="mt-0.5 w-4 h-4 rounded-md border-uber-border text-uber-black focus:ring-uber-black focus:ring-offset-0" />
+              <span class="text-xs text-uber-charcoal leading-relaxed">
+                Li e aceito os <a href="javascript:void(0)" onclick="showToast('Termos de Uso em desenvolvimento.', 'info')" class="underline font-bold text-uber-black">Termos de Uso</a> e a <a href="javascript:void(0)" onclick="showToast('Política de Privacidade em desenvolvimento.', 'info')" class="underline font-bold text-uber-black">Política de Privacidade</a> da Cooperativa.
+              </span>
+            </label>
+            <p id="reg-pass-terms-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <button type="submit"
+            class="w-full bg-uber-black text-white rounded-xl py-3 font-bold hover:bg-neutral-900 active:scale-[0.98] transition-all text-sm mt-2">
+            Criar conta
+          </button>
+
+          <!-- Divisor -->
+          <div class="relative flex items-center my-2">
+            <div class="flex-grow border-t border-uber-border"></div>
+            <span class="shrink-0 px-3 text-xs uppercase font-bold text-uber-iron bg-white">ou</span>
+            <div class="flex-grow border-t border-uber-border"></div>
+          </div>
+
+          <!-- Botão Google -->
+          ${renderGoogleAuthButton('Continuar com Google')}
+        </form>
+
+        <div class="mt-6 flex flex-col gap-2 text-xs sm:text-sm text-uber-iron">
+          <p>Já tem uma conta? <a href="#/login" class="font-bold text-uber-black underline hover:text-neutral-700 transition-colors">Entrar</a></p>
+          <p>Quer ser motorista? <a href="#/cadastro-motorista" class="font-bold text-uber-black underline hover:text-neutral-700 transition-colors">Cadastre-se como Motorista</a></p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function handleRegisterPassengerSubmit(e) {
+  e.preventDefault();
+  const nameInput = document.getElementById('reg-pass-name');
+  const cpfInput = document.getElementById('reg-pass-cpf');
+  const emailInput = document.getElementById('reg-pass-email');
+  const phoneInput = document.getElementById('reg-pass-phone');
+  const passInput = document.getElementById('reg-pass-password');
+  const confirmInput = document.getElementById('reg-pass-password-confirm');
+  const termsInput = document.getElementById('reg-pass-terms');
+
+  const nameErr = document.getElementById('reg-pass-name-error');
+  const cpfErr = document.getElementById('reg-pass-cpf-error');
+  const emailErr = document.getElementById('reg-pass-email-error');
+  const phoneErr = document.getElementById('reg-pass-phone-error');
+  const passErr = document.getElementById('reg-pass-password-error');
+  const confirmErr = document.getElementById('reg-pass-password-confirm-error');
+  const termsErr = document.getElementById('reg-pass-terms-error');
+
+  let hasError = false;
+
+  const name = (nameInput?.value || '').trim();
+  if (!name || name.length < 3) {
+    if (nameErr) { nameErr.textContent = 'Informe o seu nome completo.'; nameErr.classList.remove('hidden'); }
+    if (nameInput) nameInput.classList.add('border-red-500');
+    hasError = true;
+  } else {
+    if (nameErr) nameErr.classList.add('hidden');
+    if (nameInput) nameInput.classList.remove('border-red-500');
+  }
+
+  const cpf = (cpfInput?.value || '').trim();
+  if (!cpf) {
+    if (cpfErr) { cpfErr.textContent = 'O CPF é obrigatório.'; cpfErr.classList.remove('hidden'); }
+    if (cpfInput) cpfInput.classList.add('border-red-500');
+    hasError = true;
+  } else if (!isValidCPF(cpf)) {
+    if (cpfErr) { cpfErr.textContent = 'CPF inválido. Verifique os dígitos informados.'; cpfErr.classList.remove('hidden'); }
+    if (cpfInput) cpfInput.classList.add('border-red-500');
+    hasError = true;
+  } else {
+    if (cpfErr) cpfErr.classList.add('hidden');
+    if (cpfInput) cpfInput.classList.remove('border-red-500');
+  }
+
+  const email = (emailInput?.value || '').trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (emailErr) { emailErr.textContent = 'Informe um endereço de e-mail válido.'; emailErr.classList.remove('hidden'); }
+    if (emailInput) emailInput.classList.add('border-red-500');
+    hasError = true;
+  } else {
+    if (emailErr) emailErr.classList.add('hidden');
+    if (emailInput) emailInput.classList.remove('border-red-500');
+  }
+
+  const phoneDigits = (phoneInput?.value || '').replace(/\D/g, '');
+  if (!phoneDigits || phoneDigits.length < 10) {
+    if (phoneErr) { phoneErr.textContent = 'Informe um telefone válido com DDD (mínimo 10 dígitos).'; phoneErr.classList.remove('hidden'); }
+    if (phoneInput) phoneInput.classList.add('border-red-500');
+    hasError = true;
+  } else {
+    if (phoneErr) phoneErr.classList.add('hidden');
+    if (phoneInput) phoneInput.classList.remove('border-red-500');
+  }
+
+  const pass = passInput?.value || '';
+  if (!pass || pass.length < 6) {
+    if (passErr) { passErr.textContent = 'A senha deve conter no mínimo 6 caracteres.'; passErr.classList.remove('hidden'); }
+    if (passInput) passInput.classList.add('border-red-500');
+    hasError = true;
+  } else {
+    if (passErr) passErr.classList.add('hidden');
+    if (passInput) passInput.classList.remove('border-red-500');
+  }
+
+  const confirm = confirmInput?.value || '';
+  if (!confirm || confirm !== pass) {
+    if (confirmErr) { confirmErr.textContent = 'As senhas não coincidem.'; confirmErr.classList.remove('hidden'); }
+    if (confirmInput) confirmInput.classList.add('border-red-500');
+    hasError = true;
+  } else {
+    if (confirmErr) confirmErr.classList.add('hidden');
+    if (confirmInput) confirmInput.classList.remove('border-red-500');
+  }
+
+  if (!termsInput?.checked) {
+    if (termsErr) { termsErr.textContent = 'Você deve aceitar os Termos de Uso e Política de Privacidade.'; termsErr.classList.remove('hidden'); }
+    hasError = true;
+  } else {
+    if (termsErr) termsErr.classList.add('hidden');
+  }
+
+  if (hasError) return;
+
+  // Sem backend real
+  showToast('Cadastro de passageiro será habilitado em breve.', 'info');
+}
+
+// --------------------------------------------------
+// 8.5.3 VIEW: CADASTRO MOTORISTA
+// --------------------------------------------------
+function renderCnhUploadBox() {
+  const cnh = authDriverUploads.cnh;
+  return `
+    <input type="file" id="reg-drv-cnh-input" accept="image/*" class="hidden" onchange="handleDriverDocUpload(event, 'cnh')" />
+    ${!cnh ? `
+      <div onclick="document.getElementById('reg-drv-cnh-input').click()"
+        class="border-2 border-dashed border-uber-border hover:border-uber-black rounded-xl p-4 sm:p-5 text-center cursor-pointer transition-colors bg-uber-gray/40 group">
+        ${icon('add_a_photo', { size: 'lg', className: 'text-uber-slate group-hover:text-uber-black transition-colors mx-auto' })}
+        <p class="mt-2 text-xs sm:text-sm font-bold text-uber-black">Clique para enviar a foto da sua CNH</p>
+        <p class="text-[11px] text-uber-iron mt-0.5">Formatos de imagem (JPG, PNG) até 5MB</p>
+      </div>
+    ` : `
+      <div class="border border-uber-border rounded-xl p-3 bg-white text-center">
+        <img src="${cnh.dataUrl}" alt="Preview CNH" class="max-h-36 sm:max-h-40 rounded-lg mx-auto object-cover border border-uber-border mb-2" />
+        <div class="flex items-center justify-between text-xs text-uber-charcoal px-1">
+          <span class="truncate font-semibold max-w-[220px]">${cnh.name} (${(cnh.size / (1024 * 1024)).toFixed(2)} MB)</span>
+          <button type="button" onclick="removeDriverDocUpload('cnh')" class="text-red-600 hover:text-red-700 font-bold flex items-center gap-1">
+            ${icon('delete', { size: 'xs' })} Remover
+          </button>
+        </div>
+      </div>
+    `}
+  `;
+}
+
+function renderAntecedentesUploadBox() {
+  const criminal = authDriverUploads.criminalRecord;
+  return `
+    <input type="file" id="reg-drv-antecedentes-input" accept="image/*,application/pdf" class="hidden" onchange="handleDriverDocUpload(event, 'criminalRecord')" />
+    ${!criminal ? `
+      <div onclick="document.getElementById('reg-drv-antecedentes-input').click()"
+        class="border-2 border-dashed border-uber-border hover:border-uber-black rounded-xl p-4 sm:p-5 text-center cursor-pointer transition-colors bg-uber-gray/40 group">
+        ${icon('upload_file', { size: 'lg', className: 'text-uber-slate group-hover:text-uber-black transition-colors mx-auto' })}
+        <p class="mt-2 text-xs sm:text-sm font-bold text-uber-black">Clique para enviar a Certidão de Antecedentes</p>
+        <p class="text-[11px] text-uber-iron mt-0.5">Imagem ou PDF emitida recentemente (até 5MB)</p>
+      </div>
+    ` : `
+      <div class="border border-uber-border rounded-xl p-3 bg-white text-center">
+        ${!criminal.isPdf ? `
+          <img src="${criminal.dataUrl}" alt="Preview Antecedentes" class="max-h-36 sm:max-h-40 rounded-lg mx-auto object-cover border border-uber-border mb-2" />
+        ` : `
+          <div class="py-4 flex flex-col items-center justify-center gap-1 text-uber-black">
+            ${icon('description', { size: 'lg' })}
+            <span class="text-xs font-bold">Documento PDF Carregado</span>
+          </div>
+        `}
+        <div class="flex items-center justify-between text-xs text-uber-charcoal px-1">
+          <span class="truncate font-semibold max-w-[220px]">${criminal.name} (${(criminal.size / (1024 * 1024)).toFixed(2)} MB)</span>
+          <button type="button" onclick="removeDriverDocUpload('criminalRecord')" class="text-red-600 hover:text-red-700 font-bold flex items-center gap-1">
+            ${icon('delete', { size: 'xs' })} Remover
+          </button>
+        </div>
+      </div>
+    `}
+  `;
+}
+
+function viewRegisterDriver() {
+  return `
+    <div class="min-h-[calc(100vh-10rem)] flex items-center justify-center px-4 py-8 animate-fade-in">
+      <div class="w-full max-w-lg bg-white rounded-2xl border border-uber-border shadow-2xl p-6 sm:p-8 text-center">
+        ${renderAuthLogo()}
+
+        <h1 class="text-2xl font-extrabold text-uber-black tracking-tight">Cadastro de Motorista</h1>
+        <p class="text-xs sm:text-sm text-uber-iron mt-1">Dirija com a Cooperativa e aumente seus ganhos</p>
+
+        <!-- Aviso de Verificação -->
+        <div class="bg-uber-gray border border-uber-border rounded-xl p-4 flex items-start gap-3 my-5 text-left">
+          <div class="shrink-0 text-uber-black mt-0.5">
+            ${icon('verified_user', { size: 'md', fill: true })}
+          </div>
+          <div class="text-xs text-uber-charcoal leading-relaxed">
+            <span class="font-bold block text-uber-black mb-0.5">Processo de Verificação Segura</span>
+            Os documentos enviados são analisados pela equipe da cooperativa. Você poderá publicar e realizar viagens assim que sua conta for aprovada com o selo de <strong>Motorista Verificado</strong>.
+          </div>
+        </div>
+
+        <form id="register-driver-form" onsubmit="handleRegisterDriverSubmit(event)" novalidate class="flex flex-col gap-4 text-left">
+          <!-- Dados Pessoais -->
+          <div>
+            <label for="reg-drv-name" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">Nome completo</label>
+            <input type="text" id="reg-drv-name" placeholder="Ex: Francisco de Assis" autocomplete="name"
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="reg-drv-name-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <div>
+            <label for="reg-drv-cpf" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">CPF</label>
+            <input type="text" id="reg-drv-cpf" placeholder="000.000.000-00" maxlength="14" oninput="handleCPFInput(event)"
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="reg-drv-cpf-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <div>
+            <label for="reg-drv-email" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">E-mail</label>
+            <input type="email" id="reg-drv-email" placeholder="seu.email@exemplo.com" autocomplete="email"
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="reg-drv-email-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <div>
+            <label for="reg-drv-phone" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">Telefone / WhatsApp</label>
+            <input type="tel" id="reg-drv-phone" placeholder="(85) 90000-0000" maxlength="15" oninput="handlePhoneInput(event)" autocomplete="tel"
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="reg-drv-phone-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <div>
+            <label for="reg-drv-password" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">Senha</label>
+            <input type="password" id="reg-drv-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="reg-drv-password-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <div>
+            <label for="reg-drv-password-confirm" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">Confirmar senha</label>
+            <input type="password" id="reg-drv-password-confirm" placeholder="Repita sua senha" autocomplete="new-password"
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="reg-drv-password-confirm-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <!-- Documentos Obrigatórios -->
+          <div class="pt-2 border-t border-uber-border flex flex-col gap-4">
+            <h2 class="text-xs font-extrabold text-uber-black uppercase tracking-wider">Documentos Obrigatórios</h2>
+
+            <!-- Foto da CNH -->
+            <div>
+              <label class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">
+                Foto da CNH (com EAR ou regular) <span class="text-red-500">*</span>
+              </label>
+              <div id="cnh-upload-container">
+                ${renderCnhUploadBox()}
+              </div>
+              <p id="reg-drv-cnh-error" class="text-xs text-red-500 mt-1 hidden"></p>
+            </div>
+
+            <!-- Certidão de Antecedentes Criminais -->
+            <div>
+              <label class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">
+                Certidão de Antecedentes Criminais <span class="text-red-500">*</span>
+              </label>
+              <div id="antecedentes-upload-container">
+                ${renderAntecedentesUploadBox()}
+              </div>
+              <p id="reg-drv-antecedentes-error" class="text-xs text-red-500 mt-1 hidden"></p>
+            </div>
+          </div>
+
+          <!-- Checkbox Termos Motorista -->
+          <div class="mt-1">
+            <label class="flex items-start gap-2.5 cursor-pointer">
+              <input type="checkbox" id="reg-drv-terms"
+                class="mt-0.5 w-4 h-4 rounded-md border-uber-border text-uber-black focus:ring-uber-black focus:ring-offset-0" />
+              <span class="text-xs text-uber-charcoal leading-relaxed">
+                Declaro a veracidade dos documentos e concordo com os <a href="javascript:void(0)" onclick="showToast('Termos do Motorista em desenvolvimento.', 'info')" class="underline font-bold text-uber-black">Termos de Adesão</a> e o Código de Conduta da Cooperativa.
+              </span>
+            </label>
+            <p id="reg-drv-terms-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <button type="submit"
+            class="w-full bg-uber-black text-white rounded-xl py-3.5 font-bold hover:bg-neutral-900 active:scale-[0.98] transition-all text-sm mt-2">
+            Enviar para verificação
+          </button>
+
+          <!-- Divisor -->
+          <div class="relative flex items-center my-2">
+            <div class="flex-grow border-t border-uber-border"></div>
+            <span class="shrink-0 px-3 text-xs uppercase font-bold text-uber-iron bg-white">ou</span>
+            <div class="flex-grow border-t border-uber-border"></div>
+          </div>
+
+          <!-- Botão Google -->
+          ${renderGoogleAuthButton('Continuar com Google')}
+        </form>
+
+        <div class="mt-6 flex flex-col gap-2 text-xs sm:text-sm text-uber-iron">
+          <p>Já tem uma conta? <a href="#/login" class="font-bold text-uber-black underline hover:text-neutral-700 transition-colors">Entrar</a></p>
+          <p>Quer apenas viajar? <a href="#/cadastro" class="font-bold text-uber-black underline hover:text-neutral-700 transition-colors">Cadastre-se como Passageiro</a></p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function handleRegisterDriverSubmit(e) {
+  e.preventDefault();
+  const nameInput = document.getElementById('reg-drv-name');
+  const cpfInput = document.getElementById('reg-drv-cpf');
+  const emailInput = document.getElementById('reg-drv-email');
+  const phoneInput = document.getElementById('reg-drv-phone');
+  const passInput = document.getElementById('reg-drv-password');
+  const confirmInput = document.getElementById('reg-drv-password-confirm');
+  const termsInput = document.getElementById('reg-drv-terms');
+
+  const nameErr = document.getElementById('reg-drv-name-error');
+  const cpfErr = document.getElementById('reg-drv-cpf-error');
+  const emailErr = document.getElementById('reg-drv-email-error');
+  const phoneErr = document.getElementById('reg-drv-phone-error');
+  const passErr = document.getElementById('reg-drv-password-error');
+  const confirmErr = document.getElementById('reg-drv-password-confirm-error');
+  const cnhErr = document.getElementById('reg-drv-cnh-error');
+  const criminalErr = document.getElementById('reg-drv-antecedentes-error');
+  const termsErr = document.getElementById('reg-drv-terms-error');
+
+  let hasError = false;
+
+  const name = (nameInput?.value || '').trim();
+  if (!name || name.length < 3) {
+    if (nameErr) { nameErr.textContent = 'Informe o seu nome completo.'; nameErr.classList.remove('hidden'); }
+    if (nameInput) nameInput.classList.add('border-red-500');
+    hasError = true;
+  } else {
+    if (nameErr) nameErr.classList.add('hidden');
+    if (nameInput) nameInput.classList.remove('border-red-500');
+  }
+
+  const cpf = (cpfInput?.value || '').trim();
+  if (!cpf) {
+    if (cpfErr) { cpfErr.textContent = 'O CPF é obrigatório.'; cpfErr.classList.remove('hidden'); }
+    if (cpfInput) cpfInput.classList.add('border-red-500');
+    hasError = true;
+  } else if (!isValidCPF(cpf)) {
+    if (cpfErr) { cpfErr.textContent = 'CPF inválido. Verifique os dígitos informados.'; cpfErr.classList.remove('hidden'); }
+    if (cpfInput) cpfInput.classList.add('border-red-500');
+    hasError = true;
+  } else {
+    if (cpfErr) cpfErr.classList.add('hidden');
+    if (cpfInput) cpfInput.classList.remove('border-red-500');
+  }
+
+  const email = (emailInput?.value || '').trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (emailErr) { emailErr.textContent = 'Informe um endereço de e-mail válido.'; emailErr.classList.remove('hidden'); }
+    if (emailInput) emailInput.classList.add('border-red-500');
+    hasError = true;
+  } else {
+    if (emailErr) emailErr.classList.add('hidden');
+    if (emailInput) emailInput.classList.remove('border-red-500');
+  }
+
+  const phoneDigits = (phoneInput?.value || '').replace(/\D/g, '');
+  if (!phoneDigits || phoneDigits.length < 10) {
+    if (phoneErr) { phoneErr.textContent = 'Informe um telefone válido com DDD (mínimo 10 dígitos).'; phoneErr.classList.remove('hidden'); }
+    if (phoneInput) phoneInput.classList.add('border-red-500');
+    hasError = true;
+  } else {
+    if (phoneErr) phoneErr.classList.add('hidden');
+    if (phoneInput) phoneInput.classList.remove('border-red-500');
+  }
+
+  const pass = passInput?.value || '';
+  if (!pass || pass.length < 6) {
+    if (passErr) { passErr.textContent = 'A senha deve conter no mínimo 6 caracteres.'; passErr.classList.remove('hidden'); }
+    if (passInput) passInput.classList.add('border-red-500');
+    hasError = true;
+  } else {
+    if (passErr) passErr.classList.add('hidden');
+    if (passInput) passInput.classList.remove('border-red-500');
+  }
+
+  const confirm = confirmInput?.value || '';
+  if (!confirm || confirm !== pass) {
+    if (confirmErr) { confirmErr.textContent = 'As senhas não coincidem.'; confirmErr.classList.remove('hidden'); }
+    if (confirmInput) confirmInput.classList.add('border-red-500');
+    hasError = true;
+  } else {
+    if (confirmErr) confirmErr.classList.add('hidden');
+    if (confirmInput) confirmInput.classList.remove('border-red-500');
+  }
+
+  if (!authDriverUploads.cnh) {
+    if (cnhErr) { cnhErr.textContent = 'O envio da foto da CNH é obrigatório para motoristas.'; cnhErr.classList.remove('hidden'); }
+    hasError = true;
+  } else {
+    if (cnhErr) cnhErr.classList.add('hidden');
+  }
+
+  if (!authDriverUploads.criminalRecord) {
+    if (criminalErr) { criminalErr.textContent = 'O envio da Certidão de Antecedentes Criminais é obrigatório.'; criminalErr.classList.remove('hidden'); }
+    hasError = true;
+  } else {
+    if (criminalErr) criminalErr.classList.add('hidden');
+  }
+
+  if (!termsInput?.checked) {
+    if (termsErr) { termsErr.textContent = 'Você deve concordar com os termos para se cadastrar como motorista.'; termsErr.classList.remove('hidden'); }
+    hasError = true;
+  } else {
+    if (termsErr) termsErr.classList.add('hidden');
+  }
+
+  if (hasError) return;
+
+  // Sem backend real
+  showToast('Documentos recebidos para análise! A ativação será liberada em breve.', 'success');
+}
+
+function handleDriverDocUpload(event, docType) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const errorEl = document.getElementById(docType === 'cnh' ? 'reg-drv-cnh-error' : 'reg-drv-antecedentes-error');
+
+  const maxBytes = 5 * 1024 * 1024;
+  if (file.size > maxBytes) {
+    if (errorEl) {
+      errorEl.textContent = 'O arquivo excede o limite máximo permitido de 5MB.';
+      errorEl.classList.remove('hidden');
+    }
+    showToast('O arquivo excede o tamanho máximo de 5MB.', 'error');
+    event.target.value = '';
+    return;
+  }
+
+  if (docType === 'cnh' && !file.type.startsWith('image/')) {
+    if (errorEl) {
+      errorEl.textContent = 'Envie uma foto em formato de imagem válido (JPG ou PNG).';
+      errorEl.classList.remove('hidden');
+    }
+    showToast('A CNH deve ser enviada em formato de imagem.', 'error');
+    event.target.value = '';
+    return;
+  }
+
+  // TODO(storage): integrar upload de documento com bucket seguro (S3/Supabase Storage/Firebase Storage)
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    authDriverUploads[docType] = {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      dataUrl: e.target.result,
+      isPdf: file.type === 'application/pdf'
+    };
+    if (errorEl) {
+      errorEl.textContent = '';
+      errorEl.classList.add('hidden');
+    }
+    const container = document.getElementById(docType === 'cnh' ? 'cnh-upload-container' : 'antecedentes-upload-container');
+    if (container) {
+      container.innerHTML = docType === 'cnh' ? renderCnhUploadBox() : renderAntecedentesUploadBox();
+    }
+    showToast(`${docType === 'cnh' ? 'Foto da CNH' : 'Certidão de Antecedentes'} carregada com sucesso!`, 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeDriverDocUpload(docType) {
+  authDriverUploads[docType] = null;
+  const container = document.getElementById(docType === 'cnh' ? 'cnh-upload-container' : 'antecedentes-upload-container');
+  if (container) {
+    container.innerHTML = docType === 'cnh' ? renderCnhUploadBox() : renderAntecedentesUploadBox();
+  }
+  showToast('Documento removido.', 'info');
+}
+
+// ==========================================
 // 9. ROTEADOR SPA & CICLO DE VIDA
 // ==========================================
 
@@ -8136,6 +8940,12 @@ function renderApp() {
 
   if (path === '/' || path === '') {
     appRoot.innerHTML = viewHome();
+  } else if (path === '/login') {
+    appRoot.innerHTML = viewLogin();
+  } else if (path === '/cadastro') {
+    appRoot.innerHTML = viewRegisterPassenger();
+  } else if (path === '/cadastro-motorista') {
+    appRoot.innerHTML = viewRegisterDriver();
   } else if (path === '/buscar') {
     appRoot.innerHTML = viewSearchResults();
   } else if (path.startsWith('/motorista/')) {

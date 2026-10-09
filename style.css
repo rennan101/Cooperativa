@@ -91,6 +91,26 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
 
+/* Auth / Form Input Standard Styling */
+.uber-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  color: #000000;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-size: 0.875rem;
+}
+.uber-input:focus {
+  border-color: #000000;
+  box-shadow: 0 0 0 1px #000000;
+}
+.uber-input::placeholder {
+  color: #a6a6a6;
+}
+
 /* Glassmorphism / Frosted Tempered Glass overlay (Calibrated Transparency) */
 .hero-glass-overlay {
   background: rgba(0, 0, 0, 0.45);
