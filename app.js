@@ -8156,7 +8156,129 @@ window.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') {
       const panel = document.getElementById('notification-panel');
       if (panel) panel.style.display = 'none';
+      const pwaModal = document.getElementById('pwa-install-modal');
+      if (pwaModal) dismissInstallPrompt();
     }
   });
 });
+
+// ==========================================
+// PWA (Progressive Web App) - Instalação
+// ==========================================
+
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+});
+
+function initPWA() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+  }
+  setTimeout(showInstallPrompt, 8000);
+}
+
+function showInstallPrompt() {
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (isStandalone || localStorage.getItem('coop.install.dismissed') || sessionStorage.getItem('coop.install.shown')) {
+    return;
+  }
+  
+  sessionStorage.setItem('coop.install.shown', '1');
+
+  const ua = navigator.userAgent.toLowerCase();
+  const isIOS = /iphone|ipad|ipod/.test(ua);
+  const isAndroid = /android/.test(ua);
+  const isDesktop = !isIOS && !isAndroid;
+
+  const modalRoot = document.getElementById('modal-root');
+  if (!modalRoot) return;
+
+  const container = document.createElement('div');
+  container.id = 'pwa-install-modal';
+  container.className = 'fixed inset-0 z-[100] flex items-end justify-center sm:items-center bg-black/40 backdrop-blur-sm transition-opacity opacity-0';
+  
+  let instructionsHtml = '';
+  if (isIOS) {
+    instructionsHtml = `
+      <p class="text-sm text-uber-charcoal mt-2 mb-4 leading-relaxed">
+        Para instalar, toque em <span class="inline-flex align-middle bg-gray-100 p-1 rounded">${icon('ios_share', {size:'sm'})}</span> na barra inferior do Safari e depois em <strong>Adicionar à Tela de Início</strong> <span class="inline-flex align-middle bg-gray-100 p-1 rounded">${icon('add_box', {size:'sm'})}</span>.
+      </p>
+    `;
+  } else if (isAndroid) {
+    instructionsHtml = `
+      <p class="text-sm text-uber-charcoal mt-2 mb-4 leading-relaxed">
+        Instale o aplicativo da Cooperativa para ter acesso rápido às suas viagens e notificações.
+      </p>
+      <button onclick="handleInstallClick()" class="w-full h-12 bg-uber-black text-white font-bold rounded-lg hover:bg-uber-charcoal flex items-center justify-center gap-2 mb-2">
+        ${icon('download', {size:'sm'})} Instalar Aplicativo
+      </button>
+    `;
+  } else {
+    instructionsHtml = `
+      <p class="text-sm text-uber-charcoal mt-2 mb-4 leading-relaxed">
+        Você pode instalar este aplicativo no seu computador. Clique no ícone de instalação <span class="inline-flex align-middle bg-gray-100 p-1 rounded">${icon('install_desktop', {size:'sm'})}</span> na barra de endereço do navegador.
+      </p>
+    `;
+  }
+
+  container.innerHTML = `
+    <div class="bg-white w-full max-w-sm rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 border border-uber-border transform transition-transform translate-y-full sm:translate-y-0" id="pwa-install-content">
+      <div class="flex items-start justify-between mb-2">
+        <div class="flex items-center gap-3">
+          <img src="assets/icons/icon-192.png" class="w-12 h-12 rounded-xl shadow-sm" alt="App Icon">
+          <div>
+            <h3 class="font-bold text-lg text-uber-black leading-tight">Cooperativa</h3>
+            <p class="text-xs text-uber-iron">Viagens Compartilhadas</p>
+          </div>
+        </div>
+        <button onclick="dismissInstallPrompt()" class="text-uber-iron hover:text-uber-black p-1">
+          ${icon('close', {size:'sm'})}
+        </button>
+      </div>
+      ${instructionsHtml}
+    </div>
+  `;
+
+  modalRoot.appendChild(container);
+  
+  // Animate in
+  setTimeout(() => {
+    container.classList.remove('opacity-0');
+    document.getElementById('pwa-install-content').classList.remove('translate-y-full');
+  }, 10);
+
+  // Close on outside click
+  container.addEventListener('click', (e) => {
+    if (e.target === container) dismissInstallPrompt();
+  });
+}
+
+window.handleInstallClick = async function() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      dismissInstallPrompt(true);
+    }
+    deferredPrompt = null;
+  } else {
+    alert("Para instalar, toque no menu do navegador e selecione 'Adicionar à tela inicial'.");
+  }
+};
+
+window.dismissInstallPrompt = function(installed = false) {
+  if (!installed) {
+    localStorage.setItem('coop.install.dismissed', '1');
+  }
+  const modal = document.getElementById('pwa-install-modal');
+  if (modal) {
+    document.getElementById('pwa-install-content').classList.add('translate-y-full');
+    setTimeout(() => modal.remove(), 300);
+  }
+};
+
+window.addEventListener('DOMContentLoaded', initPWA);
 
