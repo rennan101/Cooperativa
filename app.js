@@ -473,6 +473,11 @@ const INITIAL_STATE = {
     avatarUrl: DEFAULT_BLANK_AVATAR, // Padrão SVG blank profile
     rating: 4.9,
     totalTrips: 28,
+    wallet: {
+      balance: 0,
+      pending: 0,
+      transactions: []
+    },
     vehicles: [
       {
         id: 'veh-001',
@@ -782,6 +787,15 @@ class AppStore {
         // Migração suave para notificações (estado salvo antes da feature)
         if (!Array.isArray(this.state.notifications)) {
           this.state.notifications = [];
+          this.saveState();
+        }
+        // Migração suave para carteira (wallet)
+        if (!this.state.currentUser.wallet) {
+          this.state.currentUser.wallet = {
+            balance: 0,
+            pending: 0,
+            transactions: []
+          };
           this.saveState();
         }
       } catch (e) {
@@ -2449,7 +2463,7 @@ function renderRideCard(ride) {
 
           <!-- Arrival -->
           <div class="flex items-center gap-3">
-            <span class="text-sm sm:text-base font-bold text-uber-black w-12 shrink-0">${ride.estimatedArrivalTime}</span>
+            <span class="text-sm sm:text-base font-bold text-uber-black w-12 shrink-0">${ride.estimatedArrivalTime || '—'}</span>
             <div class="w-2.5 h-2.5 bg-uber-black shrink-0"></div>
             <span class="text-sm sm:text-base font-semibold text-uber-black truncate">${ride.destinationCity}</span>
             <span class="text-xs text-uber-iron truncate hidden md:inline">(${ride.destinationSpot})</span>
@@ -2833,7 +2847,7 @@ function viewRideDetails(rideId) {
               <div class="w-2.5 h-2.5 bg-uber-black shrink-0 mt-1.5"></div>
               <div>
                 <div class="flex items-baseline gap-2">
-                  <span class="text-base font-bold text-uber-black">${ride.estimatedArrivalTime}</span>
+                  <span class="text-base font-bold text-uber-black">${ride.estimatedArrivalTime || '—'}</span>
                   <span class="text-sm font-semibold text-uber-black">${ride.destinationCity}</span>
                 </div>
                 <div class="text-xs text-uber-iron mt-0.5">
@@ -4855,6 +4869,23 @@ function togglePublishReturn(checked) {
   }
 }
 
+function calcArrivalTime(depTime, durationStr) {
+  if (!depTime || !durationStr) return undefined;
+  const [depH, depM] = depTime.split(':').map(Number);
+  let addH = 0;
+  let addM = 0;
+  const hMatch = durationStr.match(/(\d+)\s*h/);
+  if (hMatch) addH = parseInt(hMatch[1], 10);
+  const mMatch = durationStr.match(/(\d+)\s*m/);
+  if (mMatch) addM = parseInt(mMatch[1], 10);
+  
+  let newM = depM + addM;
+  let carryH = Math.floor(newM / 60);
+  newM = newM % 60;
+  let newH = (depH + addH + carryH) % 24;
+  return `${newH.toString().padStart(2, '0')}:${newM.toString().padStart(2, '0')}`;
+}
+
 function handleFinishPublishRide() {
   const notes = document.getElementById('pub-final-notes')?.value?.trim() || '';
   publishWizardState.notes = notes;
@@ -4870,6 +4901,8 @@ function handleFinishPublishRide() {
     hasUSB: true,
   };
 
+  const arrTimeIda = calcArrivalTime(publishWizardState.departureTime, publishWizardState.duration);
+
   // 1. Criar Viagem de Ida
   store.addRide({
     originCity: publishWizardState.originCity,
@@ -4879,6 +4912,7 @@ function handleFinishPublishRide() {
     departureDate: publishWizardState.departureDate,
     departureTime: publishWizardState.departureTime,
     estimatedDuration: publishWizardState.duration,
+    estimatedArrivalTime: arrTimeIda,
     pricePerSeat: publishWizardState.pricePerSeat,
     totalSeats: publishWizardState.seats,
     availableSeats: publishWizardState.seats,
@@ -4890,6 +4924,7 @@ function handleFinishPublishRide() {
 
   // 2. Criar Viagem de Volta se solicitada
   if (publishWizardState.hasReturn) {
+    const arrTimeVolta = calcArrivalTime(publishWizardState.returnTime, publishWizardState.duration);
     store.addRide({
       originCity: publishWizardState.destinationCity,
       originSpot: publishWizardState.destinationSpot,
@@ -4898,6 +4933,7 @@ function handleFinishPublishRide() {
       departureDate: publishWizardState.returnDate,
       departureTime: publishWizardState.returnTime,
       estimatedDuration: publishWizardState.duration,
+      estimatedArrivalTime: arrTimeVolta,
       pricePerSeat: publishWizardState.returnPrice,
       totalSeats: publishWizardState.returnSeats,
       availableSeats: publishWizardState.returnSeats,
@@ -6734,6 +6770,98 @@ function handleAvatarUpload(event) {
   reader.readAsDataURL(file);
 }
 
+function renderWalletSection() {
+  const { currentUser, role } = store.state;
+  const w = currentUser.wallet || { balance: 0, pending: 0, transactions: [] };
+  
+  let adminSection = '';
+  if (role === 'ADMIN') {
+    const users = [
+      { name: currentUser.name, balance: w.balance, pending: w.pending },
+      { name: 'Marcos Silva', balance: 150.00, pending: 0 },
+      { name: 'Fernanda Costa', balance: 35.00, pending: 70.00 },
+      { name: 'Rafael Guimarães', balance: 0, pending: 30.00 }
+    ];
+    adminSection = `
+      <div class="mt-6 pt-6 border-t border-uber-border">
+        <h3 class="font-bold text-sm text-uber-black mb-3">Visão Geral (ADMIN)</h3>
+        <div class="bg-uber-gray rounded-lg border border-uber-border overflow-hidden">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-white border-b border-uber-border">
+              <tr>
+                <th class="p-3 font-semibold text-uber-iron">Usuário</th>
+                <th class="p-3 font-semibold text-uber-iron text-right">Saldo</th>
+                <th class="p-3 font-semibold text-uber-iron text-right">Pendente</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-uber-border">
+              ${users.map(u => `
+                <tr>
+                  <td class="p-3 text-uber-black font-semibold">${u.name}</td>
+                  <td class="p-3 text-uber-black text-right">R$ ${u.balance.toFixed(2).replace('.', ',')}</td>
+                  <td class="p-3 text-uber-charcoal text-right">R$ ${u.pending.toFixed(2).replace('.', ',')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  const txs = w.transactions && w.transactions.length > 0 ? w.transactions.map(t => `
+    <div class="flex items-center justify-between p-3 bg-uber-gray rounded-lg border border-uber-border">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${t.type === 'CREDIT' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">
+          ${icon(t.type === 'CREDIT' ? 'arrow_downward' : 'arrow_upward', { size: 'sm' })}
+        </div>
+        <div>
+          <p class="text-xs font-bold text-uber-black">${t.description}</p>
+          <div class="flex items-center gap-2 text-[10px] text-uber-iron mt-0.5">
+            <span>${new Date(t.createdAt).toLocaleDateString('pt-BR')}</span>
+            <span>•</span>
+            <span class="${t.status === 'CONFIRMED' ? 'text-emerald-600' : 'text-amber-500'} font-semibold">${t.status === 'CONFIRMED' ? 'Confirmado' : 'Pendente'}</span>
+          </div>
+        </div>
+      </div>
+      <div class="text-right">
+        <span class="text-sm font-bold ${t.type === 'CREDIT' ? 'text-emerald-600' : 'text-uber-black'}">${t.type === 'CREDIT' ? '+' : '-'} R$ ${t.amount.toFixed(2).replace('.', ',')}</span>
+      </div>
+    </div>
+  `).join('') : `
+    <div class="p-4 text-center text-xs text-uber-iron">Nenhuma transação recente.</div>
+  `;
+
+  return `
+    <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl shadow-sm">
+      <div class="flex items-center gap-2 pb-3 border-b border-uber-border mb-4">
+        ${icon('account_balance_wallet', { size: 'md', className: 'text-uber-black' })}
+        <h3 class="font-bold text-base text-uber-black">Minha Carteira</h3>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-3 mb-5">
+        <div class="bg-uber-gray p-4 rounded-lg border border-uber-border">
+          <span class="text-[10px] uppercase font-bold text-uber-iron block mb-1">Saldo Disponível</span>
+          <span class="text-2xl font-extrabold text-uber-black">R$ ${w.balance.toFixed(2).replace('.', ',')}</span>
+        </div>
+        <div class="bg-uber-gray p-4 rounded-lg border border-uber-border">
+          <span class="text-[10px] uppercase font-bold text-uber-iron block mb-1">Pendente (Custódia)</span>
+          <span class="text-2xl font-extrabold text-uber-charcoal">R$ ${w.pending.toFixed(2).replace('.', ',')}</span>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="font-bold text-xs text-uber-black mb-3 uppercase tracking-wider">Histórico de Transações</h4>
+        <div class="flex flex-col gap-2">
+          ${txs}
+        </div>
+      </div>
+
+      ${adminSection}
+    </div>
+  `;
+}
+
 function viewProfile() {
   const { currentUser, role } = store.state;
   const avatar = currentUser.avatarUrl || DEFAULT_BLANK_AVATAR;
@@ -6858,6 +6986,9 @@ function viewProfile() {
             </div>
           </form>
         </div>
+
+        <!-- Wallet Card -->
+        ${renderWalletSection()}
 
         <!-- Vehicle Details (Driver only) -->
         ${role === 'DRIVER' ? `
