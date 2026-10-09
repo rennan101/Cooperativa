@@ -1189,7 +1189,7 @@ function renderHeader() {
           <span class="hidden sm:inline">${store.state.currentUser.name.split(' ')[0]}</span>
         </a>
 
-        <button onclick="toggleRole()" title="Alternar Perfil para Teste" class="h-8 px-3 flex items-center gap-1.5 text-xs font-semibold text-white bg-uber-charcoal hover:bg-uber-iron/30 rounded-full transition-colors active:scale-95">
+        <button onclick="toggleRole()" title="Alternar Perfil para Teste" class="h-8 px-3 flex items-center gap-1.5 text-xs font-semibold text-white bg-uber-charcoal hover:bg-uber-iron/30 rounded-lg transition-colors active:scale-95">
           ${icon('swap_horiz', { size: 'sm', className: 'text-uber-slate' })}
           <span class="text-[11px] font-bold">${role === 'DRIVER' ? 'Motorista' : role === 'ADMIN' ? 'Admin' : 'Passageiro'}</span>
         </button>
@@ -2357,7 +2357,7 @@ function viewSearchResults() {
           <button
             type="button"
             onclick="toggleFilterAC()"
-            class="h-9 px-3.5 flex items-center gap-2 text-xs font-semibold rounded-full border transition-all shrink-0 active:scale-95 ${searchFilterAC ? 'bg-uber-black text-white border-uber-black' : 'bg-white text-uber-black border-uber-border hover:bg-uber-gray'}"
+            class="h-9 px-3.5 flex items-center gap-2 text-xs font-semibold rounded-lg border transition-all shrink-0 active:scale-95 ${searchFilterAC ? 'bg-uber-black text-white border-uber-black' : 'bg-white text-uber-black border-uber-border hover:bg-uber-gray'}"
           >
             ${icon('ac_unit', { size: 'sm', className: searchFilterAC ? 'text-white' : 'text-uber-iron' })}
             <span>Ar-condicionado</span>
@@ -2528,8 +2528,8 @@ function viewRideDetails(rideId) {
         <!-- Vehicle Showcase Card (Uber/99 Style) -->
         <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
           <div class="flex items-center gap-4 w-full sm:w-auto">
-            <div class="w-24 h-16 bg-uber-gray border border-uber-border rounded-lg flex items-center justify-center p-1.5 shrink-0 overflow-hidden shadow-2xs">
-              <img src="${getVehicleImage(ride.vehicle)}" alt="${ride.vehicle.brand} ${ride.vehicle.model}" class="w-full h-full object-contain" />
+            <div class="w-28 h-20 sm:w-32 sm:h-22 flex items-center justify-center shrink-0">
+              <img src="${getVehicleImage(ride.vehicle)}" alt="${ride.vehicle.brand} ${ride.vehicle.model}" class="w-full h-full object-contain drop-shadow-sm" />
             </div>
             <div>
               <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Veículo Confirmado</span>
@@ -2667,17 +2667,17 @@ function viewMyTrips() {
                 <div class="flex justify-between items-center pb-3 border-b border-uber-border text-xs">
                   <span class="font-mono font-medium text-uber-iron">${b.id}</span>
                   ${isAwaiting ? `
-                    <span class="flex items-center gap-1.5 font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full text-[11px] border border-amber-200">
+                    <span class="flex items-center gap-1.5 font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-md text-[11px] border border-amber-200">
                       ${icon('hourglass_top', { size: 'sm', className: 'text-amber-700' })}
                       <span>Aguardando Motorista</span>
                     </span>
                   ` : isAccepted ? `
-                    <span class="flex items-center gap-1.5 font-bold text-uber-black bg-uber-gray px-2.5 py-1 rounded-full text-[11px]">
+                    <span class="flex items-center gap-1.5 font-bold text-uber-black bg-uber-gray px-2.5 py-1 rounded-md text-[11px]">
                       ${icon('check_circle', { size: 'sm', className: 'text-uber-black' })}
                       <span>Viagem Confirmada</span>
                     </span>
                   ` : `
-                    <span class="flex items-center gap-1.5 font-bold text-red-700 bg-red-50 px-2.5 py-1 rounded-full text-[11px]">
+                    <span class="flex items-center gap-1.5 font-bold text-red-700 bg-red-50 px-2.5 py-1 rounded-md text-[11px]">
                       ${icon('cancel', { size: 'sm', className: 'text-red-600' })}
                       <span>${b.status === 'REJECTED_BY_DRIVER' ? 'Recusada pelo Motorista' : 'Cancelada'}</span>
                     </span>
@@ -2687,8 +2687,8 @@ function viewMyTrips() {
                 ${ride ? `
                   <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                     <div class="flex items-center gap-3">
-                      <div class="w-14 h-10 rounded-lg bg-uber-gray border border-uber-border flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs">
-                        <img src="${getVehicleImage(ride.vehicle)}" alt="${ride.vehicle.model}" class="w-full h-full object-contain" />
+                      <div class="w-16 h-12 flex items-center justify-center shrink-0">
+                        <img src="${getVehicleImage(ride.vehicle)}" alt="${ride.vehicle.model}" class="w-full h-full object-contain drop-shadow-2xs" />
                       </div>
                       <div>
                         <p class="font-bold text-sm sm:text-base text-uber-black">${ride.originCity} ➔ ${ride.destinationCity}</p>
@@ -2760,7 +2760,7 @@ function viewMyTrips() {
               <div class="p-4 sm:p-5 border border-uber-border bg-white rounded-xl flex flex-col gap-3">
                 <div class="flex justify-between items-center pb-3 border-b border-uber-border text-xs">
                   <span class="font-bold text-sm sm:text-base text-uber-black">${ride.originCity} ➔ ${ride.destinationCity}</span>
-                  <span class="flex items-center gap-1.5 font-bold text-uber-black bg-uber-gray px-2.5 py-1 rounded-full text-[11px]">
+                  <span class="flex items-center gap-1.5 font-bold text-uber-black bg-uber-gray px-2.5 py-1 rounded-md text-[11px]">
                     ${icon('airline_seat_recline_normal', { size: 'sm', className: 'text-uber-black' })}
                     <span>${ride.availableSeats}/${ride.totalSeats} lugares livres</span>
                   </span>
@@ -3689,10 +3689,10 @@ function viewPublishRide() {
                     <div
                       data-veh-id="${veh.id}"
                       onclick="handleSelectPublishVehicle('${veh.id}')"
-                      class="pub-vehicle-card p-3 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${isSelected ? 'ring-2 ring-black border-black bg-neutral-50' : 'border-uber-border bg-white hover:bg-neutral-50'}"
+                      class="pub-vehicle-card p-3 rounded-xl border flex items-center gap-3.5 cursor-pointer transition-all ${isSelected ? 'ring-2 ring-black border-black bg-neutral-50' : 'border-uber-border bg-white hover:bg-neutral-50'}"
                     >
-                      <div class="w-14 h-10 bg-white border border-uber-border rounded-lg flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs">
-                        <img src="${getVehicleImage(veh)}" alt="${veh.brand} ${veh.model}" class="w-full h-full object-contain" />
+                      <div class="w-16 h-12 flex items-center justify-center shrink-0">
+                        <img src="${getVehicleImage(veh)}" alt="${veh.brand} ${veh.model}" class="w-full h-full object-contain drop-shadow-2xs" />
                       </div>
                       <div class="min-w-0 flex-1">
                         <div class="flex items-center justify-between gap-1">
@@ -3926,9 +3926,9 @@ function viewPublishRide() {
           <div class="p-4 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
             
             <!-- Summary Header Card -->
-            <div class="p-4 bg-uber-gray border border-uber-border rounded-xl flex items-center gap-3.5">
-              <div class="w-16 h-11 bg-white border border-uber-border rounded-lg flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs">
-                <img src="${getVehicleImage(veh)}" alt="${veh.brand} ${veh.model}" class="w-full h-full object-contain" />
+            <div class="p-4 bg-uber-gray border border-uber-border rounded-xl flex items-center gap-4">
+              <div class="w-20 h-14 flex items-center justify-center shrink-0">
+                <img src="${getVehicleImage(veh)}" alt="${veh.brand} ${veh.model}" class="w-full h-full object-contain drop-shadow-xs" />
               </div>
               <div class="min-w-0">
                 <span class="text-[10px] font-bold uppercase tracking-wider text-uber-iron block">Veículo Confirmado</span>
@@ -4372,7 +4372,7 @@ function viewAdmin() {
               ${['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map(st => `
                 <button
                   onclick="adminReqFilter = '${st}'; renderApp();"
-                  class="px-3 py-1 rounded-full text-xs font-semibold border transition-all ${adminReqFilter === st ? 'bg-uber-black text-white border-uber-black' : 'bg-white text-uber-black border-uber-border hover:bg-uber-gray'}"
+                  class="px-3 py-1 rounded-md text-xs font-semibold border transition-all ${adminReqFilter === st ? 'bg-uber-black text-white border-uber-black' : 'bg-white text-uber-black border-uber-border hover:bg-uber-gray'}"
                 >
                   ${st === 'ALL' ? 'Todas' : st === 'PENDING' ? 'Pendentes' : st === 'APPROVED' ? 'Aprovadas' : 'Recusadas'}
                 </button>
@@ -4388,7 +4388,7 @@ function viewAdmin() {
                     <h3 class="font-bold text-sm text-uber-black">${req.userName}</h3>
                     <p class="text-xs text-uber-iron font-normal">${req.userEmail} • ${req.userPhone}</p>
                   </div>
-                  <span class="inline-flex items-center gap-1 font-bold text-xs px-2.5 py-1 rounded-full ${req.status === 'PENDING' ? 'bg-amber-100 text-amber-900' : req.status === 'APPROVED' ? 'bg-green-100 text-green-900' : 'bg-red-100 text-red-900'}">
+                  <span class="inline-flex items-center gap-1 font-bold text-xs px-2.5 py-1 rounded-md ${req.status === 'PENDING' ? 'bg-amber-100 text-amber-900' : req.status === 'APPROVED' ? 'bg-green-100 text-green-900' : 'bg-red-100 text-red-900'}">
                     ${req.status === 'PENDING' ? 'Pendente' : req.status === 'APPROVED' ? 'Aprovado' : 'Recusado'}
                   </span>
                 </div>
@@ -4448,11 +4448,11 @@ function viewAdmin() {
                       Liberar Resgate (PIX)
                     </button>
                   ` : b.status === 'FULLY_PAID' ? `
-                    <span class="font-bold text-green-700 bg-green-50 px-3 py-1.5 rounded-full text-xs">
+                    <span class="font-bold text-green-700 bg-green-50 px-3 py-1.5 rounded-md text-xs">
                       Repasse Concluído
                     </span>
                   ` : `
-                    <span class="font-bold text-red-700 bg-red-50 px-3 py-1.5 rounded-full text-xs">
+                    <span class="font-bold text-red-700 bg-red-50 px-3 py-1.5 rounded-md text-xs">
                       Reserva Cancelada
                     </span>
                   `}
@@ -4682,9 +4682,9 @@ function viewProfile() {
                   return `
                   <div class="p-3.5 sm:p-4 bg-uber-gray border border-uber-border rounded-xl flex flex-col gap-3 transition-all hover:border-uber-charcoal">
                     <div class="flex items-start justify-between gap-3">
-                      <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-16 h-11 bg-white border border-uber-border rounded-lg flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs">
-                          <img src="${getVehicleImage(veh)}" alt="${veh.brand} ${veh.model}" class="w-full h-full object-contain" />
+                      <div class="flex items-center gap-3.5 min-w-0">
+                        <div class="w-20 h-14 flex items-center justify-center shrink-0">
+                          <img src="${getVehicleImage(veh)}" alt="${veh.brand} ${veh.model}" class="w-full h-full object-contain drop-shadow-xs" />
                         </div>
                         <div class="min-w-0">
                           <div class="flex items-center gap-2 flex-wrap">
@@ -4879,13 +4879,13 @@ function openVehicleModal(vehicleId = null) {
 
         <form onsubmit="handleSaveVehicle(event, '${vehicleId || ''}')" class="pt-4 space-y-4">
           <!-- Real-time Vehicle Visual Preview Card (Uber Style) -->
-          <div class="p-3 bg-uber-gray border border-uber-border rounded-xl flex items-center gap-3.5">
-            <div class="w-20 h-13 bg-white border border-uber-border rounded-lg flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs">
-              <img id="veh-modal-preview-img" src="${getVehicleImage(brandVal, modelVal, selectedColor)}" alt="Prévia do Veículo" class="w-full h-full object-contain" />
+          <div class="p-3 bg-uber-gray border border-uber-border rounded-xl flex items-center gap-4">
+            <div class="w-24 h-16 sm:w-28 sm:h-18 flex items-center justify-center shrink-0">
+              <img id="veh-modal-preview-img" src="${getVehicleImage(brandVal, modelVal, selectedColor)}" alt="Prévia do Veículo" class="w-full h-full object-contain drop-shadow-sm" />
             </div>
             <div class="min-w-0">
               <span class="text-[10px] font-bold uppercase tracking-wider text-uber-iron block">Render e Cor em Tempo Real</span>
-              <span id="veh-modal-preview-legend" class="text-xs font-bold text-uber-black truncate block">${brandVal || 'Veículo'} ${modelVal || ''} • Cor ${getVehicleColorName(selectedColor)}</span>
+              <span id="veh-modal-preview-legend" class="text-sm font-bold text-uber-black truncate block mt-0.5">${brandVal || 'Veículo'} ${modelVal || ''} • Cor ${getVehicleColorName(selectedColor)}</span>
             </div>
           </div>
 
@@ -5485,7 +5485,7 @@ function viewDriverProfile(driverId) {
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 <h1 class="text-xl sm:text-2xl font-extrabold text-uber-black">${driver.name}</h1>
-                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">
                   ${icon('verified', { size: 'sm', className: 'text-emerald-600' })}
                   <span>Verificado</span>
                 </span>
@@ -5527,8 +5527,8 @@ function viewDriverProfile(driverId) {
           </div>
 
           <div class="pt-4 flex flex-col sm:flex-row items-center gap-4">
-            <div class="w-28 h-18 bg-uber-gray border border-uber-border rounded-xl flex items-center justify-center p-2 shrink-0 overflow-hidden shadow-2xs">
-              <img src="${getVehicleImage(driver.vehicle)}" alt="${driver.vehicle.brand} ${driver.vehicle.model}" class="w-full h-full object-contain" />
+            <div class="w-32 h-22 flex items-center justify-center shrink-0">
+              <img src="${getVehicleImage(driver.vehicle)}" alt="${driver.vehicle.brand} ${driver.vehicle.model}" class="w-full h-full object-contain filter drop-shadow-xs" />
             </div>
 
             <div class="flex-1 w-full grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
@@ -5548,8 +5548,13 @@ function viewDriverProfile(driverId) {
                 <p class="font-mono font-bold text-uber-black mt-0.5 text-xs">${driver.vehicle.plate}</p>
               </div>
               <div class="p-2.5 bg-uber-gray border border-uber-border rounded-lg">
-                <span class="font-semibold text-uber-iron block text-[10px] uppercase tracking-wider">Conforto</span>
-                <p class="font-bold text-uber-black mt-0.5 text-xs">${driver.vehicle.hasAC ? 'Ar' : ''} ${driver.vehicle.hasUSB ? '• USB' : ''}</p>
+                <span class="font-semibold text-uber-iron block text-[10px] uppercase tracking-wider">Regras / Conforto</span>
+                <div class="flex items-center gap-1.5 mt-0.5 text-uber-charcoal">
+                  ${driver.vehicle.hasAC ? `<span title="Ar-condicionado">${icon('ac_unit', { size: 'xs' })}</span>` : ''}
+                  ${driver.vehicle.hasUSB ? `<span title="Carregador USB">${icon('usb', { size: 'xs' })}</span>` : ''}
+                  ${driver.vehicle.noSmoking ? `<span title="Proibido fumar">${icon('smoke_free', { size: 'xs' })}</span>` : ''}
+                  ${driver.vehicle.noPets ? `<span title="Sem animais de estimação">${icon('pets', { size: 'xs', className: 'line-through opacity-60' })}</span>` : ''}
+                </div>
               </div>
             </div>
           </div>
@@ -5584,7 +5589,7 @@ function viewDriverProfile(driverId) {
                 ${rev.tags && rev.tags.length > 0 ? `
                   <div class="flex flex-wrap gap-1.5 pt-1">
                     ${rev.tags.map(t => `
-                      <span class="text-[10px] font-semibold text-uber-black bg-white border border-uber-border px-2 py-0.5 rounded-full">${t}</span>
+                      <span class="text-[10px] font-semibold text-uber-black bg-white border border-uber-border px-2 py-0.5 rounded-md">${t}</span>
                     `).join('')}
                   </div>
                 ` : ''}
