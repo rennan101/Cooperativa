@@ -474,9 +474,26 @@ const INITIAL_STATE = {
     rating: 4.9,
     totalTrips: 28,
     wallet: {
-      balance: 0,
-      pending: 0,
-      transactions: []
+      balance: 150.00,
+      pending: 37.50,
+      transactions: [
+        {
+          id: 'tx-001',
+          type: 'CREDIT',
+          amount: 150.00,
+          description: 'Repasse de viagem concluída',
+          status: 'CONFIRMED',
+          createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
+        },
+        {
+          id: 'tx-002',
+          type: 'DEBIT',
+          amount: 37.50,
+          description: 'Sinal PIX - Viagem Fortaleza',
+          status: 'PENDING',
+          createdAt: new Date(Date.now() - 3600000).toISOString()
+        }
+      ]
     },
     vehicles: [
       {
