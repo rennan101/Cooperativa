@@ -507,8 +507,8 @@ const INITIAL_STATE = {
     }
   },
   searchParams: {
-    origin: 'Fortaleza, CE',
-    destination: 'Juazeiro do Norte, CE',
+    origin: '',
+    destination: '',
     date: new Date().toISOString().split('T')[0],
     seats: 1,
   },
@@ -731,6 +731,12 @@ class AppStore {
             ...DEFAULT_PLATFORM_SETTINGS,
             ...this.state.platformSettings,
           };
+        }
+        if (this.state.searchParams) {
+          if (this.state.searchParams.origin === 'Fortaleza, CE' && this.state.searchParams.destination === 'Juazeiro do Norte, CE') {
+            this.state.searchParams.origin = '';
+            this.state.searchParams.destination = '';
+          }
         }
         // Migração suave de CPFs em viagens e reservas
         if (Array.isArray(this.state.rides)) {
@@ -2139,7 +2145,7 @@ function renderHeroSearchBar() {
   const todayStr = new Date().toISOString().split('T')[0];
 
   return `
-    <div class="w-full max-w-6xl xl:max-w-7xl mx-auto relative overflow-visible">
+    <div class="w-full max-w-6xl xl:max-w-7xl mx-auto relative overflow-visible z-30">
       <form id="hero-search-form" onsubmit="handleSearchSubmit(event)" class="bg-white border border-uber-border shadow-2xl rounded-2xl p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center gap-3 overflow-visible relative z-30">
         
         <!-- Origin Input with Uber-Style Autocomplete Dropdown -->
@@ -2151,8 +2157,8 @@ function renderHeroSearchBar() {
                 id="search-origin"
                 type="text"
                 autocomplete="off"
-                value="${origin}"
-                placeholder="Cidade de partida"
+                value="${origin || ''}"
+                placeholder="Cidade ou ponto de partida"
                 class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
                 onfocus="handleLocationFocus('search-origin', 'autocomplete-origin-dropdown', 'origin')"
                 oninput="handleLocationInput('search-origin', 'autocomplete-origin-dropdown', 'origin')"
@@ -2177,8 +2183,8 @@ function renderHeroSearchBar() {
                 id="search-dest"
                 type="text"
                 autocomplete="off"
-                value="${destination}"
-                placeholder="Cidade de destino"
+                value="${destination || ''}"
+                placeholder="Cidade ou ponto de destino"
                 class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-sm placeholder-uber-iron truncate"
                 onfocus="handleLocationFocus('search-dest', 'autocomplete-dest-dropdown', 'dest')"
                 oninput="handleLocationInput('search-dest', 'autocomplete-dest-dropdown', 'dest')"
@@ -2347,6 +2353,9 @@ function swapSearchCities() {
     const tmp = originEl.value;
     originEl.value = destEl.value;
     destEl.value = tmp;
+    store.state.searchParams.origin = originEl.value;
+    store.state.searchParams.destination = destEl.value;
+    store.saveState();
   }
 }
 
@@ -2365,30 +2374,32 @@ function viewHome() {
   const role = store.state.role;
 
   return `
-    <div class="flex flex-col gap-10 md:gap-14 pb-12 text-left animate-fade-in">
+    <div class="flex flex-col gap-10 md:gap-14 pb-12 text-left animate-fade-in overflow-visible">
       
       <!-- Hero Section with Background Video & Tempered Glass (Blur) Overlay -->
-      <section class="relative bg-uber-black text-white pt-12 pb-16 px-4 overflow-hidden min-h-[380px] sm:min-h-[420px] flex items-center justify-center">
+      <section class="relative bg-uber-black text-white pt-12 pb-16 px-4 min-h-[380px] sm:min-h-[420px] flex items-center justify-center relative z-30 overflow-visible">
         
-        <!-- Background Video with Loop & Mobile Autoplay -->
-        <video
-          id="hero-bg-video"
-          autoplay
-          loop
-          muted
-          playsinline
-          webkit-playsinline
-          preload="auto"
-          class="absolute inset-0 w-full h-full object-cover object-center pointer-events-none z-0 scale-105"
-        >
-          <source src="assets/video/homevideo.mp4" type="video/mp4" />
-        </video>
+        <!-- Background Video with Loop & Mobile Autoplay (Isolated overflow-hidden wrapper) -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <video
+            id="hero-bg-video"
+            autoplay
+            loop
+            muted
+            playsinline
+            webkit-playsinline
+            preload="auto"
+            class="absolute inset-0 w-full h-full object-cover object-center scale-105"
+          >
+            <source src="assets/video/homevideo.mp4" type="video/mp4" />
+          </video>
 
-        <!-- Frosted Tempered Glass (Dark Glassmorphism) Overlay (Calibrated 45% Transparency) -->
-        <div class="absolute inset-0 hero-glass-overlay z-10"></div>
+          <!-- Frosted Tempered Glass (Dark Glassmorphism) Overlay (Calibrated 45% Transparency) -->
+          <div class="absolute inset-0 hero-glass-overlay z-10"></div>
+        </div>
 
         <!-- Hero Content Layer -->
-        <div class="relative z-20 max-w-6xl xl:max-w-7xl mx-auto text-center flex flex-col items-center gap-4 w-full">
+        <div class="relative z-20 max-w-6xl xl:max-w-7xl mx-auto text-center flex flex-col items-center gap-4 w-full overflow-visible">
           
           <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight max-w-3xl leading-tight text-white drop-shadow-md">
             Viagens Compartilhadas pelo Nordeste
@@ -2398,14 +2409,14 @@ function viewHome() {
             Encontre motoristas verificados, garanta sua vaga com 50% no PIX e pague o restante na chegada.
           </p>
 
-          <div class="w-full mt-4">
+          <div class="w-full mt-4 relative z-30 overflow-visible">
             ${renderHeroSearchBar()}
           </div>
         </div>
       </section>
 
       <!-- Popular Routes with Location Photos (Nordeste) -->
-      <section class="max-w-6xl xl:max-w-7xl mx-auto px-4 w-full">
+      <section class="max-w-6xl xl:max-w-7xl mx-auto px-4 w-full relative z-10">
         <div class="flex items-center justify-between mb-4 h-8">
           <h2 class="text-lg sm:text-xl font-bold text-uber-black flex items-center gap-2">
             ${icon('trending_up', { size: 'sm', className: 'text-uber-black' })}
@@ -2509,8 +2520,8 @@ function viewSearchResults() {
 
 
   return `
-    <div class="max-w-6xl xl:max-w-7xl mx-auto px-4 py-6 text-left animate-fade-in">
-      <div class="mb-6">
+    <div class="max-w-6xl xl:max-w-7xl mx-auto px-4 py-6 text-left animate-fade-in overflow-visible">
+      <div class="mb-6 relative z-30 overflow-visible">
         ${renderHeroSearchBar()}
       </div>
 
