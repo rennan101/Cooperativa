@@ -448,8 +448,20 @@ const BRAZIL_VEHICLES_DATABASE = [
 // 3. ESTADO E DADOS INICIAIS (LOCAL STORAGE)
 // ==========================================
 
+const DEFAULT_PLATFORM_SETTINGS = {
+  driverPayoutPercent: 85,      // % repassado ao motorista (ex.: 85%)
+  platformFeePercent: 15,       // % taxa de manutenção da cooperativa (ex.: 15%) -> Soma = 100%
+  signalPercent: 50,            // % exigido no PIX para confirmação da reserva (ex.: 50%)
+  payOnArrivalPercent: 50,      // % pago diretamente no embarque/desembarque (ex.: 50%) -> Soma = 100%
+  earlyRefundPercent: 70,       // % estornado em cancelamento com antecedência >1h (ex.: 70%)
+  earlyRetentionPercent: 30,    // % retido para custos operacionais (>1h) (ex.: 30%) -> Soma = 100%
+  lateRefundPercent: 50,        // % estornado em cancelamento com <1h (ex.: 50%)
+  lateRetentionPercent: 50,     // % retido em cancelamento de última hora (<1h) (ex.: 50%) -> Soma = 100%
+};
+
 const INITIAL_STATE = {
   role: 'PASSENGER', // 'PASSENGER' | 'DRIVER' | 'ADMIN'
+  platformSettings: { ...DEFAULT_PLATFORM_SETTINGS },
   currentUser: {
     id: 'user-001',
     name: 'Carlos Oliveira',
@@ -702,6 +714,15 @@ class AppStore {
         if (!this.state.currentUser.avatarUrl) {
           this.state.currentUser.avatarUrl = DEFAULT_BLANK_AVATAR;
         }
+        // Migração suave para configurações da plataforma
+        if (!this.state.platformSettings) {
+          this.state.platformSettings = { ...DEFAULT_PLATFORM_SETTINGS };
+        } else {
+          this.state.platformSettings = {
+            ...DEFAULT_PLATFORM_SETTINGS,
+            ...this.state.platformSettings,
+          };
+        }
         // Migração suave para lista de veículos
         if (!Array.isArray(this.state.currentUser.vehicles) || this.state.currentUser.vehicles.length === 0) {
           const defaultVeh = this.state.currentUser.vehicle || {
@@ -739,6 +760,20 @@ class AppStore {
 
   saveState() {
     localStorage.setItem('cooperativa_state_v3', JSON.stringify(this.state));
+  }
+
+  updatePlatformSettings(newSettings) {
+    this.state.platformSettings = {
+      ...DEFAULT_PLATFORM_SETTINGS,
+      ...this.state.platformSettings,
+      ...newSettings,
+    };
+    this.saveState();
+  }
+
+  resetPlatformSettings() {
+    this.state.platformSettings = { ...DEFAULT_PLATFORM_SETTINGS };
+    this.saveState();
   }
 
   setRole(newRole) {
@@ -885,9 +920,11 @@ class AppStore {
     const ride = this.state.rides.find(r => r.id === rideId);
     if (!ride) return null;
 
+    const settings = this.state.platformSettings || DEFAULT_PLATFORM_SETTINGS;
+    const signalRate = (settings.signalPercent || 50) / 100;
     const totalAmount = ride.pricePerSeat * seats;
-    const signal = totalAmount * 0.5;
-    const finalVal = totalAmount * 0.5;
+    const signal = Math.round(totalAmount * signalRate * 100) / 100;
+    const finalVal = Math.round((totalAmount - signal) * 100) / 100;
     const bookingId = 'BK-' + Math.floor(1000 + Math.random() * 9000);
 
     const newBooking = {
@@ -935,9 +972,9 @@ class AppStore {
     renderApp();
   }
 
-  cancelBooking(bookingId) {
+  cancelBooking(bookingId, isEarly = true) {
     const booking = this.state.bookings.find(b => b.id === bookingId);
-    if (!booking) return { refundAmount: 0 };
+    if (!booking) return { refundAmount: 0, retainedAmount: 0 };
 
     booking.status = 'CANCELLED';
     const ride = this.state.rides.find(r => r.id === booking.rideId);
@@ -945,9 +982,12 @@ class AppStore {
       ride.availableSeats += booking.seatsBooked;
     }
 
-    const refundAmount = booking.amountPaidSignal * 0.70;
+    const settings = this.state.platformSettings || DEFAULT_PLATFORM_SETTINGS;
+    const refundPct = (isEarly ? (settings.earlyRefundPercent || 70) : (settings.lateRefundPercent || 50)) / 100;
+    const refundAmount = Math.round(booking.amountPaidSignal * refundPct * 100) / 100;
+    const retainedAmount = Math.round((booking.amountPaidSignal - refundAmount) * 100) / 100;
     this.saveState();
-    return { refundAmount };
+    return { refundAmount, retainedAmount };
   }
 
   addRide(rideData) {
@@ -2768,6 +2808,381 @@ function getAvailableMonths(rides = []) {
   return Array.from(monthSet).sort().reverse();
 }
 
+function getAdminFilteredRides(rides = [], bookings = [], monthFilter = 'ALL', statusFilter = 'ALL', searchQuery = '') {
+  return rides.filter(ride => {
+    // 1. Filtro Mensal
+    if (monthFilter !== 'ALL') {
+      const rideMonth = ride.departureDate ? ride.departureDate.slice(0, 7) : '';
+      if (rideMonth !== monthFilter) return false;
+    }
+
+    // 2. Filtro de Status
+    const rideBookings = bookings.filter(b => b.rideId === ride.id);
+    if (statusFilter === 'WITH_BOOKINGS' && rideBookings.length === 0) {
+      return false;
+    }
+    if (statusFilter === 'PAID') {
+      const hasPaid = rideBookings.some(b => b.status === 'FULLY_PAID' || b.status === 'SIGNAL_CONFIRMED');
+      if (!hasPaid) return false;
+    }
+    if (statusFilter === 'CANCELLED') {
+      const hasCancelled = rideBookings.some(b => b.status === 'CANCELLED' || b.status === 'REJECTED_BY_DRIVER');
+      if (!hasCancelled) return false;
+    }
+
+    // 3. Busca Textual Rápida
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const matchRoute = `${ride.originCity} ${ride.destinationCity} ${ride.originSpot || ''} ${ride.destinationSpot || ''}`.toLowerCase().includes(q);
+      const matchDriver = `${ride.driverName} ${ride.vehicle?.model || ''} ${ride.vehicle?.plate || ''}`.toLowerCase().includes(q);
+      const matchPassenger = rideBookings.some(b => `${b.passengerName} ${b.passengerPhone || ''} ${b.id}`.toLowerCase().includes(q));
+      if (!matchRoute && !matchDriver && !matchPassenger) return false;
+    }
+
+    return true;
+  });
+}
+
+function renderAdminTripsKpisHtml(filteredRides = [], bookings = []) {
+  let totalMonthPassengers = 0;
+  let totalMonthVolume = 0;
+  let totalMonthCustody = 0;
+
+  filteredRides.forEach(ride => {
+    const rBookings = bookings.filter(b => b.rideId === ride.id && b.status !== 'CANCELLED' && b.status !== 'REJECTED_BY_DRIVER');
+    rBookings.forEach(b => {
+      totalMonthPassengers += b.seatsBooked || 1;
+      totalMonthVolume += b.totalAmount || 0;
+      if (b.status === 'SIGNAL_CONFIRMED') {
+        totalMonthCustody += b.amountPaidSignal || 0;
+      }
+    });
+  });
+
+  return `
+    <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
+      <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Viagens no Mês</span>
+      <div class="flex items-center gap-1.5 mt-1">
+        ${icon('directions_car', { size: 'sm', className: 'text-uber-black' })}
+        <span class="text-xl font-extrabold text-uber-black">${filteredRides.length}</span>
+      </div>
+    </div>
+
+    <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
+      <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Passageiros no Mês</span>
+      <div class="flex items-center gap-1.5 mt-1">
+        ${icon('group', { size: 'sm', className: 'text-uber-black' })}
+        <span class="text-xl font-extrabold text-uber-black">${totalMonthPassengers}</span>
+      </div>
+    </div>
+
+    <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
+      <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Volume Transacionado</span>
+      <div class="flex items-center gap-1 mt-1">
+        <span class="text-xs font-bold text-uber-iron">R$</span>
+        <span class="text-xl font-extrabold text-uber-black">${totalMonthVolume.toFixed(2).replace('.', ',')}</span>
+      </div>
+    </div>
+
+    <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
+      <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Sinais em Custódia</span>
+      <div class="flex items-center gap-1 mt-1">
+        <span class="text-xs font-bold text-emerald-700">R$</span>
+        <span class="text-xl font-extrabold text-emerald-800">${totalMonthCustody.toFixed(2).replace('.', ',')}</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderAdminTripsListHtml(filteredRides = [], bookings = []) {
+  if (filteredRides.length === 0) {
+    return `
+      <div class="bg-white border border-uber-border rounded-xl p-8 sm:p-12 text-center space-y-2">
+        <div class="w-12 h-12 bg-uber-gray text-uber-iron rounded-xl flex items-center justify-center mx-auto mb-2">
+          ${icon('search_off', { size: 'md' })}
+        </div>
+        <h3 class="text-base font-bold text-uber-black">Nenhuma viagem encontrada</h3>
+        <p class="text-xs text-uber-iron max-w-sm mx-auto font-normal">
+          Não foram encontradas viagens para o mês de <strong>${formatMonthName(adminTripsMonthFilter)}</strong> com os filtros aplicados. Tente selecionar outro mês ou limpar a busca.
+        </p>
+        <button
+          type="button"
+          onclick="adminTripsMonthFilter = 'ALL'; adminTripsStatusFilter = 'ALL'; clearAdminTripsSearch(); renderApp();"
+          class="mt-2 px-4 py-2 bg-black text-white text-xs font-bold rounded-lg hover:bg-neutral-900 transition-transform active:scale-95 cursor-pointer"
+        >
+          Exibir Todas as Viagens da Plataforma
+        </button>
+      </div>
+    `;
+  }
+
+  return filteredRides.map(ride => {
+    const rideBookings = bookings.filter(b => b.rideId === ride.id);
+    const activeBookings = rideBookings.filter(b => b.status !== 'CANCELLED' && b.status !== 'REJECTED_BY_DRIVER');
+    const occupiedSeats = activeBookings.reduce((sum, b) => sum + (b.seatsBooked || 1), 0);
+    const colorObj = getVehicleColorObj(ride.vehicle.color);
+    const luggage = getLuggageInfo(ride);
+
+    return `
+      <div class="border border-uber-border bg-white rounded-xl shadow-xs overflow-hidden transition-all hover:border-uber-charcoal">
+        
+        <!-- Topo do Card: Trajeto, Horário, Vagas e Tarifa -->
+        <div class="p-4 bg-neutral-50/70 border-b border-uber-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-mono font-semibold text-uber-iron bg-white border border-uber-border px-1.5 py-0.5 rounded text-[10px]">${ride.id}</span>
+              <h3 class="font-extrabold text-sm sm:text-base text-uber-black">${ride.originCity} ➔ ${ride.destinationCity}</h3>
+            </div>
+            <div class="flex items-center gap-2 text-uber-iron flex-wrap">
+              <span class="flex items-center gap-1 font-semibold text-uber-black">
+                ${icon('calendar_today', { size: 'xs' })}
+                ${ride.departureDate} às ${ride.departureTime}
+              </span>
+              <span>•</span>
+              <span>Duração: ~${ride.estimatedDuration || '2h 00m'}</span>
+              <span>•</span>
+              <span class="text-uber-charcoal truncate">Embarque: ${ride.originSpot || 'Centro'}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 shrink-0">
+            <div class="text-left sm:text-right">
+              <span class="font-extrabold text-sm sm:text-base text-uber-black block">R$ ${ride.pricePerSeat.toFixed(2).replace('.', ',')} <span class="text-[10px] font-normal text-uber-iron">/ lugar</span></span>
+              <span class="text-[11px] font-bold text-uber-charcoal">${occupiedSeats}/${ride.totalSeats} lugares ocupados (${ride.availableSeats} livres)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloco do Motorista e Veículo -->
+        <div class="p-4 border-b border-uber-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs bg-white">
+          <div class="flex items-center gap-3.5">
+            <div class="w-16 h-12 flex items-center justify-center shrink-0">
+              <img src="${getVehicleImage(ride.vehicle)}" alt="${ride.vehicle.model}" class="w-full h-full object-contain drop-shadow-2xs" />
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="font-bold text-sm text-uber-black">${ride.driverName}</span>
+                <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                  ${icon('verified', { size: 'xs' })} Motorista
+                </span>
+                <span class="flex items-center gap-0.5 font-bold text-uber-black ml-1">
+                  ${icon('star', { size: 'xs', fill: true, className: 'star-gold' })}
+                  ${ride.driverRating.toFixed(1)}
+                </span>
+              </div>
+              <div class="flex items-center gap-1.5 text-[11px] text-uber-iron mt-0.5 flex-wrap">
+                <span class="font-semibold text-uber-black">${ride.vehicle.brand} ${ride.vehicle.model}</span>
+                <span>•</span>
+                <span class="font-mono font-bold">${ride.vehicle.plate}</span>
+                <span>•</span>
+                <span class="inline-flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-xs border ${colorObj.border}" style="background-color: ${colorObj.hex}"></span>
+                  <span>${colorObj.name}</span>
+                </span>
+                <span>•</span>
+                <span title="${luggage.label}" class="inline-flex items-center gap-0.5 font-semibold text-uber-charcoal">
+                  ${icon(luggage.iconName, { size: 'xs' })} ${luggage.shortLabel}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botão de Suporte Direto ao Motorista -->
+          <div class="flex items-center gap-2 self-start sm:self-center shrink-0">
+            <button
+              type="button"
+              onclick="openAdminContactSupportModal('${ride.driverName}', '${ride.driverPhone || '(85) 98765-4321'}', 'Motorista', '${ride.id}')"
+              class="px-3 py-1.5 bg-uber-gray hover:bg-neutral-200 text-uber-black font-bold rounded-lg transition-colors flex items-center gap-1.5 text-xs cursor-pointer active:scale-95"
+            >
+              ${icon('support_agent', { size: 'sm', className: 'text-uber-black' })}
+              <span>Suporte Motorista</span>
+            </button>
+            <a
+              href="#/viagem/${ride.id}"
+              class="p-1.5 text-uber-iron hover:text-uber-black hover:bg-uber-gray rounded-lg transition-colors"
+              title="Ver detalhes públicos da viagem"
+            >
+              ${icon('visibility', { size: 'sm' })}
+            </a>
+          </div>
+        </div>
+
+        <!-- Lista de Passageiros e Condições Financeiras -->
+        <div class="p-4 bg-neutral-50/40 space-y-3">
+          <div class="flex items-center justify-between text-xs pb-1">
+            <span class="font-bold text-uber-black uppercase tracking-wider text-[11px] flex items-center gap-1">
+              ${icon('group', { size: 'sm', className: 'text-uber-black' })}
+              Passageiros e Condição de Pagamento (${rideBookings.length} ${rideBookings.length === 1 ? 'reserva' : 'reservas'}):
+            </span>
+          </div>
+
+          ${rideBookings.length > 0 ? `
+            <div class="space-y-2.5">
+              ${rideBookings.map(bk => {
+                const isSignalPaid = bk.status === 'SIGNAL_CONFIRMED';
+                const isFullyPaid = bk.status === 'FULLY_PAID';
+                const isAwaiting = bk.status === 'AWAITING_DRIVER';
+                const isCancelled = bk.status === 'CANCELLED';
+                const isRejected = bk.status === 'REJECTED_BY_DRIVER';
+
+                return `
+                  <div class="p-3 bg-white border border-uber-border rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
+                    
+                    <!-- Perfil do Passageiro -->
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <img src="${bk.passengerAvatar || DEFAULT_BLANK_AVATAR}" class="w-8 h-8 rounded-full object-cover bg-uber-gray border border-uber-border shrink-0" />
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                          <span class="font-bold text-uber-black text-xs sm:text-sm">${bk.passengerName}</span>
+                          <span class="font-mono text-uber-iron text-[10px]">(${bk.id})</span>
+                          <span class="text-[10px] font-bold text-uber-charcoal bg-uber-gray border border-uber-border px-1.5 py-0.2 rounded">
+                            ${bk.seatsBooked} ${bk.seatsBooked === 1 ? 'lugar' : 'lugares'}
+                          </span>
+                        </div>
+                        <p class="text-uber-iron font-normal text-[11px] mt-0.5">
+                          Tel: ${bk.passengerPhone || '(85) 98765-4321'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Valores e Status Financeiro -->
+                    <div class="flex flex-col sm:items-end gap-1 shrink-0">
+                      <div class="flex items-center gap-2">
+                        ${isSignalPaid ? `
+                          <span class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                            ${icon('account_balance_wallet', { size: 'xs', className: 'text-blue-700' })}
+                            <span>Sinal PIX Pago (Custódia)</span>
+                          </span>
+                        ` : isFullyPaid ? `
+                          <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-900 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                            ${icon('check_circle', { size: 'xs', className: 'text-emerald-700' })}
+                            <span>Repasse Concluído</span>
+                          </span>
+                        ` : isAwaiting ? `
+                          <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                            ${icon('hourglass_top', { size: 'xs', className: 'text-amber-700' })}
+                            <span>Aguardando Aceite</span>
+                          </span>
+                        ` : isCancelled ? `
+                          <span class="inline-flex items-center gap-1 text-[11px] font-bold text-red-900 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
+                            ${icon('cancel', { size: 'xs', className: 'text-red-700' })}
+                            <span>Cancelada (Estorno PIX)</span>
+                          </span>
+                        ` : isRejected ? `
+                          <span class="inline-flex items-center gap-1 text-[11px] font-bold text-neutral-800 bg-neutral-100 border border-neutral-300 px-2 py-0.5 rounded-md">
+                            ${icon('cancel', { size: 'xs' })}
+                            <span>Recusada (Estorno 100%)</span>
+                          </span>
+                        ` : ''}
+                      </div>
+
+                      <div class="text-[11px] text-uber-charcoal">
+                        <span>Sinal: <strong>R$ ${bk.amountPaidSignal.toFixed(2).replace('.', ',')}</strong></span>
+                        <span class="text-uber-border mx-1">•</span>
+                        <span>Total: <strong>R$ ${bk.totalAmount.toFixed(2).replace('.', ',')}</strong></span>
+                      </div>
+                    </div>
+
+                    <!-- Ações Administrativas de Suporte por Reserva -->
+                    <div class="flex items-center gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-uber-border shrink-0 flex-wrap justify-end">
+                      ${isSignalPaid ? `
+                        <button
+                          type="button"
+                          onclick="handleReleaseCustodyAdmin('${bk.id}', ${bk.amountPaidSignal})"
+                          class="px-2.5 py-1.5 bg-black hover:bg-neutral-900 text-white font-bold rounded-lg text-xs flex items-center gap-1 transition-transform active:scale-95 shadow-2xs cursor-pointer"
+                          title="Liberar repasse de sinal para a chave PIX do motorista"
+                        >
+                          ${icon('payments', { size: 'sm' })}
+                          <span>Liberar PIX</span>
+                        </button>
+                      ` : ''}
+
+                      <button
+                        type="button"
+                        onclick="openReceiptModalById('${bk.id}')"
+                        class="px-2.5 py-1.5 bg-uber-gray hover:bg-neutral-200 text-uber-black font-semibold rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                        title="Ver comprovante da transação"
+                      >
+                        ${icon('receipt_long', { size: 'sm' })}
+                        <span>Recibo</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onclick="openAdminContactSupportModal('${bk.passengerName}', '${bk.passengerPhone || '(85) 98765-4321'}', 'Passageiro', '${bk.id}')"
+                        class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                        title="Abrir canal de suporte com o passageiro"
+                      >
+                        ${icon('support_agent', { size: 'sm' })}
+                        <span>Suporte</span>
+                      </button>
+
+                      ${!isCancelled && !isRejected ? `
+                        <button
+                          type="button"
+                          onclick="openAdminCancelBookingModal('${bk.id}')"
+                          class="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-semibold rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                          title="Cancelar reserva e processar estorno assistido"
+                        >
+                          ${icon('cancel', { size: 'sm' })}
+                          <span>Estornar</span>
+                        </button>
+                      ` : ''}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          ` : `
+            <div class="p-3 bg-white rounded-lg border border-dashed border-uber-border text-center text-xs text-uber-iron">
+              Nenhum passageiro reservou esta viagem ainda. As ${ride.availableSeats} vagas continuam abertas na plataforma.
+            </div>
+          `}
+        </div>
+
+      </div>
+    `;
+  }).join('');
+}
+
+function updateAdminTripsLiveView() {
+  const { bookings, rides } = store.state;
+  const filtered = getAdminFilteredRides(rides, bookings, adminTripsMonthFilter, adminTripsStatusFilter, adminTripsSearchQuery);
+  
+  const kpisContainer = document.getElementById('admin-trips-kpis-container');
+  const listContainer = document.getElementById('admin-trips-list-container');
+  
+  if (kpisContainer && listContainer) {
+    kpisContainer.innerHTML = renderAdminTripsKpisHtml(filtered, bookings);
+    listContainer.innerHTML = renderAdminTripsListHtml(filtered, bookings);
+  } else {
+    renderApp();
+  }
+}
+
+function handleAdminTripsSearchInput(value) {
+  adminTripsSearchQuery = value;
+  const clearBtn = document.getElementById('admin-trips-search-clear-btn');
+  if (clearBtn) {
+    clearBtn.classList.toggle('hidden', !value);
+  }
+  updateAdminTripsLiveView();
+}
+
+function clearAdminTripsSearch() {
+  adminTripsSearchQuery = '';
+  const searchInput = document.getElementById('admin-trips-search-input');
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.focus();
+  }
+  const clearBtn = document.getElementById('admin-trips-search-clear-btn');
+  if (clearBtn) {
+    clearBtn.classList.add('hidden');
+  }
+  updateAdminTripsLiveView();
+}
+
 // View: My Trips / Viagens da Plataforma
 function viewMyTrips() {
   const { bookings, rides, currentUser, role } = store.state;
@@ -2776,55 +3191,8 @@ function viewMyTrips() {
 
   // Filtros administrativos para a visão de Admin / Gestor
   let adminFilteredRides = [];
-  let totalMonthPassengers = 0;
-  let totalMonthVolume = 0;
-  let totalMonthCustody = 0;
-
   if (isAdmin) {
-    adminFilteredRides = rides.filter(ride => {
-      // 1. Filtro Mensal
-      if (adminTripsMonthFilter !== 'ALL') {
-        const rideMonth = ride.departureDate ? ride.departureDate.slice(0, 7) : '';
-        if (rideMonth !== adminTripsMonthFilter) return false;
-      }
-
-      // 2. Filtro de Status
-      const rideBookings = bookings.filter(b => b.rideId === ride.id);
-      if (adminTripsStatusFilter === 'WITH_BOOKINGS' && rideBookings.length === 0) {
-        return false;
-      }
-      if (adminTripsStatusFilter === 'PAID') {
-        const hasPaid = rideBookings.some(b => b.status === 'FULLY_PAID' || b.status === 'SIGNAL_CONFIRMED');
-        if (!hasPaid) return false;
-      }
-      if (adminTripsStatusFilter === 'CANCELLED') {
-        const hasCancelled = rideBookings.some(b => b.status === 'CANCELLED' || b.status === 'REJECTED_BY_DRIVER');
-        if (!hasCancelled) return false;
-      }
-
-      // 3. Busca Textual Rápida
-      if (adminTripsSearchQuery.trim()) {
-        const q = adminTripsSearchQuery.toLowerCase().trim();
-        const matchRoute = `${ride.originCity} ${ride.destinationCity} ${ride.originSpot || ''} ${ride.destinationSpot || ''}`.toLowerCase().includes(q);
-        const matchDriver = `${ride.driverName} ${ride.vehicle?.model || ''} ${ride.vehicle?.plate || ''}`.toLowerCase().includes(q);
-        const matchPassenger = rideBookings.some(b => `${b.passengerName} ${b.passengerPhone || ''} ${b.id}`.toLowerCase().includes(q));
-        if (!matchRoute && !matchDriver && !matchPassenger) return false;
-      }
-
-      return true;
-    });
-
-    // Calcular KPIs do período filtrado
-    adminFilteredRides.forEach(ride => {
-      const rBookings = bookings.filter(b => b.rideId === ride.id && b.status !== 'CANCELLED' && b.status !== 'REJECTED_BY_DRIVER');
-      rBookings.forEach(b => {
-        totalMonthPassengers += b.seatsBooked || 1;
-        totalMonthVolume += b.totalAmount || 0;
-        if (b.status === 'SIGNAL_CONFIRMED') {
-          totalMonthCustody += b.amountPaidSignal || 0;
-        }
-      });
-    });
+    adminFilteredRides = getAdminFilteredRides(rides, bookings, adminTripsMonthFilter, adminTripsStatusFilter, adminTripsSearchQuery);
   }
 
   const currentMonthStr = new Date().toISOString().slice(0, 7);
@@ -2907,25 +3275,25 @@ function viewMyTrips() {
                 <label class="block text-[10px] font-bold text-uber-iron uppercase tracking-wider mb-0.5">Busca Rápida</label>
                 <div class="relative">
                   <input
+                    id="admin-trips-search-input"
                     type="text"
                     value="${adminTripsSearchQuery}"
                     placeholder="Buscar motorista, passageiro, cidade ou código..."
-                    oninput="adminTripsSearchQuery = this.value; renderApp();"
+                    oninput="handleAdminTripsSearchInput(this.value)"
                     class="w-full h-10 bg-uber-gray border border-uber-border focus:border-uber-black focus:bg-white text-xs font-semibold rounded-lg pl-9 pr-8 focus:outline-none transition-all"
                   />
                   <div class="absolute left-3 top-2.5 text-uber-iron pointer-events-none">
                     ${icon('search', { size: 'sm' })}
                   </div>
-                  ${adminTripsSearchQuery ? `
-                    <button
-                      type="button"
-                      onclick="adminTripsSearchQuery = ''; renderApp();"
-                      class="absolute right-2.5 top-2.5 text-uber-iron hover:text-uber-black"
-                      title="Limpar busca"
-                    >
-                      ${icon('close', { size: 'sm' })}
-                    </button>
-                  ` : ''}
+                  <button
+                    id="admin-trips-search-clear-btn"
+                    type="button"
+                    onclick="clearAdminTripsSearch()"
+                    class="absolute right-2.5 top-2.5 text-uber-iron hover:text-uber-black ${adminTripsSearchQuery ? '' : 'hidden'}"
+                    title="Limpar busca"
+                  >
+                    ${icon('close', { size: 'sm' })}
+                  </button>
                 </div>
               </div>
             </div>
@@ -2965,286 +3333,13 @@ function viewMyTrips() {
           </div>
 
           <!-- Resumo e Indicadores do Período Filtrado -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
-              <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Viagens no Mês</span>
-              <div class="flex items-center gap-1.5 mt-1">
-                ${icon('directions_car', { size: 'sm', className: 'text-uber-black' })}
-                <span class="text-xl font-extrabold text-uber-black">${adminFilteredRides.length}</span>
-              </div>
-            </div>
-
-            <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
-              <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Passageiros no Mês</span>
-              <div class="flex items-center gap-1.5 mt-1">
-                ${icon('group', { size: 'sm', className: 'text-uber-black' })}
-                <span class="text-xl font-extrabold text-uber-black">${totalMonthPassengers}</span>
-              </div>
-            </div>
-
-            <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
-              <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Volume Transacionado</span>
-              <div class="flex items-center gap-1 mt-1">
-                <span class="text-xs font-bold text-uber-iron">R$</span>
-                <span class="text-xl font-extrabold text-uber-black">${totalMonthVolume.toFixed(2).replace('.', ',')}</span>
-              </div>
-            </div>
-
-            <div class="p-3.5 bg-white border border-uber-border rounded-xl shadow-2xs">
-              <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Sinais em Custódia</span>
-              <div class="flex items-center gap-1 mt-1">
-                <span class="text-xs font-bold text-emerald-700">R$</span>
-                <span class="text-xl font-extrabold text-emerald-800">${totalMonthCustody.toFixed(2).replace('.', ',')}</span>
-              </div>
-            </div>
+          <div id="admin-trips-kpis-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            ${renderAdminTripsKpisHtml(adminFilteredRides, bookings)}
           </div>
 
           <!-- Lista Detalhada de Viagens da Plataforma -->
-          <div class="space-y-4">
-            ${adminFilteredRides.length > 0 ? adminFilteredRides.map(ride => {
-              const rideBookings = bookings.filter(b => b.rideId === ride.id);
-              const activeBookings = rideBookings.filter(b => b.status !== 'CANCELLED' && b.status !== 'REJECTED_BY_DRIVER');
-              const occupiedSeats = activeBookings.reduce((sum, b) => sum + (b.seatsBooked || 1), 0);
-              const colorObj = getVehicleColorObj(ride.vehicle.color);
-              const luggage = getLuggageInfo(ride);
-
-              return `
-                <div class="border border-uber-border bg-white rounded-xl shadow-xs overflow-hidden transition-all hover:border-uber-charcoal">
-                  
-                  <!-- Topo do Card: Trajeto, Horário, Vagas e Tarifa -->
-                  <div class="p-4 bg-neutral-50/70 border-b border-uber-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                    <div class="space-y-1">
-                      <div class="flex items-center gap-2 flex-wrap">
-                        <span class="font-mono font-semibold text-uber-iron bg-white border border-uber-border px-1.5 py-0.5 rounded text-[10px]">${ride.id}</span>
-                        <h3 class="font-extrabold text-sm sm:text-base text-uber-black">${ride.originCity} ➔ ${ride.destinationCity}</h3>
-                      </div>
-                      <div class="flex items-center gap-2 text-uber-iron flex-wrap">
-                        <span class="flex items-center gap-1 font-semibold text-uber-black">
-                          ${icon('calendar_today', { size: 'xs' })}
-                          ${ride.departureDate} às ${ride.departureTime}
-                        </span>
-                        <span>•</span>
-                        <span>Duração: ~${ride.estimatedDuration || '2h 00m'}</span>
-                        <span>•</span>
-                        <span class="text-uber-charcoal truncate">Embarque: ${ride.originSpot || 'Centro'}</span>
-                      </div>
-                    </div>
-
-                    <div class="flex items-center gap-3 shrink-0">
-                      <div class="text-left sm:text-right">
-                        <span class="font-extrabold text-sm sm:text-base text-uber-black block">R$ ${ride.pricePerSeat.toFixed(2).replace('.', ',')} <span class="text-[10px] font-normal text-uber-iron">/ lugar</span></span>
-                        <span class="text-[11px] font-bold text-uber-charcoal">${occupiedSeats}/${ride.totalSeats} lugares ocupados (${ride.availableSeats} livres)</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Bloco do Motorista e Veículo -->
-                  <div class="p-4 border-b border-uber-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs bg-white">
-                    <div class="flex items-center gap-3.5">
-                      <div class="w-16 h-12 flex items-center justify-center shrink-0">
-                        <img src="${getVehicleImage(ride.vehicle)}" alt="${ride.vehicle.model}" class="w-full h-full object-contain drop-shadow-2xs" />
-                      </div>
-                      <div>
-                        <div class="flex items-center gap-1.5">
-                          <span class="font-bold text-sm text-uber-black">${ride.driverName}</span>
-                          <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                            ${icon('verified', { size: 'xs' })} Motorista
-                          </span>
-                          <span class="flex items-center gap-0.5 font-bold text-uber-black ml-1">
-                            ${icon('star', { size: 'xs', fill: true, className: 'star-gold' })}
-                            ${ride.driverRating.toFixed(1)}
-                          </span>
-                        </div>
-                        <div class="flex items-center gap-1.5 text-[11px] text-uber-iron mt-0.5 flex-wrap">
-                          <span class="font-semibold text-uber-black">${ride.vehicle.brand} ${ride.vehicle.model}</span>
-                          <span>•</span>
-                          <span class="font-mono font-bold">${ride.vehicle.plate}</span>
-                          <span>•</span>
-                          <span class="inline-flex items-center gap-1">
-                            <span class="w-2 h-2 rounded-xs border ${colorObj.border}" style="background-color: ${colorObj.hex}"></span>
-                            <span>${colorObj.name}</span>
-                          </span>
-                          <span>•</span>
-                          <span title="${luggage.label}" class="inline-flex items-center gap-0.5 font-semibold text-uber-charcoal">
-                            ${icon(luggage.iconName, { size: 'xs' })} ${luggage.shortLabel}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Botão de Suporte Direto ao Motorista -->
-                    <div class="flex items-center gap-2 self-start sm:self-center shrink-0">
-                      <button
-                        type="button"
-                        onclick="openAdminContactSupportModal('${ride.driverName}', '${ride.driverPhone || '(85) 98765-4321'}', 'Motorista', '${ride.id}')"
-                        class="px-3 py-1.5 bg-uber-gray hover:bg-neutral-200 text-uber-black font-bold rounded-lg transition-colors flex items-center gap-1.5 text-xs cursor-pointer active:scale-95"
-                      >
-                        ${icon('support_agent', { size: 'sm', className: 'text-uber-black' })}
-                        <span>Suporte Motorista</span>
-                      </button>
-                      <a
-                        href="#/viagem/${ride.id}"
-                        class="p-1.5 text-uber-iron hover:text-uber-black hover:bg-uber-gray rounded-lg transition-colors"
-                        title="Ver detalhes públicos da viagem"
-                      >
-                        ${icon('visibility', { size: 'sm' })}
-                      </a>
-                    </div>
-                  </div>
-
-                  <!-- Lista de Passageiros e Condições Financeiras -->
-                  <div class="p-4 bg-neutral-50/40 space-y-3">
-                    <div class="flex items-center justify-between text-xs pb-1">
-                      <span class="font-bold text-uber-black uppercase tracking-wider text-[11px] flex items-center gap-1">
-                        ${icon('group', { size: 'sm', className: 'text-uber-black' })}
-                        Passageiros e Condição de Pagamento (${rideBookings.length} ${rideBookings.length === 1 ? 'reserva' : 'reservas'}):
-                      </span>
-                    </div>
-
-                    ${rideBookings.length > 0 ? `
-                      <div class="space-y-2.5">
-                        ${rideBookings.map(bk => {
-                          const isSignalPaid = bk.status === 'SIGNAL_CONFIRMED';
-                          const isFullyPaid = bk.status === 'FULLY_PAID';
-                          const isAwaiting = bk.status === 'AWAITING_DRIVER';
-                          const isCancelled = bk.status === 'CANCELLED';
-                          const isRejected = bk.status === 'REJECTED_BY_DRIVER';
-
-                          return `
-                            <div class="p-3 bg-white border border-uber-border rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
-                              
-                              <!-- Perfil do Passageiro -->
-                              <div class="flex items-center gap-2.5 min-w-0">
-                                <img src="${bk.passengerAvatar || DEFAULT_BLANK_AVATAR}" class="w-8 h-8 rounded-full object-cover bg-uber-gray border border-uber-border shrink-0" />
-                                <div class="min-w-0">
-                                  <div class="flex items-center gap-1.5 flex-wrap">
-                                    <span class="font-bold text-uber-black text-xs sm:text-sm">${bk.passengerName}</span>
-                                    <span class="font-mono text-uber-iron text-[10px]">(${bk.id})</span>
-                                    <span class="text-[10px] font-bold text-uber-charcoal bg-uber-gray border border-uber-border px-1.5 py-0.2 rounded">
-                                      ${bk.seatsBooked} ${bk.seatsBooked === 1 ? 'lugar' : 'lugares'}
-                                    </span>
-                                  </div>
-                                  <p class="text-uber-iron font-normal text-[11px] mt-0.5">
-                                    Tel: ${bk.passengerPhone || '(85) 98765-4321'}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <!-- Valores e Status Financeiro -->
-                              <div class="flex flex-col sm:items-end gap-1 shrink-0">
-                                <div class="flex items-center gap-2">
-                                  ${isSignalPaid ? `
-                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
-                                      ${icon('account_balance_wallet', { size: 'xs', className: 'text-blue-700' })}
-                                      <span>Sinal PIX 50% Pago (Custódia)</span>
-                                    </span>
-                                  ` : isFullyPaid ? `
-                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-900 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                                      ${icon('check_circle', { size: 'xs', className: 'text-emerald-700' })}
-                                      <span>Repasse 100% Concluído</span>
-                                    </span>
-                                  ` : isAwaiting ? `
-                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
-                                      ${icon('hourglass_top', { size: 'xs', className: 'text-amber-700' })}
-                                      <span>Aguardando Aceite</span>
-                                    </span>
-                                  ` : isCancelled ? `
-                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-red-900 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
-                                      ${icon('cancel', { size: 'xs', className: 'text-red-700' })}
-                                      <span>Cancelada (Estorno PIX)</span>
-                                    </span>
-                                  ` : isRejected ? `
-                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-neutral-800 bg-neutral-100 border border-neutral-300 px-2 py-0.5 rounded-md">
-                                      ${icon('cancel', { size: 'xs' })}
-                                      <span>Recusada (Estorno 100%)</span>
-                                    </span>
-                                  ` : ''}
-                                </div>
-
-                                <div class="text-[11px] text-uber-charcoal">
-                                  <span>Sinal: <strong>R$ ${bk.amountPaidSignal.toFixed(2).replace('.', ',')}</strong></span>
-                                  <span class="text-uber-border mx-1">•</span>
-                                  <span>Total: <strong>R$ ${bk.totalAmount.toFixed(2).replace('.', ',')}</strong></span>
-                                </div>
-                              </div>
-
-                              <!-- Ações Administrativas de Suporte por Reserva -->
-                              <div class="flex items-center gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-uber-border shrink-0 flex-wrap justify-end">
-                                ${isSignalPaid ? `
-                                  <button
-                                    type="button"
-                                    onclick="handleReleaseCustodyAdmin('${bk.id}', ${bk.amountPaidSignal})"
-                                    class="px-2.5 py-1.5 bg-black hover:bg-neutral-900 text-white font-bold rounded-lg text-xs flex items-center gap-1 transition-transform active:scale-95 shadow-2xs cursor-pointer"
-                                    title="Liberar repasse de sinal para a chave PIX do motorista"
-                                  >
-                                    ${icon('payments', { size: 'sm' })}
-                                    <span>Liberar PIX</span>
-                                  </button>
-                                ` : ''}
-
-                                <button
-                                  type="button"
-                                  onclick="openReceiptModalById('${bk.id}')"
-                                  class="px-2.5 py-1.5 bg-uber-gray hover:bg-neutral-200 text-uber-black font-semibold rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer"
-                                  title="Ver comprovante da transação"
-                                >
-                                  ${icon('receipt_long', { size: 'sm' })}
-                                  <span>Recibo</span>
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onclick="openAdminContactSupportModal('${bk.passengerName}', '${bk.passengerPhone || '(85) 98765-4321'}', 'Passageiro', '${bk.id}')"
-                                  class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer"
-                                  title="Abrir canal de suporte com o passageiro"
-                                >
-                                  ${icon('support_agent', { size: 'sm' })}
-                                  <span>Suporte</span>
-                                </button>
-
-                                ${!isCancelled && !isRejected ? `
-                                  <button
-                                    type="button"
-                                    onclick="openAdminCancelBookingModal('${bk.id}')"
-                                    class="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-semibold rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer"
-                                    title="Cancelar reserva e processar estorno assistido"
-                                  >
-                                    ${icon('cancel', { size: 'sm' })}
-                                    <span>Estornar</span>
-                                  </button>
-                                ` : ''}
-                              </div>
-                            </div>
-                          `;
-                        }).join('')}
-                      </div>
-                    ` : `
-                      <div class="p-3 bg-white rounded-lg border border-dashed border-uber-border text-center text-xs text-uber-iron">
-                        Nenhum passageiro reservou esta viagem ainda. As ${ride.availableSeats} vagas continuam abertas na plataforma.
-                      </div>
-                    `}
-                  </div>
-
-                </div>
-              `;
-            }).join('') : `
-              <div class="bg-white border border-uber-border rounded-xl p-8 sm:p-12 text-center space-y-2">
-                <div class="w-12 h-12 bg-uber-gray text-uber-iron rounded-xl flex items-center justify-center mx-auto mb-2">
-                  ${icon('search_off', { size: 'md' })}
-                </div>
-                <h3 class="text-base font-bold text-uber-black">Nenhuma viagem encontrada</h3>
-                <p class="text-xs text-uber-iron max-w-sm mx-auto font-normal">
-                  Não foram encontradas viagens para o mês de <strong>${formatMonthName(adminTripsMonthFilter)}</strong> com os filtros aplicados. Tente selecionar outro mês ou limpar a busca.
-                </p>
-                <button
-                  type="button"
-                  onclick="adminTripsMonthFilter = 'ALL'; adminTripsStatusFilter = 'ALL'; adminTripsSearchQuery = ''; renderApp();"
-                  class="mt-2 px-4 py-2 bg-black text-white text-xs font-bold rounded-lg hover:bg-neutral-900 transition-transform active:scale-95"
-                >
-                  Exibir Todas as Viagens da Plataforma
-                </button>
-              </div>
-            `}
+          <div id="admin-trips-list-container" class="space-y-4">
+            ${renderAdminTripsListHtml(adminFilteredRides, bookings)}
           </div>
 
         </div>
@@ -4987,9 +5082,173 @@ function handleRatingSubmit(e, rideId) {
 // View: Admin Dashboard
 let adminTab = 'REQUESTS';
 let adminReqFilter = 'ALL';
+let adminSimulatedTripValue = 80;
+
+function handleAdminRateChange(key, value) {
+  let val = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
+  const settings = store.state.platformSettings || { ...DEFAULT_PLATFORM_SETTINGS };
+  
+  if (key === 'driverPayoutPercent') {
+    settings.driverPayoutPercent = val;
+    settings.platformFeePercent = 100 - val;
+  } else if (key === 'platformFeePercent') {
+    settings.platformFeePercent = val;
+    settings.driverPayoutPercent = 100 - val;
+  } else if (key === 'signalPercent') {
+    settings.signalPercent = val;
+    settings.payOnArrivalPercent = 100 - val;
+  } else if (key === 'payOnArrivalPercent') {
+    settings.payOnArrivalPercent = val;
+    settings.signalPercent = 100 - val;
+  } else if (key === 'earlyRefundPercent') {
+    settings.earlyRefundPercent = val;
+    settings.earlyRetentionPercent = 100 - val;
+  } else if (key === 'earlyRetentionPercent') {
+    settings.earlyRetentionPercent = val;
+    settings.earlyRefundPercent = 100 - val;
+  } else if (key === 'lateRefundPercent') {
+    settings.lateRefundPercent = val;
+    settings.lateRetentionPercent = 100 - val;
+  } else if (key === 'lateRetentionPercent') {
+    settings.lateRetentionPercent = val;
+    settings.lateRefundPercent = 100 - val;
+  }
+
+  store.state.platformSettings = settings;
+  updateAdminRatesDomElements();
+}
+
+function updateAdminRatesDomElements() {
+  const settings = store.state.platformSettings || DEFAULT_PLATFORM_SETTINGS;
+  
+  const pairs = [
+    {
+      inA: 'rate-driver-payout', slA: 'slider-driver-payout', valA: settings.driverPayoutPercent,
+      inB: 'rate-platform-fee', slB: 'slider-platform-fee', valB: settings.platformFeePercent,
+      barA: 'bar-driver-payout', barB: 'bar-platform-fee',
+      txtA: 'text-driver-payout', txtB: 'text-platform-fee'
+    },
+    {
+      inA: 'rate-signal-percent', slA: 'slider-signal-percent', valA: settings.signalPercent,
+      inB: 'rate-arrival-percent', slB: 'slider-arrival-percent', valB: settings.payOnArrivalPercent,
+      barA: 'bar-signal-percent', barB: 'bar-arrival-percent',
+      txtA: 'text-signal-percent', txtB: 'text-arrival-percent'
+    },
+    {
+      inA: 'rate-early-refund', slA: 'slider-early-refund', valA: settings.earlyRefundPercent,
+      inB: 'rate-early-retention', slB: 'slider-early-retention', valB: settings.earlyRetentionPercent,
+      barA: 'bar-early-refund', barB: 'bar-early-retention',
+      txtA: 'text-early-refund', txtB: 'text-early-retention'
+    },
+    {
+      inA: 'rate-late-refund', slA: 'slider-late-refund', valA: settings.lateRefundPercent,
+      inB: 'rate-late-retention', slB: 'slider-late-retention', valB: settings.lateRetentionPercent,
+      barA: 'bar-late-refund', barB: 'bar-late-retention',
+      txtA: 'text-late-refund', txtB: 'text-late-retention'
+    }
+  ];
+
+  pairs.forEach(p => {
+    const elInA = document.getElementById(p.inA);
+    const elSlA = document.getElementById(p.slA);
+    const elInB = document.getElementById(p.inB);
+    const elSlB = document.getElementById(p.slB);
+    const elBarA = document.getElementById(p.barA);
+    const elBarB = document.getElementById(p.barB);
+    const elTxtA = document.getElementById(p.txtA);
+    const elTxtB = document.getElementById(p.txtB);
+
+    if (elInA && document.activeElement !== elInA) elInA.value = p.valA;
+    if (elSlA) elSlA.value = p.valA;
+    if (elInB && document.activeElement !== elInB) elInB.value = p.valB;
+    if (elSlB) elSlB.value = p.valB;
+    if (elBarA) elBarA.style.width = `${p.valA}%`;
+    if (elBarB) elBarB.style.width = `${p.valB}%`;
+    if (elTxtA) elTxtA.textContent = `${p.valA}%`;
+    if (elTxtB) elTxtB.textContent = `${p.valB}%`;
+  });
+
+  updateAdminRatesSimulator();
+}
+
+function handleAdminSimulatedValueChange(val) {
+  adminSimulatedTripValue = Math.max(10, parseFloat(val) || 0);
+  updateAdminRatesSimulator();
+}
+
+function renderAdminSimulatorHtml(total, signalVal, arrivalVal, driverVal, platformVal, earlyRefundVal, earlyRetentionVal, settings) {
+  return `
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+      <div class="p-3 bg-blue-50/70 border border-blue-200 rounded-xl space-y-1">
+        <span class="text-[10px] font-bold text-blue-900 uppercase tracking-wider block">Sinal no PIX (${settings.signalPercent}%)</span>
+        <p class="text-base sm:text-lg font-extrabold text-blue-950">R$ ${signalVal.toFixed(2).replace('.', ',')}</p>
+        <span class="text-[10px] text-blue-800 block">Pago na reserva (Custódia)</span>
+      </div>
+
+      <div class="p-3 bg-neutral-100 border border-neutral-300 rounded-xl space-y-1">
+        <span class="text-[10px] font-bold text-neutral-800 uppercase tracking-wider block">Saldo Embarque (${settings.payOnArrivalPercent}%)</span>
+        <p class="text-base sm:text-lg font-extrabold text-neutral-900">R$ ${arrivalVal.toFixed(2).replace('.', ',')}</p>
+        <span class="text-[10px] text-neutral-600 block">Direto ao motorista</span>
+      </div>
+
+      <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-1">
+        <span class="text-[10px] font-bold text-emerald-900 uppercase tracking-wider block">Líquido Motorista (${settings.driverPayoutPercent}%)</span>
+        <p class="text-base sm:text-lg font-extrabold text-emerald-950">R$ ${driverVal.toFixed(2).replace('.', ',')}</p>
+        <span class="text-[10px] text-emerald-800 block">Ganho total do condutor</span>
+      </div>
+
+      <div class="p-3 bg-neutral-900 text-white rounded-xl space-y-1">
+        <span class="text-[10px] font-bold text-neutral-300 uppercase tracking-wider block">Cooperativa (${settings.platformFeePercent}%)</span>
+        <p class="text-base sm:text-lg font-extrabold text-white">R$ ${platformVal.toFixed(2).replace('.', ',')}</p>
+        <span class="text-[10px] text-neutral-400 block">Sustentação do app</span>
+      </div>
+    </div>
+
+    <!-- Cenário de Cancelamento com Antecedência (>1h) -->
+    <div class="p-3.5 bg-amber-50/60 border border-amber-200 rounded-xl text-xs space-y-1">
+      <div class="flex items-center gap-1.5 font-bold text-amber-950">
+        ${icon('info', { size: 'sm', className: 'text-amber-700' })}
+        <span>Simulação de Cancelamento com Antecedência (>1h):</span>
+      </div>
+      <p class="text-[11px] text-amber-900 leading-relaxed">
+        Do sinal de <strong>R$ ${signalVal.toFixed(2).replace('.', ',')}</strong>, o passageiro receberá <strong>R$ ${earlyRefundVal.toFixed(2).replace('.', ',')} (${settings.earlyRefundPercent}%)</strong> de estorno PIX e a plataforma reterá <strong>R$ ${earlyRetentionVal.toFixed(2).replace('.', ',')} (${settings.earlyRetentionPercent}%)</strong> como taxa operacional.
+      </p>
+    </div>
+  `;
+}
+
+function updateAdminRatesSimulator() {
+  const container = document.getElementById('admin-rates-simulator-results');
+  if (!container) return;
+
+  const settings = store.state.platformSettings || DEFAULT_PLATFORM_SETTINGS;
+  const total = adminSimulatedTripValue;
+  
+  const signalVal = (total * settings.signalPercent / 100);
+  const arrivalVal = (total * settings.payOnArrivalPercent / 100);
+  const driverVal = (total * settings.driverPayoutPercent / 100);
+  const platformVal = (total * settings.platformFeePercent / 100);
+  
+  const earlyRefundVal = (signalVal * settings.earlyRefundPercent / 100);
+  const earlyRetentionVal = (signalVal * settings.earlyRetentionPercent / 100);
+
+  container.innerHTML = renderAdminSimulatorHtml(total, signalVal, arrivalVal, driverVal, platformVal, earlyRefundVal, earlyRetentionVal, settings);
+}
+
+function handleSavePlatformSettings() {
+  store.saveState();
+  showToast('Porcentagens e taxas salvas com sucesso na plataforma!', 'success');
+}
+
+function handleResetPlatformSettings() {
+  store.resetPlatformSettings();
+  renderApp();
+  showToast('Porcentagens restauradas para os padrões da Cooperativa.', 'info');
+}
 
 function viewAdmin() {
   const { driverRequests, bookings, role } = store.state;
+  const settings = store.state.platformSettings || DEFAULT_PLATFORM_SETTINGS;
 
   if (role !== 'ADMIN' && role !== 'MANAGER') {
     return `
@@ -5011,11 +5270,19 @@ function viewAdmin() {
     return req.status === adminReqFilter;
   });
 
+  const total = adminSimulatedTripValue;
+  const signalVal = (total * settings.signalPercent / 100);
+  const arrivalVal = (total * settings.payOnArrivalPercent / 100);
+  const driverVal = (total * settings.driverPayoutPercent / 100);
+  const platformVal = (total * settings.platformFeePercent / 100);
+  const earlyRefundVal = (signalVal * settings.earlyRefundPercent / 100);
+  const earlyRetentionVal = (signalVal * settings.earlyRetentionPercent / 100);
+
   return `
     <div class="max-w-4xl mx-auto px-4 py-6 text-left pb-24 md:pb-12 animate-fade-in">
       <div class="flex justify-between items-center mb-6 h-10">
         <h1 class="text-xl sm:text-2xl font-bold text-uber-black">Painel de Gestão</h1>
-        <div class="flex items-center gap-1.5 text-xs font-bold text-uber-black bg-uber-gray px-3 py-1 rounded-full border border-uber-border">
+        <div class="flex items-center gap-1.5 text-xs font-bold text-uber-black bg-uber-gray px-3 py-1.5 rounded-lg border border-uber-border shadow-2xs">
           ${icon('shield', { size: 'sm' })}
           <span>Perfil ${role === 'ADMIN' ? 'Administrador' : 'Gestor'}</span>
         </div>
@@ -5023,7 +5290,7 @@ function viewAdmin() {
 
       <!-- KPI Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        <div class="p-4 border border-uber-border bg-white rounded-xl">
+        <div class="p-4 border border-uber-border bg-white rounded-xl shadow-xs">
           <div class="flex items-center justify-between pb-2 text-uber-iron text-xs font-semibold">
             <span>Volume Transacionado</span>
             ${icon('payments', { size: 'sm', className: 'text-uber-black' })}
@@ -5032,7 +5299,7 @@ function viewAdmin() {
           <span class="text-[11px] text-uber-iron font-normal">Sinais e valores totais</span>
         </div>
 
-        <div class="p-4 border border-uber-border bg-white rounded-xl">
+        <div class="p-4 border border-uber-border bg-white rounded-xl shadow-xs">
           <div class="flex items-center justify-between pb-2 text-uber-iron text-xs font-semibold">
             <span>Saldo em Custódia</span>
             ${icon('lock', { size: 'sm', className: 'text-uber-black' })}
@@ -5041,7 +5308,7 @@ function viewAdmin() {
           <span class="text-[11px] text-uber-iron font-normal">Garantia ativa até o fim da viagem</span>
         </div>
 
-        <div class="p-4 border border-uber-border bg-white rounded-xl">
+        <div class="p-4 border border-uber-border bg-white rounded-xl shadow-xs">
           <div class="flex items-center justify-between pb-2 text-uber-iron text-xs font-semibold">
             <span>Solicitações Pendentes</span>
             ${icon('person_add', { size: 'sm', className: 'text-uber-black' })}
@@ -5051,22 +5318,30 @@ function viewAdmin() {
         </div>
       </div>
 
-      <!-- Tabs -->
-      <div class="flex border-b border-uber-border mb-6">
+      <!-- Tabs de Gestão -->
+      <div class="flex border-b border-uber-border mb-6 overflow-x-auto">
         <button
           onclick="adminTab = 'REQUESTS'; renderApp();"
-          class="py-2.5 px-4 text-xs font-bold border-b-2 transition-colors ${adminTab === 'REQUESTS' ? 'border-uber-black text-uber-black' : 'border-transparent text-uber-iron hover:text-uber-black'}"
+          class="py-2.5 px-4 text-xs font-bold border-b-2 transition-colors shrink-0 cursor-pointer ${adminTab === 'REQUESTS' ? 'border-uber-black text-uber-black' : 'border-transparent text-uber-iron hover:text-uber-black'}"
         >
           Credenciamento de Motoristas
         </button>
         <button
           onclick="adminTab = 'FINANCE'; renderApp();"
-          class="py-2.5 px-4 text-xs font-bold border-b-2 transition-colors ${adminTab === 'FINANCE' ? 'border-uber-black text-uber-black' : 'border-transparent text-uber-iron hover:text-uber-black'}"
+          class="py-2.5 px-4 text-xs font-bold border-b-2 transition-colors shrink-0 cursor-pointer ${adminTab === 'FINANCE' ? 'border-uber-black text-uber-black' : 'border-transparent text-uber-iron hover:text-uber-black'}"
         >
-          Custódia Financeira (PIX 50%)
+          Custódia Financeira (PIX)
+        </button>
+        <button
+          onclick="adminTab = 'RATES'; renderApp();"
+          class="py-2.5 px-4 text-xs font-bold border-b-2 transition-colors shrink-0 cursor-pointer flex items-center gap-1.5 ${adminTab === 'RATES' ? 'border-uber-black text-uber-black' : 'border-transparent text-uber-iron hover:text-uber-black'}"
+        >
+          ${icon('percent', { size: 'xs' })}
+          <span>Taxas & Porcentagens</span>
         </button>
       </div>
 
+      <!-- TAB 1: CREDENCIAMENTO -->
       ${adminTab === 'REQUESTS' ? `
         <div class="space-y-4">
           <div class="flex items-center justify-between">
@@ -5075,7 +5350,7 @@ function viewAdmin() {
               ${['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map(st => `
                 <button
                   onclick="adminReqFilter = '${st}'; renderApp();"
-                  class="px-3 py-1 rounded-md text-xs font-semibold border transition-all ${adminReqFilter === st ? 'bg-uber-black text-white border-uber-black' : 'bg-white text-uber-black border-uber-border hover:bg-uber-gray'}"
+                  class="px-3 py-1 rounded-md text-xs font-semibold border transition-all cursor-pointer ${adminReqFilter === st ? 'bg-uber-black text-white border-uber-black' : 'bg-white text-uber-black border-uber-border hover:bg-uber-gray'}"
                 >
                   ${st === 'ALL' ? 'Todas' : st === 'PENDING' ? 'Pendentes' : st === 'APPROVED' ? 'Aprovadas' : 'Recusadas'}
                 </button>
@@ -5085,7 +5360,7 @@ function viewAdmin() {
 
           <div class="space-y-3">
             ${filteredRequests.length > 0 ? filteredRequests.map(req => `
-              <div class="p-4 border border-uber-border bg-white rounded-xl">
+              <div class="p-4 border border-uber-border bg-white rounded-xl shadow-2xs">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-uber-border">
                   <div>
                     <h3 class="font-bold text-sm text-uber-black">${req.userName}</h3>
@@ -5117,10 +5392,10 @@ function viewAdmin() {
 
                 ${req.status === 'PENDING' ? `
                   <div class="pt-3 border-t border-uber-border flex justify-end gap-2 text-xs">
-                    <button onclick="handleRejectDriver('${req.id}')" class="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-bold transition-colors">
+                    <button onclick="handleRejectDriver('${req.id}')" class="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-bold transition-colors cursor-pointer">
                       Recusar
                     </button>
-                    <button onclick="handleApproveDriver('${req.id}')" class="px-4 py-2 bg-black text-white hover:bg-neutral-900 rounded-lg font-bold transition-transform active:scale-95">
+                    <button onclick="handleApproveDriver('${req.id}')" class="px-4 py-2 bg-black text-white hover:bg-neutral-900 rounded-lg font-bold transition-transform active:scale-95 cursor-pointer">
                       Aprovar Motorista
                     </button>
                   </div>
@@ -5133,12 +5408,13 @@ function viewAdmin() {
             `}
           </div>
         </div>
-      ` : `
+      ` : adminTab === 'FINANCE' ? `
+        <!-- TAB 2: CUSTÓDIA FINANCEIRA -->
         <div class="space-y-4">
           <p class="text-xs text-uber-iron font-normal">Gestão e liberação de resgates para motoristas após a conclusão das viagens.</p>
           <div class="space-y-3">
             ${bookings.map(b => `
-              <div class="p-4 border border-uber-border bg-white rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div class="p-4 border border-uber-border bg-white rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
                 <div>
                   <span class="font-mono font-medium text-uber-iron block text-[11px]">${b.id} • Passageiro: ${b.passengerName}</span>
                   <p class="font-bold text-sm text-uber-black mt-0.5">Sinal em Custódia: R$ ${b.amountPaidSignal.toFixed(2).replace('.', ',')}</p>
@@ -5147,7 +5423,7 @@ function viewAdmin() {
 
                 <div class="flex items-center gap-2">
                   ${b.status === 'SIGNAL_CONFIRMED' ? `
-                    <button onclick="handleReleaseCustodyAdmin('${b.id}', ${b.amountPaidSignal})" class="px-3.5 py-2 bg-black text-white hover:bg-neutral-900 rounded-lg font-bold text-xs transition-transform active:scale-95">
+                    <button onclick="handleReleaseCustodyAdmin('${b.id}', ${b.amountPaidSignal})" class="px-3.5 py-2 bg-black text-white hover:bg-neutral-900 rounded-lg font-bold text-xs transition-transform active:scale-95 cursor-pointer">
                       Liberar Resgate (PIX)
                     </button>
                   ` : b.status === 'FULLY_PAID' ? `
@@ -5163,6 +5439,424 @@ function viewAdmin() {
               </div>
             `).join('')}
           </div>
+        </div>
+      ` : `
+        <!-- TAB 3: TAXAS E PORCENTAGENS INTERLIGADAS DA PLATAFORMA -->
+        <div class="space-y-6">
+          
+          <!-- Banner Informativo -->
+          <div class="p-4 bg-white border border-uber-border rounded-xl shadow-2xs flex items-start gap-3">
+            <div class="w-10 h-10 bg-black text-white rounded-lg flex items-center justify-center shrink-0">
+              ${icon('tune', { size: 'sm' })}
+            </div>
+            <div>
+              <h2 class="text-sm sm:text-base font-extrabold text-uber-black">Configuração Dinâmica de Porcentagens</h2>
+              <p class="text-xs text-uber-iron font-normal mt-0.5">
+                Todas as porcentagens de divisão e composição são <strong>interligadas</strong>. Ao alterar uma taxa, o complemento é recalculado automaticamente para somar exatamente 100%.
+              </p>
+            </div>
+          </div>
+
+          <!-- BLOCO 1: REPASSE MOTORISTA vs TAXA PLATAFORMA (SOMA = 100%) -->
+          <div class="p-5 bg-white border border-uber-border rounded-xl shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2 border-b border-uber-border">
+              <div>
+                <h3 class="font-bold text-sm text-uber-black flex items-center gap-1.5">
+                  ${icon('payments', { size: 'sm', className: 'text-uber-black' })}
+                  <span>Divisão da Tarifa (Repasse ao Motorista vs Cooperativa)</span>
+                </h3>
+                <p class="text-[11px] text-uber-iron">Proporção final da receita líquida gerada por cada viagem.</p>
+              </div>
+              <span class="text-xs font-mono font-bold text-uber-black bg-uber-gray px-2.5 py-1 rounded-md border border-uber-border self-start sm:self-center">
+                Total: 100%
+              </span>
+            </div>
+
+            <!-- Barra Visual Proporcional Bicolor -->
+            <div class="space-y-1.5">
+              <div class="w-full h-4 bg-neutral-200 rounded-md overflow-hidden flex border border-uber-border shadow-inner">
+                <div id="bar-driver-payout" style="width: ${settings.driverPayoutPercent}%" class="bg-black text-white text-[10px] font-bold flex items-center justify-center transition-all duration-150">
+                  <span class="truncate px-1">Motorista</span>
+                </div>
+                <div id="bar-platform-fee" style="width: ${settings.platformFeePercent}%" class="bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center transition-all duration-150">
+                  <span class="truncate px-1">Cooperativa</span>
+                </div>
+              </div>
+              <div class="flex justify-between text-[11px] font-bold">
+                <span class="text-uber-black">Repasse Motorista: <strong id="text-driver-payout">${settings.driverPayoutPercent}%</strong></span>
+                <span class="text-emerald-700">Taxa Cooperativa: <strong id="text-platform-fee">${settings.platformFeePercent}%</strong></span>
+              </div>
+            </div>
+
+            <!-- Controles Interligados (Sliders e Inputs Numéricos) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              
+              <!-- Repasse ao Motorista -->
+              <div class="p-3.5 bg-uber-gray rounded-xl border border-uber-border space-y-2">
+                <div class="flex justify-between items-center">
+                  <label class="text-xs font-bold text-uber-black">Repasse ao Motorista (%)</label>
+                  <div class="flex items-center gap-1">
+                    <input
+                      id="rate-driver-payout"
+                      type="number"
+                      min="50"
+                      max="98"
+                      value="${settings.driverPayoutPercent}"
+                      oninput="handleAdminRateChange('driverPayoutPercent', this.value)"
+                      class="w-16 h-8 bg-white border border-uber-border rounded-lg text-center font-bold text-xs text-uber-black focus:outline-none focus:border-uber-black"
+                    />
+                    <span class="text-xs font-bold text-uber-iron">%</span>
+                  </div>
+                </div>
+                <input
+                  id="slider-driver-payout"
+                  type="range"
+                  min="50"
+                  max="98"
+                  value="${settings.driverPayoutPercent}"
+                  oninput="handleAdminRateChange('driverPayoutPercent', this.value)"
+                  class="w-full accent-black cursor-pointer"
+                />
+                <span class="text-[10px] text-uber-iron block">Percentual creditado na carteira / chave PIX do motorista.</span>
+              </div>
+
+              <!-- Taxa da Cooperativa / Plataforma -->
+              <div class="p-3.5 bg-emerald-50/50 rounded-xl border border-emerald-200 space-y-2">
+                <div class="flex justify-between items-center">
+                  <label class="text-xs font-bold text-emerald-950">Taxa da Cooperativa (%)</label>
+                  <div class="flex items-center gap-1">
+                    <input
+                      id="rate-platform-fee"
+                      type="number"
+                      min="2"
+                      max="50"
+                      value="${settings.platformFeePercent}"
+                      oninput="handleAdminRateChange('platformFeePercent', this.value)"
+                      class="w-16 h-8 bg-white border border-emerald-300 rounded-lg text-center font-bold text-xs text-emerald-950 focus:outline-none focus:border-emerald-600"
+                    />
+                    <span class="text-xs font-bold text-emerald-700">%</span>
+                  </div>
+                </div>
+                <input
+                  id="slider-platform-fee"
+                  type="range"
+                  min="2"
+                  max="50"
+                  value="${settings.platformFeePercent}"
+                  oninput="handleAdminRateChange('platformFeePercent', this.value)"
+                  class="w-full accent-emerald-600 cursor-pointer"
+                />
+                <span class="text-[10px] text-emerald-800 block">Fundo de manutenção tecnológica e operacional da cooperativa.</span>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- BLOCO 2: SINAL PIX ANTECIPADO vs SALDO NO EMBARQUE (SOMA = 100%) -->
+          <div class="p-5 bg-white border border-uber-border rounded-xl shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2 border-b border-uber-border">
+              <div>
+                <h3 class="font-bold text-sm text-uber-black flex items-center gap-1.5">
+                  ${icon('account_balance_wallet', { size: 'sm', className: 'text-uber-black' })}
+                  <span>Composição da Cobrança (Sinal PIX vs Restante no Embarque)</span>
+                </h3>
+                <p class="text-[11px] text-uber-iron">Como o valor da passagem é fracionado entre a reserva e o momento da viagem.</p>
+              </div>
+              <span class="text-xs font-mono font-bold text-uber-black bg-uber-gray px-2.5 py-1 rounded-md border border-uber-border self-start sm:self-center">
+                Total: 100%
+              </span>
+            </div>
+
+            <!-- Barra Visual Proporcional Bicolor -->
+            <div class="space-y-1.5">
+              <div class="w-full h-4 bg-neutral-200 rounded-md overflow-hidden flex border border-uber-border shadow-inner">
+                <div id="bar-signal-percent" style="width: ${settings.signalPercent}%" class="bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center transition-all duration-150">
+                  <span class="truncate px-1">Sinal PIX</span>
+                </div>
+                <div id="bar-arrival-percent" style="width: ${settings.payOnArrivalPercent}%" class="bg-neutral-800 text-white text-[10px] font-bold flex items-center justify-center transition-all duration-150">
+                  <span class="truncate px-1">No Embarque</span>
+                </div>
+              </div>
+              <div class="flex justify-between text-[11px] font-bold">
+                <span class="text-blue-700">Sinal PIX Antecipado: <strong id="text-signal-percent">${settings.signalPercent}%</strong></span>
+                <span class="text-neutral-800">Saldo Restante no Embarque: <strong id="text-arrival-percent">${settings.payOnArrivalPercent}%</strong></span>
+              </div>
+            </div>
+
+            <!-- Controles Interligados -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              
+              <!-- Sinal PIX Antecipado -->
+              <div class="p-3.5 bg-blue-50/50 rounded-xl border border-blue-200 space-y-2">
+                <div class="flex justify-between items-center">
+                  <label class="text-xs font-bold text-blue-950">Sinal PIX na Reserva (%)</label>
+                  <div class="flex items-center gap-1">
+                    <input
+                      id="rate-signal-percent"
+                      type="number"
+                      min="10"
+                      max="90"
+                      value="${settings.signalPercent}"
+                      oninput="handleAdminRateChange('signalPercent', this.value)"
+                      class="w-16 h-8 bg-white border border-blue-300 rounded-lg text-center font-bold text-xs text-blue-950 focus:outline-none focus:border-blue-600"
+                    />
+                    <span class="text-xs font-bold text-blue-700">%</span>
+                  </div>
+                </div>
+                <input
+                  id="slider-signal-percent"
+                  type="range"
+                  min="10"
+                  max="90"
+                  value="${settings.signalPercent}"
+                  oninput="handleAdminRateChange('signalPercent', this.value)"
+                  class="w-full accent-blue-600 cursor-pointer"
+                />
+                <span class="text-[10px] text-blue-800 block">Garantia financeira custodiada até a conclusão do trajeto.</span>
+              </div>
+
+              <!-- Saldo no Embarque -->
+              <div class="p-3.5 bg-neutral-100 rounded-xl border border-neutral-300 space-y-2">
+                <div class="flex justify-between items-center">
+                  <label class="text-xs font-bold text-neutral-900">Saldo no Embarque (%)</label>
+                  <div class="flex items-center gap-1">
+                    <input
+                      id="rate-arrival-percent"
+                      type="number"
+                      min="10"
+                      max="90"
+                      value="${settings.payOnArrivalPercent}"
+                      oninput="handleAdminRateChange('payOnArrivalPercent', this.value)"
+                      class="w-16 h-8 bg-white border border-neutral-300 rounded-lg text-center font-bold text-xs text-neutral-900 focus:outline-none focus:border-neutral-800"
+                    />
+                    <span class="text-xs font-bold text-neutral-700">%</span>
+                  </div>
+                </div>
+                <input
+                  id="slider-arrival-percent"
+                  type="range"
+                  min="10"
+                  max="90"
+                  value="${settings.payOnArrivalPercent}"
+                  oninput="handleAdminRateChange('payOnArrivalPercent', this.value)"
+                  class="w-full accent-neutral-800 cursor-pointer"
+                />
+                <span class="text-[10px] text-neutral-600 block">Pago pelo passageiro diretamente no momento do embarque.</span>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- BLOCO 3: REGRAS DE ESTORNO EM CANCELAMENTOS (SOMA = 100%) -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- Estorno com Antecedência (>1h) -->
+            <div class="p-5 bg-white border border-uber-border rounded-xl shadow-2xs space-y-3.5">
+              <div class="pb-2 border-b border-uber-border">
+                <div class="flex justify-between items-center">
+                  <h3 class="font-bold text-xs text-uber-black flex items-center gap-1">
+                    ${icon('schedule', { size: 'xs', className: 'text-uber-black' })}
+                    <span>Cancelamento com Antecedência (>1h)</span>
+                  </h3>
+                  <span class="text-[10px] font-mono font-bold text-uber-black bg-uber-gray px-1.5 py-0.5 rounded">100%</span>
+                </div>
+                <p class="text-[10px] text-uber-iron mt-0.5">Divisão do sinal quando cancelado com mais de 1 hora de antecedência.</p>
+              </div>
+
+              <div class="w-full h-3.5 bg-neutral-200 rounded-md overflow-hidden flex border border-uber-border">
+                <div id="bar-early-refund" style="width: ${settings.earlyRefundPercent}%" class="bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center">
+                  <span class="truncate px-0.5">Estorno</span>
+                </div>
+                <div id="bar-early-retention" style="width: ${settings.earlyRetentionPercent}%" class="bg-amber-600 text-white text-[9px] font-bold flex items-center justify-center">
+                  <span class="truncate px-0.5">Taxa</span>
+                </div>
+              </div>
+
+              <div class="space-y-2 pt-1">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="font-semibold text-blue-900">Estorno ao Passageiro:</span>
+                  <div class="flex items-center gap-1">
+                    <input
+                      id="rate-early-refund"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value="${settings.earlyRefundPercent}"
+                      oninput="handleAdminRateChange('earlyRefundPercent', this.value)"
+                      class="w-14 h-7 bg-white border border-blue-300 rounded text-center font-bold text-xs text-blue-950 focus:outline-none"
+                    />
+                    <span class="font-bold text-blue-800">%</span>
+                  </div>
+                </div>
+                <input
+                  id="slider-early-refund"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value="${settings.earlyRefundPercent}"
+                  oninput="handleAdminRateChange('earlyRefundPercent', this.value)"
+                  class="w-full accent-blue-600 cursor-pointer"
+                />
+
+                <div class="flex justify-between items-center text-xs pt-1">
+                  <span class="font-semibold text-amber-900">Retenção Operacional:</span>
+                  <div class="flex items-center gap-1">
+                    <input
+                      id="rate-early-retention"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value="${settings.earlyRetentionPercent}"
+                      oninput="handleAdminRateChange('earlyRetentionPercent', this.value)"
+                      class="w-14 h-7 bg-white border border-amber-300 rounded text-center font-bold text-xs text-amber-950 focus:outline-none"
+                    />
+                    <span class="font-bold text-amber-800">%</span>
+                  </div>
+                </div>
+                <input
+                  id="slider-early-retention"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value="${settings.earlyRetentionPercent}"
+                  oninput="handleAdminRateChange('earlyRetentionPercent', this.value)"
+                  class="w-full accent-amber-600 cursor-pointer"
+                />
+              </div>
+            </div>
+
+            <!-- Estorno de Última Hora (<1h) -->
+            <div class="p-5 bg-white border border-uber-border rounded-xl shadow-2xs space-y-3.5">
+              <div class="pb-2 border-b border-uber-border">
+                <div class="flex justify-between items-center">
+                  <h3 class="font-bold text-xs text-uber-black flex items-center gap-1">
+                    ${icon('timer', { size: 'xs', className: 'text-uber-black' })}
+                    <span>Cancelamento de Última Hora (<1h)</span>
+                  </h3>
+                  <span class="text-[10px] font-mono font-bold text-uber-black bg-uber-gray px-1.5 py-0.5 rounded">100%</span>
+                </div>
+                <p class="text-[10px] text-uber-iron mt-0.5">Divisão do sinal quando cancelado com menos de 1 hora de antecedência.</p>
+              </div>
+
+              <div class="w-full h-3.5 bg-neutral-200 rounded-md overflow-hidden flex border border-uber-border">
+                <div id="bar-late-refund" style="width: ${settings.lateRefundPercent}%" class="bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center">
+                  <span class="truncate px-0.5">Estorno</span>
+                </div>
+                <div id="bar-late-retention" style="width: ${settings.lateRetentionPercent}%" class="bg-red-600 text-white text-[9px] font-bold flex items-center justify-center">
+                  <span class="truncate px-0.5">Multa</span>
+                </div>
+              </div>
+
+              <div class="space-y-2 pt-1">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="font-semibold text-blue-900">Estorno ao Passageiro:</span>
+                  <div class="flex items-center gap-1">
+                    <input
+                      id="rate-late-refund"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value="${settings.lateRefundPercent}"
+                      oninput="handleAdminRateChange('lateRefundPercent', this.value)"
+                      class="w-14 h-7 bg-white border border-blue-300 rounded text-center font-bold text-xs text-blue-950 focus:outline-none"
+                    />
+                    <span class="font-bold text-blue-800">%</span>
+                  </div>
+                </div>
+                <input
+                  id="slider-late-refund"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value="${settings.lateRefundPercent}"
+                  oninput="handleAdminRateChange('lateRefundPercent', this.value)"
+                  class="w-full accent-blue-600 cursor-pointer"
+                />
+
+                <div class="flex justify-between items-center text-xs pt-1">
+                  <span class="font-semibold text-red-900">Retenção / Multa Condutor:</span>
+                  <div class="flex items-center gap-1">
+                    <input
+                      id="rate-late-retention"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value="${settings.lateRetentionPercent}"
+                      oninput="handleAdminRateChange('lateRetentionPercent', this.value)"
+                      class="w-14 h-7 bg-white border border-red-300 rounded text-center font-bold text-xs text-red-950 focus:outline-none"
+                    />
+                    <span class="font-bold text-red-800">%</span>
+                  </div>
+                </div>
+                <input
+                  id="slider-late-retention"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value="${settings.lateRetentionPercent}"
+                  oninput="handleAdminRateChange('lateRetentionPercent', this.value)"
+                  class="w-full accent-red-600 cursor-pointer"
+                />
+              </div>
+            </div>
+
+          </div>
+
+          <!-- BLOCO 4: SIMULADOR INTERATIVO EM TEMPO REAL -->
+          <div class="p-5 bg-white border border-uber-border rounded-xl shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-uber-border">
+              <div>
+                <h3 class="font-bold text-sm text-uber-black flex items-center gap-1.5">
+                  ${icon('calculate', { size: 'sm', className: 'text-uber-black' })}
+                  <span>Simulador de Viagem em Tempo Real</span>
+                </h3>
+                <p class="text-[11px] text-uber-iron">Altere o valor de teste abaixo para verificar a distribuição automática de centavos.</p>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <label class="text-xs font-bold text-uber-black whitespace-nowrap">Valor de Teste:</label>
+                <div class="relative flex items-center">
+                  <span class="absolute left-2.5 text-xs font-bold text-uber-iron">R$</span>
+                  <input
+                    type="number"
+                    min="10"
+                    max="1000"
+                    step="5"
+                    value="${adminSimulatedTripValue}"
+                    oninput="handleAdminSimulatedValueChange(this.value)"
+                    class="w-28 h-9 bg-uber-gray border border-uber-border focus:border-uber-black focus:bg-white text-xs font-extrabold rounded-lg pl-8 pr-2 focus:outline-none transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Resultados Dinâmicos do Simulador -->
+            <div id="admin-rates-simulator-results" class="space-y-3">
+              ${renderAdminSimulatorHtml(total, signalVal, arrivalVal, driverVal, platformVal, earlyRefundVal, earlyRetentionVal, settings)}
+            </div>
+          </div>
+
+          <!-- BLOCO 5: BOTÕES DE AÇÃO -->
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+            <button
+              type="button"
+              onclick="handleResetPlatformSettings()"
+              class="w-full sm:w-auto px-4 py-2.5 bg-uber-gray hover:bg-neutral-200 text-uber-black font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            >
+              ${icon('restart_alt', { size: 'sm' })}
+              <span>Restaurar Padrão da Cooperativa</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="handleSavePlatformSettings()"
+              class="w-full sm:w-auto px-6 py-2.5 bg-black hover:bg-neutral-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md cursor-pointer"
+            >
+              ${icon('save', { size: 'sm' })}
+              <span>Salvar Configurações da Plataforma</span>
+            </button>
+          </div>
+
         </div>
       `}
     </div>
