@@ -1813,24 +1813,24 @@ function renderHeroSearchBar() {
 
 
         <!-- Date & Seats Row -->
-        <div class="flex items-center gap-2 flex-initial">
-          <div class="flex-1 md:flex-initial flex items-center gap-2 px-3 h-12 bg-uber-gray rounded-xl border border-uber-border hover:border-uber-iron focus-within:border-uber-black focus-within:bg-white min-w-[155px] transition-all">
+        <div class="flex items-center gap-2 flex-initial w-full md:w-auto">
+          <div class="flex-1 md:flex-initial flex items-center gap-2 px-3 h-12 bg-uber-gray rounded-xl border border-uber-border hover:border-uber-iron focus-within:border-uber-black focus-within:bg-white min-w-0 md:min-w-[155px] transition-all">
             ${icon('calendar_today', { size: 'sm', className: 'text-uber-iron shrink-0' })}
             <input
               id="search-date"
               type="date"
               min="${todayStr}"
               value="${date}"
-              class="w-full bg-transparent font-semibold text-uber-black focus:outline-none text-xs sm:text-sm cursor-pointer"
+              class="w-full max-w-full bg-transparent font-semibold text-uber-black focus:outline-none text-xs sm:text-sm cursor-pointer"
               required
             />
           </div>
 
-          <div class="flex-1 md:flex-initial flex items-center gap-2 px-3 h-12 bg-uber-gray rounded-xl border border-uber-border hover:border-uber-iron focus-within:border-uber-black focus-within:bg-white min-w-[115px] transition-all">
+          <div class="flex-1 md:flex-initial flex items-center gap-2 px-3 h-12 bg-uber-gray rounded-xl border border-uber-border hover:border-uber-iron focus-within:border-uber-black focus-within:bg-white min-w-0 md:min-w-[115px] transition-all">
             ${icon('group', { size: 'sm', className: 'text-uber-iron shrink-0' })}
             <select
               id="search-seats"
-              class="w-full bg-transparent font-bold text-uber-black focus:outline-none text-xs sm:text-sm cursor-pointer"
+              class="w-full max-w-full bg-transparent font-bold text-uber-black focus:outline-none text-xs sm:text-sm cursor-pointer"
             >
               <option value="1" ${seats === 1 ? 'selected' : ''}>1 lugar</option>
               <option value="2" ${seats === 2 ? 'selected' : ''}>2 lugares</option>
@@ -3074,9 +3074,9 @@ function viewPublishRide() {
 
       <!-- STEP 1: TRAJETO -->
       ${currentStep === 1 ? `
-        <div class="p-5 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
+        <div class="p-4 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
+            <div class="min-w-0 w-full">
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Cidade de Partida (Origem)</label>
               <input
                 id="pub-origin-city"
@@ -3086,10 +3086,10 @@ function viewPublishRide() {
                 value="${publishWizardState.originCity}"
                 placeholder="Ex: Fortaleza, CE"
                 onchange="updatePublishRouteMetrics()"
-                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none transition-all"
+                class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none transition-all"
               />
             </div>
-            <div>
+            <div class="min-w-0 w-full">
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Ponto de Encontro</label>
               <input
                 id="pub-origin-spot"
@@ -3097,13 +3097,13 @@ function viewPublishRide() {
                 required
                 value="${publishWizardState.originSpot}"
                 placeholder="Ex: Shopping Iguatemi / Rodoviária"
-                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none transition-all"
+                class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none transition-all"
               />
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
+            <div class="min-w-0 w-full">
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Cidade de Destino (Chegada)</label>
               <input
                 id="pub-dest-city"
@@ -3113,10 +3113,10 @@ function viewPublishRide() {
                 value="${publishWizardState.destinationCity}"
                 placeholder="Ex: Juazeiro do Norte, CE"
                 onchange="updatePublishRouteMetrics()"
-                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none transition-all"
+                class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none transition-all"
               />
             </div>
-            <div>
+            <div class="min-w-0 w-full">
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Ponto de Desembarque</label>
               <input
                 id="pub-dest-spot"
@@ -3124,7 +3124,7 @@ function viewPublishRide() {
                 required
                 value="${publishWizardState.destinationSpot}"
                 placeholder="Ex: Cariri Garden Shopping / Praça Central"
-                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none transition-all"
+                class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none transition-all"
               />
             </div>
           </div>
@@ -3153,9 +3153,9 @@ function viewPublishRide() {
 
       <!-- STEP 2: DATA E HORÁRIO -->
       ${currentStep === 2 ? `
-        <div class="p-5 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
+        <div class="p-4 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
+            <div class="min-w-0 w-full">
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Data da Viagem</label>
               <input
                 id="pub-date"
@@ -3163,17 +3163,17 @@ function viewPublishRide() {
                 required
                 min="${new Date().toISOString().split('T')[0]}"
                 value="${publishWizardState.departureDate}"
-                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+                class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none cursor-pointer transition-all"
               />
             </div>
-            <div>
+            <div class="min-w-0 w-full">
               <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Horário de Saída</label>
               <input
                 id="pub-time"
                 type="time"
                 required
                 value="${publishWizardState.departureTime}"
-                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+                class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none cursor-pointer transition-all"
               />
             </div>
           </div>
@@ -3205,7 +3205,7 @@ function viewPublishRide() {
 
       <!-- STEP 3: VEÍCULO, VAGAS E PRECIFICAÇÃO INTELIGENTE -->
       ${currentStep === 3 ? `
-        <div class="p-5 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-5">
+        <div class="p-4 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-5">
           
           <!-- Seletor de Carro Cadastrado -->
           <div>
@@ -3274,7 +3274,7 @@ function viewPublishRide() {
             <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Vagas Disponíveis para Passageiros</label>
             <select
               id="pub-seats"
-              class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-uber-black font-bold text-sm rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+              class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-uber-black font-bold text-sm rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none cursor-pointer transition-all"
             >
               ${[1, 2, 3, 4, 5, 6, 7].map(num => `
                 <option value="${num}" ${num === publishWizardState.seats ? 'selected' : ''}>
@@ -3369,7 +3369,7 @@ function viewPublishRide() {
 
       <!-- STEP 4: VIAGEM DE VOLTA (OPCIONAL) -->
       ${currentStep === 4 ? `
-        <div class="p-5 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
+        <div class="p-4 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
           
           <div class="p-4 bg-uber-gray border border-uber-border rounded-xl">
             <label class="flex items-start gap-3 cursor-pointer select-none">
@@ -3378,11 +3378,11 @@ function viewPublishRide() {
                 id="pub-has-return"
                 ${publishWizardState.hasReturn ? 'checked' : ''}
                 onchange="togglePublishReturn(this.checked)"
-                class="w-5 h-5 mt-0.5 rounded text-black focus:ring-black cursor-pointer"
+                class="w-5 h-5 mt-0.5 rounded text-black focus:ring-black cursor-pointer shrink-0"
               />
-              <div>
+              <div class="min-w-0 flex-1">
                 <span class="font-bold text-sm text-uber-black block">Desejo cadastrar também a viagem de volta</span>
-                <span class="text-xs text-uber-iron block mt-0.5 leading-relaxed">
+                <span class="text-xs text-uber-iron block mt-0.5 leading-relaxed break-words">
                   O trajeto contrário (${publishWizardState.destinationCity} ➔ ${publishWizardState.originCity}) será publicado automaticamente no mesmo anúncio.
                 </span>
               </div>
@@ -3390,40 +3390,40 @@ function viewPublishRide() {
           </div>
 
           <!-- Return Trip Details (Conditional) -->
-          <div id="pub-return-details-container" class="${publishWizardState.hasReturn ? '' : 'hidden'} space-y-3.5 pt-1">
+          <div id="pub-return-details-container" class="${publishWizardState.hasReturn ? '' : 'hidden'} space-y-3.5 pt-1 w-full max-w-full overflow-hidden">
             <div class="p-3 bg-neutral-50 border border-neutral-200 rounded-lg text-xs font-semibold text-uber-black flex items-center gap-2">
-              ${icon('sync_alt', { size: 'sm', className: 'text-uber-black' })}
-              <span>Percurso da Volta: <strong>${publishWizardState.destinationCity}</strong> ➔ <strong>${publishWizardState.originCity}</strong></span>
+              ${icon('sync_alt', { size: 'sm', className: 'text-uber-black shrink-0' })}
+              <span class="break-words">Percurso da Volta: <strong>${publishWizardState.destinationCity}</strong> ➔ <strong>${publishWizardState.originCity}</strong></span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
+              <div class="min-w-0 w-full">
                 <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Data de Retorno</label>
                 <input
                   id="pub-return-date"
                   type="date"
                   min="${publishWizardState.departureDate}"
                   value="${publishWizardState.returnDate}"
-                  class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+                  class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none cursor-pointer transition-all"
                 />
               </div>
-              <div>
+              <div class="min-w-0 w-full">
                 <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Horário de Saída (Volta)</label>
                 <input
                   id="pub-return-time"
                   type="time"
                   value="${publishWizardState.returnTime}"
-                  class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+                  class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none cursor-pointer transition-all"
                 />
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
+              <div class="min-w-0 w-full">
                 <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Vagas na Volta</label>
                 <select
                   id="pub-return-seats"
-                  class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-uber-black font-bold text-sm rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+                  class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-uber-black font-bold text-sm rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none cursor-pointer transition-all"
                 >
                   ${[1, 2, 3, 4, 5, 6, 7].map(num => `
                     <option value="${num}" ${num === publishWizardState.returnSeats ? 'selected' : ''}>
@@ -3432,14 +3432,14 @@ function viewPublishRide() {
                   `).join('')}
                 </select>
               </div>
-              <div>
+              <div class="min-w-0 w-full">
                 <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Valor na Volta (R$)</label>
                 <input
                   id="pub-return-price"
                   type="number"
                   step="1.00"
                   value="${publishWizardState.returnPrice.toFixed(2)}"
-                  class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-bold rounded-xl h-12 px-4 focus:outline-none"
+                  class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-bold rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none"
                 />
               </div>
             </div>
@@ -3475,7 +3475,7 @@ function viewPublishRide() {
         const totalPotential = maxEarningsOut + maxEarningsReturn;
 
         return `
-          <div class="p-5 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
+          <div class="p-4 sm:p-6 border border-uber-border bg-white rounded-xl shadow-xs space-y-4">
             
             <!-- Summary Header Card -->
             <div class="p-4 bg-uber-gray border border-uber-border rounded-xl flex items-center gap-3.5">

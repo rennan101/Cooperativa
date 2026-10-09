@@ -61,17 +61,26 @@ button, a, input, select, textarea {
   background: #9ca3af;
 }
 
-/* Date input styling to prevent iOS/Android truncation */
-input[type="date"] {
-  min-height: 2.5rem;
+/* Date and Time input styling to prevent iOS/Android overflow and truncation */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  min-height: 2.75rem;
   font-family: inherit;
   color-scheme: light;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
-input[type="date"]::-webkit-calendar-picker-indicator {
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   opacity: 0.7;
+  padding: 0;
+  margin-left: 0.25rem;
 }
-input[type="date"]::-webkit-calendar-picker-indicator:hover {
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
 
