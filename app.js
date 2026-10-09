@@ -3294,10 +3294,15 @@ function renderAdminTripsListHtml(filteredRides = [], bookings = []) {
 }
 
 // Renderizador da Sub-Aba: "Por Motorista"
-function renderAdminDriversViewHtml(rides = [], bookings = [], searchQuery = '') {
-  // Consolidar motoristas únicos
+function renderAdminDriversViewHtml(rides = [], bookings = [], searchQuery = '', monthFilter = 'ALL') {
+  // Filtrar viagens pelo mês selecionado
+  const filteredRides = monthFilter === 'ALL'
+    ? rides
+    : rides.filter(r => r.departureDate && r.departureDate.slice(0, 7) === monthFilter);
+
+  // Consolidar motoristas únicos a partir das viagens do período
   const driverMap = new Map();
-  rides.forEach(r => {
+  filteredRides.forEach(r => {
     const key = r.driverId || r.driverName;
     if (!driverMap.has(key)) {
       driverMap.set(key, {
@@ -3335,7 +3340,7 @@ function renderAdminDriversViewHtml(rides = [], bookings = [], searchQuery = '')
         </div>
         <h3 class="text-base font-bold text-uber-black">Nenhum motorista encontrado</h3>
         <p class="text-xs text-uber-iron max-w-sm mx-auto font-normal">
-          Não foram localizados motoristas com o CPF ou nome <strong>"${searchQuery}"</strong>.
+          ${searchQuery ? `Não foram localizados motoristas com os critérios <strong>"${searchQuery}"</strong> no período selecionado.` : 'Não há viagens de motoristas registradas para o mês selecionado.'}
         </p>
         <button
           type="button"
@@ -3387,7 +3392,7 @@ function renderAdminDriversViewHtml(rides = [], bookings = [], searchQuery = '')
           <!-- Ações e KPIs Rápidos do Motorista -->
           <div class="flex items-center gap-3 shrink-0 self-start sm:self-center">
             <div class="text-left sm:text-right text-xs">
-              <span class="font-extrabold text-sm text-uber-black block">${totalPublished} ${totalPublished === 1 ? 'viagem' : 'viagens'}</span>
+              <span class="font-extrabold text-sm text-uber-black block">${totalPublished} ${totalPublished === 1 ? 'viagem no mês' : 'viagens no mês'}</span>
               <span class="text-[11px] text-uber-iron">${totalPassengers} passageiros transportados</span>
             </div>
             <button
@@ -3406,10 +3411,10 @@ function renderAdminDriversViewHtml(rides = [], bookings = [], searchQuery = '')
           <div class="p-4 bg-neutral-50/70 border-t border-uber-border space-y-3 animate-fade-in">
             <div class="flex justify-between items-center text-xs pb-1">
               <span class="font-bold text-uber-black uppercase tracking-wider text-[11px]">
-                Histórico Completo de Viagens Publicadas (${d.publishedRides.length}):
+                Histórico de Viagens do Período (${d.publishedRides.length}):
               </span>
               <span class="text-xs font-bold text-emerald-800">
-                Faturamento Total: R$ ${totalRevenue.toFixed(2).replace('.', ',')}
+                Faturamento: R$ ${totalRevenue.toFixed(2).replace('.', ',')}
               </span>
             </div>
 
@@ -3463,10 +3468,21 @@ function renderAdminDriversViewHtml(rides = [], bookings = [], searchQuery = '')
 }
 
 // Renderizador da Sub-Aba: "Por Passageiro"
-function renderAdminPassengersViewHtml(rides = [], bookings = [], searchQuery = '') {
-  // Consolidar passageiros únicos a partir de bookings e currentUser
+function renderAdminPassengersViewHtml(rides = [], bookings = [], searchQuery = '', monthFilter = 'ALL') {
+  // Filtrar reservas pelo mês selecionado (baseado na data da viagem associada ou na data da reserva)
+  const filteredBookings = monthFilter === 'ALL'
+    ? bookings
+    : bookings.filter(b => {
+        const associatedRide = rides.find(r => r.id === b.rideId);
+        const rideMonth = associatedRide && associatedRide.departureDate
+          ? associatedRide.departureDate.slice(0, 7)
+          : (b.createdAt ? b.createdAt.slice(0, 7) : '');
+        return rideMonth === monthFilter;
+      });
+
+  // Consolidar passageiros únicos a partir de filteredBookings
   const passengerMap = new Map();
-  bookings.forEach(b => {
+  filteredBookings.forEach(b => {
     const key = b.passengerId || b.passengerName;
     if (!passengerMap.has(key)) {
       passengerMap.set(key, {
@@ -3501,7 +3517,7 @@ function renderAdminPassengersViewHtml(rides = [], bookings = [], searchQuery = 
         </div>
         <h3 class="text-base font-bold text-uber-black">Nenhum passageiro encontrado</h3>
         <p class="text-xs text-uber-iron max-w-sm mx-auto font-normal">
-          Não foram localizados passageiros com o CPF ou nome <strong>"${searchQuery}"</strong>.
+          ${searchQuery ? `Não foram localizados passageiros com os critérios <strong>"${searchQuery}"</strong> no período selecionado.` : 'Não há reservas de passageiros registradas para o mês selecionado.'}
         </p>
         <button
           type="button"
@@ -3545,7 +3561,7 @@ function renderAdminPassengersViewHtml(rides = [], bookings = [], searchQuery = 
           <!-- Ações e KPIs Rápidos do Passageiro -->
           <div class="flex items-center gap-3 shrink-0 self-start sm:self-center">
             <div class="text-left sm:text-right text-xs">
-              <span class="font-extrabold text-sm text-uber-black block">${totalBookings} ${totalBookings === 1 ? 'reserva' : 'reservas'}</span>
+              <span class="font-extrabold text-sm text-uber-black block">${totalBookings} ${totalBookings === 1 ? 'reserva no mês' : 'reservas no mês'}</span>
               <span class="text-[11px] text-uber-iron">Total em Sinais: R$ ${totalSignals.toFixed(2).replace('.', ',')}</span>
             </div>
             <button
@@ -3564,10 +3580,10 @@ function renderAdminPassengersViewHtml(rides = [], bookings = [], searchQuery = 
           <div class="p-4 bg-neutral-50/70 border-t border-uber-border space-y-3 animate-fade-in">
             <div class="flex justify-between items-center text-xs pb-1">
               <span class="font-bold text-uber-black uppercase tracking-wider text-[11px]">
-                Histórico Completo de Reservas (${p.bookingsList.length}):
+                Histórico de Reservas do Período (${p.bookingsList.length}):
               </span>
               <span class="text-xs font-bold text-uber-black">
-                Total Geral: R$ ${totalSpent.toFixed(2).replace('.', ',')}
+                Total do Período: R$ ${totalSpent.toFixed(2).replace('.', ',')}
               </span>
             </div>
 
@@ -3638,14 +3654,14 @@ function updateAdminTripsLiveView() {
   } else if (adminTripsViewMode === 'DRIVERS') {
     const driversContainer = document.getElementById('admin-trips-drivers-container');
     if (driversContainer) {
-      driversContainer.innerHTML = renderAdminDriversViewHtml(rides, bookings, adminTripsSearchQuery);
+      driversContainer.innerHTML = renderAdminDriversViewHtml(rides, bookings, adminTripsSearchQuery, adminTripsMonthFilter);
     } else {
       renderApp();
     }
   } else if (adminTripsViewMode === 'PASSENGERS') {
     const passengersContainer = document.getElementById('admin-trips-passengers-container');
     if (passengersContainer) {
-      passengersContainer.innerHTML = renderAdminPassengersViewHtml(rides, bookings, adminTripsSearchQuery);
+      passengersContainer.innerHTML = renderAdminPassengersViewHtml(rides, bookings, adminTripsSearchQuery, adminTripsMonthFilter);
     } else {
       renderApp();
     }
@@ -3768,29 +3784,27 @@ function viewMyTrips() {
           <div class="p-4 bg-white border border-uber-border rounded-xl shadow-xs space-y-3.5">
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               
-              <!-- Seletor de Mês (Exibido na visão geral de viagens) -->
-              ${adminTripsViewMode === 'ALL' ? `
-                <div class="flex items-center gap-2 min-w-0 flex-1 sm:max-w-xs">
-                  <div class="text-uber-black shrink-0">
-                    ${icon('calendar_month', { size: 'sm' })}
-                  </div>
-                  <div class="w-full">
-                    <label class="block text-[10px] font-bold text-uber-iron uppercase tracking-wider mb-0.5">Mês de Referência</label>
-                    <select
-                      id="admin-month-filter"
-                      onchange="adminTripsMonthFilter = this.value; renderApp();"
-                      class="w-full h-10 bg-uber-gray border border-uber-border rounded-lg px-3 text-xs font-bold text-uber-black focus:outline-none focus:border-uber-black cursor-pointer"
-                    >
-                      ${availableMonths.map(m => `
-                        <option value="${m}" ${adminTripsMonthFilter === m ? 'selected' : ''}>
-                          ${formatMonthName(m)} ${m === currentMonthStr ? '(Mês Atual)' : ''}
-                        </option>
-                      `).join('')}
-                      <option value="ALL" ${adminTripsMonthFilter === 'ALL' ? 'selected' : ''}>Todos os Meses</option>
-                    </select>
-                  </div>
+              <!-- Seletor de Mês (Disponível em todas as sub-abas: Todas, Motoristas e Passageiros) -->
+              <div class="flex items-center gap-2 min-w-0 flex-1 sm:max-w-xs">
+                <div class="text-uber-black shrink-0">
+                  ${icon('calendar_month', { size: 'sm' })}
                 </div>
-              ` : ''}
+                <div class="w-full">
+                  <label class="block text-[10px] font-bold text-uber-iron uppercase tracking-wider mb-0.5">Mês de Referência</label>
+                  <select
+                    id="admin-month-filter"
+                    onchange="adminTripsMonthFilter = this.value; renderApp();"
+                    class="w-full h-10 bg-uber-gray border border-uber-border rounded-lg px-3 text-xs font-bold text-uber-black focus:outline-none focus:border-uber-black cursor-pointer"
+                  >
+                    ${availableMonths.map(m => `
+                      <option value="${m}" ${adminTripsMonthFilter === m ? 'selected' : ''}>
+                        ${formatMonthName(m)} ${m === currentMonthStr ? '(Mês Atual)' : ''}
+                      </option>
+                    `).join('')}
+                    <option value="ALL" ${adminTripsMonthFilter === 'ALL' ? 'selected' : ''}>Todos os Meses</option>
+                  </select>
+                </div>
+              </div>
 
               <!-- Campo de Busca por CPF / Nome / Rota -->
               <div class="flex-1 min-w-0">
