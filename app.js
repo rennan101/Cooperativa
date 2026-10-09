@@ -1352,6 +1352,7 @@ function toggleNotificationCenter() {
   const panel = document.getElementById('notification-panel');
   const isOpen = panel && panel.style.display !== 'none';
   if (isOpen) { panel.style.display = 'none'; return; }
+  SoundEngine.play('info');
   renderNotificationPanel();
   if (panel) panel.style.display = 'block';
 }
