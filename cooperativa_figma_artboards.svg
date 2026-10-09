@@ -1,0 +1,776 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4600 3200" width="4600" height="3200" style="background-color: #0b0c10; font-family: 'Inter', -apple-system, sans-serif;">
+  <defs>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb" />
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669" />
+    </marker>
+    <marker id="arr-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#d97706" />
+    </marker>
+    <marker id="arr-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#9333ea" />
+    </marker>
+    <filter id="f-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.6" />
+    </filter>
+  </defs>
+
+  <!-- Global Banner -->
+  <g transform="translate(100, 50)">
+    <rect width="4400" height="80" rx="16" fill="#161822" stroke="#282c3f" stroke-width="2" />
+    <text x="36" y="50" fill="#ffffff" font-size="26" font-weight="900" letter-spacing="1">COOPERATIVA DE VIAGENS COMPARTILHADAS — ARQUITETURA VISUAL &amp; BACKEND</text>
+    <text x="2600" y="50" fill="#94a3b8" font-size="16" font-weight="600">Design System Uber Monochrome • 11 Telas Exatas • Rotas com Setas de Fluxo • Mapeamento de Backend</text>
+  </g>
+
+  <!-- Flow Connector Arrows -->
+  <g id="flow-arrows">
+    <!-- Home to Buscar -->
+    <path d="M 520 480 C 620 480, 680 480, 780 480" fill="none" stroke="#2563eb" stroke-width="4.5" stroke-dasharray="8 4" marker-end="url(#arr-blue)" />
+    <rect x="610" y="460" width="100" height="26" rx="6" fill="#1e293b" stroke="#3b82f6" stroke-width="1" />
+    <text x="620" y="478" fill="#93c5fd" font-size="11" font-weight="800">Submeter Busca</text>
+
+    <!-- Buscar to Viagem Detalhes -->
+    <path d="M 1190 480 C 1290 480, 1350 480, 1450 480" fill="none" stroke="#2563eb" stroke-width="4.5" stroke-dasharray="8 4" marker-end="url(#arr-blue)" />
+    <rect x="1280" y="460" width="100" height="26" rx="6" fill="#1e293b" stroke="#3b82f6" stroke-width="1" />
+    <text x="1290" y="478" fill="#93c5fd" font-size="11" font-weight="800">Selecionar Card</text>
+
+    <!-- Viagem to Modal PIX -->
+    <path d="M 1860 480 C 1960 480, 2020 480, 2120 480" fill="none" stroke="#059669" stroke-width="4.5" stroke-dasharray="8 4" marker-end="url(#arr-green)" />
+    <rect x="1950" y="460" width="100" height="26" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+    <text x="1960" y="478" fill="#6ee7b7" font-size="11" font-weight="800">Reservar PIX</text>
+
+    <!-- Modal PIX to Minhas Viagens (Passageiro) -->
+    <path d="M 2330 920 C 2330 1100, 1500 1100, 990 1200" fill="none" stroke="#059669" stroke-width="4.5" stroke-dasharray="8 4" marker-end="url(#arr-green)" />
+    <rect x="1600" y="1080" width="130" height="26" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+    <text x="1610" y="1098" fill="#6ee7b7" font-size="11" font-weight="800">PIX Confirmado</text>
+
+    <!-- Home to Publicar -->
+    <path d="M 315 920 C 315 1100, 315 1140, 315 1200" fill="none" stroke="#d97706" stroke-width="4.5" stroke-dasharray="8 4" marker-end="url(#arr-amber)" />
+    <rect x="255" y="1040" width="120" height="26" rx="6" fill="#451a03" stroke="#f59e0b" stroke-width="1" />
+    <text x="265" y="1058" fill="#fde68a" font-size="11" font-weight="800">Oferecer Viagem</text>
+
+    <!-- Publicar to Minhas Viagens (Motorista) -->
+    <path d="M 520 1480 C 620 1480, 680 1480, 780 1480" fill="none" stroke="#d97706" stroke-width="4.5" stroke-dasharray="8 4" marker-end="url(#arr-amber)" />
+    <rect x="610" y="1460" width="100" height="26" rx="6" fill="#451a03" stroke="#f59e0b" stroke-width="1" />
+    <text x="620" y="1478" fill="#fde68a" font-size="11" font-weight="800">Salvar Viagem</text>
+
+    <!-- Minhas Viagens to Chat -->
+    <path d="M 1190 1480 C 1290 1480, 1350 1480, 1450 1480" fill="none" stroke="#2563eb" stroke-width="4.5" stroke-dasharray="8 4" marker-end="url(#arr-blue)" />
+    <rect x="1280" y="1460" width="100" height="26" rx="6" fill="#1e293b" stroke="#3b82f6" stroke-width="1" />
+    <text x="1290" y="1478" fill="#93c5fd" font-size="11" font-weight="800">Abrir Chat</text>
+
+    <!-- Minhas Viagens to Avaliar -->
+    <path d="M 1190 1620 C 1290 1620, 2020 1620, 2120 1480" fill="none" stroke="#2563eb" stroke-width="4.5" stroke-dasharray="8 4" marker-end="url(#arr-blue)" />
+    <rect x="1600" y="1600" width="120" height="26" rx="6" fill="#1e293b" stroke="#3b82f6" stroke-width="1" />
+    <text x="1610" y="1618" fill="#93c5fd" font-size="11" font-weight="800">Pós-Viagem</text>
+
+    <!-- Minhas Viagens to Perfil -->
+    <path d="M 985 1940 C 985 2080, 520 2080, 520 2200" fill="none" stroke="#9333ea" stroke-width="4.5" stroke-dasharray="8 4" marker-end="url(#arr-purple)" />
+    <rect x="710" y="2060" width="120" height="26" rx="6" fill="#3b0764" stroke="#a855f7" stroke-width="1" />
+    <text x="720" y="2078" fill="#e9d5ff" font-size="11" font-weight="800">Gerenciar Frota</text>
+  </g>
+
+  <!-- ================= ROW 1 SCREENS (TOP) ================= -->
+
+  <!-- 01. HOME & HERO -->
+  <g transform="translate(100, 180)" filter="url(#f-shadow)">
+    <!-- Device Frame 410 x 740 -->
+    <rect width="410" height="740" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" />
+    <!-- App Header -->
+    <rect width="410" height="56" rx="16" fill="#000000" />
+    <rect x="16" y="12" width="32" height="32" rx="8" fill="#ffffff" />
+    <text x="24" y="34" fill="#000000" font-size="18" font-weight="900">C</text>
+    <text x="56" y="32" fill="#ffffff" font-size="16" font-weight="900">Cooperativa</text>
+    <rect x="290" y="14" width="104" height="28" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1" />
+    <text x="302" y="32" fill="#38bdf8" font-size="10" font-weight="800">Passageiro ⇄</text>
+
+    <!-- Hero Box with Dark Theme -->
+    <g transform="translate(14, 68)">
+      <rect width="382" height="150" rx="12" fill="#0f172a" />
+      <text x="16" y="34" fill="#ffffff" font-size="16" font-weight="900">Viagens pelo Nordeste</text>
+      <text x="16" y="56" fill="#94a3b8" font-size="11">Motoristas verificados • PIX 50% antecipado</text>
+
+      <!-- Search Inputs Inside Hero -->
+      <g transform="translate(12, 70)">
+        <rect width="358" height="34" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <circle cx="16" cy="17" r="4" fill="#000000" />
+        <text x="28" y="21" fill="#0f172a" font-size="11" font-weight="600">Fortaleza, CE (Terminal João Thomé)</text>
+      </g>
+      <g transform="translate(12, 108)">
+        <rect width="358" height="34" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <rect x="12" y="13" width="8" height="8" fill="#000000" />
+        <text x="28" y="21" fill="#0f172a" font-size="11" font-weight="600">Juazeiro do Norte, CE (Cariri Shopping)</text>
+      </g>
+    </g>
+
+    <!-- Date & Seats Row -->
+    <g transform="translate(14, 228)">
+      <rect width="186" height="42" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+      <text x="12" y="16" fill="#64748b" font-size="9" font-weight="700">DATA</text>
+      <text x="12" y="32" fill="#0f172a" font-size="11" font-weight="700">10 de Outubro</text>
+
+      <g transform="translate(196, 0)">
+        <rect width="186" height="42" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+        <text x="12" y="16" fill="#64748b" font-size="9" font-weight="700">ASSENTOS</text>
+        <text x="12" y="32" fill="#0f172a" font-size="11" font-weight="700">1 passageiro</text>
+      </g>
+    </g>
+
+    <!-- Search CTA Button -->
+    <g transform="translate(14, 278)">
+      <rect width="382" height="46" rx="8" fill="#000000" />
+      <text x="140" y="28" fill="#ffffff" font-size="13" font-weight="800">Buscar Viagens</text>
+    </g>
+
+    <!-- Highlights Section -->
+    <g transform="translate(14, 336)">
+      <text x="0" y="16" fill="#0f172a" font-size="13" font-weight="900">Rotas Populares no Nordeste</text>
+      
+      <g transform="translate(0, 26)">
+        <rect width="382" height="60" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+        <text x="14" y="24" fill="#0f172a" font-size="12" font-weight="700">Sobral ⇄ Fortaleza</text>
+        <text x="14" y="44" fill="#64748b" font-size="10">235 km • 3h 15m • Diário</text>
+        <text x="310" y="34" fill="#059669" font-size="14" font-weight="900">R$ 40</text>
+      </g>
+
+      <g transform="translate(0, 94)">
+        <rect width="382" height="60" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+        <text x="14" y="24" fill="#0f172a" font-size="12" font-weight="700">Recife ⇄ Caruaru</text>
+        <text x="14" y="44" fill="#64748b" font-size="10">135 km • 2h 00m • Diário</text>
+        <text x="310" y="34" fill="#059669" font-size="14" font-weight="900">R$ 35</text>
+      </g>
+
+      <g transform="translate(0, 162)">
+        <rect width="382" height="60" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+        <text x="14" y="24" fill="#0f172a" font-size="12" font-weight="700">Salvador ⇄ Feira de Santana</text>
+        <text x="14" y="44" fill="#64748b" font-size="10">115 km • 1h 45m • Diário</text>
+        <text x="310" y="34" fill="#059669" font-size="14" font-weight="900">R$ 30</text>
+      </g>
+    </g>
+
+    <!-- Bottom Nav -->
+    <g transform="translate(0, 680)">
+      <rect width="410" height="60" rx="0" fill="#000000" />
+      <text x="45" y="35" fill="#ffffff" font-size="11" font-weight="700">Início</text>
+      <text x="140" y="35" fill="#94a3b8" font-size="11">Buscar</text>
+      <text x="235" y="35" fill="#94a3b8" font-size="11">Viagens</text>
+      <text x="335" y="35" fill="#94a3b8" font-size="11">Perfil</text>
+    </g>
+
+    <!-- Backend Spec Sticky Card -->
+    <g transform="translate(0, 760)">
+      <rect width="410" height="150" rx="10" fill="#161822" stroke="#2563eb" stroke-width="1.5" />
+      <text x="14" y="24" fill="#60a5fa" font-size="11" font-weight="900">⚙️ BACKEND &amp; CONEXÕES (#/)</text>
+      <text x="14" y="48" fill="#34d399" font-size="10" font-weight="700">GET /api/rides/highlights  •  GET /api/stats/cooperative</text>
+      <text x="14" y="72" fill="#cbd5e1" font-size="10">State: search_origin, search_destination, search_date, search_seats</text>
+      <text x="14" y="96" fill="#c084fc" font-size="10" font-weight="700">Tabelas DB: rides, users, route_metrics</text>
+      <text x="14" y="120" fill="#94a3b8" font-size="9">Geocodificação: Google Maps API / Matriz Nordeste</text>
+    </g>
+  </g>
+
+  <!-- 02. BUSCA E FILTROS -->
+  <g transform="translate(780, 180)" filter="url(#f-shadow)">
+    <rect width="410" height="740" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" />
+    <rect width="410" height="56" rx="16" fill="#000000" />
+    <text x="16" y="34" fill="#ffffff" font-size="15" font-weight="900">02. Resultados de Busca</text>
+    <rect x="300" y="14" width="94" height="28" rx="6" fill="#2563eb" />
+    <text x="312" y="32" fill="#ffffff" font-size="11" font-weight="700">#/buscar</text>
+
+    <!-- Filter Bar -->
+    <g transform="translate(14, 68)">
+      <rect width="70" height="28" rx="6" fill="#0f172a" />
+      <text x="12" y="18" fill="#ffffff" font-size="10" font-weight="700">Manhã</text>
+      <rect x="76" width="60" height="28" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+      <text x="88" y="18" fill="#334155" font-size="10" font-weight="600">Tarde</text>
+      <rect x="142" width="110" height="28" rx="6" fill="#dcfce7" stroke="#86efac" stroke-width="1" />
+      <text x="152" y="18" fill="#166534" font-size="10" font-weight="800">Ar-Condicionado</text>
+      <rect x="258" width="80" height="28" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+      <text x="268" y="18" fill="#334155" font-size="10" font-weight="600">Bagagem</text>
+    </g>
+
+    <!-- Result Ride Cards -->
+    <g transform="translate(14, 110)">
+      <!-- Card 1 -->
+      <g transform="translate(0, 0)">
+        <rect width="382" height="170" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+        <!-- Times & Route -->
+        <text x="14" y="26" fill="#0f172a" font-size="15" font-weight="900">07:00 → 13:30</text>
+        <text x="280" y="26" fill="#059669" font-size="17" font-weight="900">R$ 65,00</text>
+        <text x="14" y="46" fill="#64748b" font-size="11">Terminal João Thomé ➔ Cariri Garden Shopping</text>
+        
+        <!-- Driver & Car Specs -->
+        <circle cx="26" cy="74" r="14" fill="#cbd5e1" />
+        <text x="48" y="72" fill="#0f172a" font-size="12" font-weight="700">Marcos Silva</text>
+        <text x="48" y="86" fill="#d97706" font-size="10" font-weight="700">4.95 ★ (142 viagens) • Verificado</text>
+
+        <!-- Car & Feature Badges -->
+        <g transform="translate(14, 100)">
+          <rect width="160" height="24" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+          <text x="8" y="16" fill="#334155" font-size="10" font-weight="700">Toyota Corolla • Prata</text>
+          
+          <rect x="168" width="90" height="24" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+          <text x="176" y="16" fill="#059669" font-size="10" font-weight="700">3 Vagas</text>
+        </g>
+
+        <!-- CTA Button -->
+        <g transform="translate(14, 130)">
+          <rect width="354" height="30" rx="6" fill="#000000" />
+          <text x="135" y="20" fill="#ffffff" font-size="11" font-weight="800">Ver Viagem &amp; Reservar</text>
+        </g>
+      </g>
+
+      <!-- Card 2 -->
+      <g transform="translate(0, 182)">
+        <rect width="382" height="170" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+        <text x="14" y="26" fill="#0f172a" font-size="15" font-weight="900">08:30 → 15:00</text>
+        <text x="280" y="26" fill="#059669" font-size="17" font-weight="900">R$ 60,00</text>
+        <text x="14" y="46" fill="#64748b" font-size="11">Shopping Iguatemi ➔ Praça Padre Cícero</text>
+        
+        <circle cx="26" cy="74" r="14" fill="#cbd5e1" />
+        <text x="48" y="72" fill="#0f172a" font-size="12" font-weight="700">Ana Beatriz</text>
+        <text x="48" y="86" fill="#d97706" font-size="10" font-weight="700">5.00 ★ (88 viagens) • Verificada</text>
+
+        <g transform="translate(14, 100)">
+          <rect width="160" height="24" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+          <text x="8" y="16" fill="#334155" font-size="10" font-weight="700">Honda Civic • Preto</text>
+          
+          <rect x="168" width="90" height="24" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+          <text x="176" y="16" fill="#059669" font-size="10" font-weight="700">2 Vagas</text>
+        </g>
+
+        <g transform="translate(14, 130)">
+          <rect width="354" height="30" rx="6" fill="#000000" />
+          <text x="135" y="20" fill="#ffffff" font-size="11" font-weight="800">Ver Viagem &amp; Reservar</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- Backend Spec Sticky Card -->
+    <g transform="translate(0, 760)">
+      <rect width="410" height="150" rx="10" fill="#161822" stroke="#2563eb" stroke-width="1.5" />
+      <text x="14" y="24" fill="#60a5fa" font-size="11" font-weight="900">⚙️ BACKEND &amp; CONEXÕES (#/buscar)</text>
+      <text x="14" y="48" fill="#34d399" font-size="10" font-weight="700">GET /api/rides?origin={}&amp;dest={}&amp;date={}&amp;seats={}</text>
+      <text x="14" y="72" fill="#cbd5e1" font-size="10">Filters: time_filter, only_ac, luggage_allowed, max_price</text>
+      <text x="14" y="96" fill="#c084fc" font-size="10" font-weight="700">Tabelas DB: rides, vehicles, users</text>
+      <text x="14" y="120" fill="#94a3b8" font-size="9">Motor de Cores: templates.js (SVG Color Interpolation)</text>
+    </g>
+  </g>
+
+  <!-- 03. DETALHES & RESERVA -->
+  <g transform="translate(1450, 180)" filter="url(#f-shadow)">
+    <rect width="410" height="740" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" />
+    <rect width="410" height="56" rx="16" fill="#000000" />
+    <text x="16" y="34" fill="#ffffff" font-size="15" font-weight="900">03. Detalhes da Viagem</text>
+    <rect x="290" y="14" width="104" height="28" rx="6" fill="#2563eb" />
+    <text x="300" y="32" fill="#ffffff" font-size="11" font-weight="700">#/viagem/:id</text>
+
+    <!-- Itinerary Card -->
+    <g transform="translate(14, 68)">
+      <rect width="382" height="90" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+      <text x="14" y="26" fill="#0f172a" font-size="14" font-weight="900">Fortaleza ➔ Juazeiro do Norte</text>
+      <text x="14" y="48" fill="#64748b" font-size="11">Distância: 490 km • Duração estimada: 6h 30m</text>
+      <text x="14" y="70" fill="#059669" font-size="11" font-weight="700">Saída: 10 de Outubro às 07:00</text>
+    </g>
+
+    <!-- Driver Full Details -->
+    <g transform="translate(14, 168)">
+      <rect width="382" height="90" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+      <circle cx="30" cy="34" r="18" fill="#cbd5e1" />
+      <text x="56" y="30" fill="#0f172a" font-size="13" font-weight="800">Marcos Silva (Condutor)</text>
+      <text x="56" y="48" fill="#d97706" font-size="11" font-weight="700">4.95 ★ • Membro desde 2023 • Verificado</text>
+      <text x="14" y="76" fill="#475569" font-size="11">Toyota Corolla 2022 (Prata) • Placa: BRA2E19</text>
+    </g>
+
+    <!-- Amenities -->
+    <g transform="translate(14, 268)">
+      <rect width="382" height="40" rx="8" fill="#dcfce7" stroke="#86efac" stroke-width="1" />
+      <text x="14" y="24" fill="#166534" font-size="11" font-weight="800">✓ Ar-condicionado  •  ✓ Bagagem 15kg inclusa</text>
+    </g>
+
+    <!-- Price Breakdown -->
+    <g transform="translate(14, 318)">
+      <rect width="382" height="110" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+      <text x="14" y="26" fill="#334155" font-size="12">Valor do Assento (1 passageiro):</text>
+      <text x="300" y="26" fill="#0f172a" font-size="12" font-weight="700">R$ 65,00</text>
+      
+      <text x="14" y="52" fill="#64748b" font-size="12">Taxa Cooperativa (5%):</text>
+      <text x="300" y="52" fill="#64748b" font-size="12">R$ 3,25</text>
+      
+      <line x1="14" y1="68" x2="368" y2="68" stroke="#cbd5e1" stroke-width="1" />
+      
+      <text x="14" y="92" fill="#0f172a" font-size="14" font-weight="900">Total a Pagar:</text>
+      <text x="290" y="92" fill="#059669" font-size="16" font-weight="900">R$ 68,25</text>
+    </g>
+
+    <!-- Booking CTA Button -->
+    <g transform="translate(14, 440)">
+      <rect width="382" height="48" rx="8" fill="#059669" />
+      <text x="120" y="30" fill="#ffffff" font-size="14" font-weight="900">Reservar com PIX (R$ 68,25)</text>
+    </g>
+
+    <!-- Backend Spec Sticky Card -->
+    <g transform="translate(0, 760)">
+      <rect width="410" height="150" rx="10" fill="#161822" stroke="#059669" stroke-width="1.5" />
+      <text x="14" y="24" fill="#34d399" font-size="11" font-weight="900">⚙️ BACKEND &amp; CONEXÕES (#/viagem/:id)</text>
+      <text x="14" y="48" fill="#34d399" font-size="10" font-weight="700">GET /api/rides/:id  •  POST /api/bookings</text>
+      <text x="14" y="72" fill="#cbd5e1" font-size="10">Payload: { ride_id, seats_count, total_amount, coop_fee }</text>
+      <text x="14" y="96" fill="#c084fc" font-size="10" font-weight="700">Tabelas DB: bookings, rides, users</text>
+      <text x="14" y="120" fill="#94a3b8" font-size="9">Status da Reserva: PENDING_PIX</text>
+    </g>
+  </g>
+
+  <!-- 12. MODAL PIX -->
+  <g transform="translate(2120, 180)" filter="url(#f-shadow)">
+    <rect width="410" height="740" rx="16" fill="#ffffff" stroke="#059669" stroke-width="3" />
+    <rect width="410" height="56" rx="16" fill="#059669" />
+    <text x="16" y="34" fill="#ffffff" font-size="15" font-weight="900">12. Pagamento PIX Imediato</text>
+    <rect x="300" y="14" width="94" height="28" rx="6" fill="#047857" />
+    <text x="314" y="32" fill="#ffffff" font-size="11" font-weight="700">Overlay</text>
+
+    <!-- QR Code Block -->
+    <g transform="translate(14, 68)">
+      <rect width="382" height="220" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+      <text x="90" y="30" fill="#0f172a" font-size="15" font-weight="900">Total a pagar: R$ 68,25</text>
+      <text x="120" y="50" fill="#64748b" font-size="11">Expira em: 09:59 min</text>
+
+      <g transform="translate(126, 64)">
+        <rect width="130" height="130" rx="8" fill="#ffffff" stroke="#000000" stroke-width="2" stroke-dasharray="6 4" />
+        <text x="15" y="70" fill="#000000" font-size="12" font-weight="900">[QR CODE PIX]</text>
+      </g>
+    </g>
+
+    <!-- Copia e Cola Field -->
+    <g transform="translate(14, 300)">
+      <text x="0" y="16" fill="#0f172a" font-size="11" font-weight="800">Código PIX Copia e Cola:</text>
+      <rect y="24" width="382" height="42" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+      <text x="12" y="50" fill="#475569" font-size="10" font-family="monospace">00020126580014br.gov.bcb.pix0136...</text>
+    </g>
+
+    <!-- Copy Button -->
+    <g transform="translate(14, 380)">
+      <rect width="382" height="46" rx="8" fill="#000000" />
+      <text x="125" y="28" fill="#ffffff" font-size="13" font-weight="800">Copiar Código PIX</text>
+    </g>
+
+    <!-- Confirm Button -->
+    <g transform="translate(14, 436)">
+      <rect width="382" height="46" rx="8" fill="#059669" />
+      <text x="110" y="28" fill="#ffffff" font-size="13" font-weight="800">Já Realizei o Pagamento</text>
+    </g>
+
+    <!-- Backend Spec Sticky Card -->
+    <g transform="translate(0, 760)">
+      <rect width="410" height="150" rx="10" fill="#161822" stroke="#059669" stroke-width="1.5" />
+      <text x="14" y="24" fill="#34d399" font-size="11" font-weight="900">⚙️ GATEWAY PIX &amp; WEBHOOKS</text>
+      <text x="14" y="48" fill="#34d399" font-size="10" font-weight="700">POST /api/webhooks/pix/confirm</text>
+      <text x="14" y="72" fill="#cbd5e1" font-size="10">State: pix_code, pix_qr_url, expires_in_seconds (600s)</text>
+      <text x="14" y="96" fill="#c084fc" font-size="10" font-weight="700">Tabelas DB: bookings, transactions</text>
+      <text x="14" y="120" fill="#94a3b8" font-size="9">Liquidação: Liberação de Vaga Instantânea</text>
+    </g>
+  </g>
+
+  <!-- 04. PERFIL PÚBLICO DO MOTORISTA -->
+  <g transform="translate(2790, 180)" filter="url(#f-shadow)">
+    <rect width="410" height="740" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" />
+    <rect width="410" height="56" rx="16" fill="#000000" />
+    <text x="16" y="34" fill="#ffffff" font-size="15" font-weight="900">04. Perfil do Motorista</text>
+    <rect x="280" y="14" width="114" height="28" rx="6" fill="#6366f1" />
+    <text x="290" y="32" fill="#ffffff" font-size="11" font-weight="700">#/motorista/:id</text>
+
+    <!-- Profile Header Card -->
+    <g transform="translate(14, 68)">
+      <circle cx="36" cy="36" r="28" fill="#cbd5e1" />
+      <text x="76" y="30" fill="#0f172a" font-size="16" font-weight="900">Marcos Silva</text>
+      <text x="76" y="52" fill="#d97706" font-size="12" font-weight="700">4.95 ★ (142 viagens) • Verificado</text>
+      <text x="14" y="86" fill="#64748b" font-size="11">Membro desde Março/2023 • Fortaleza, CE</text>
+    </g>
+
+    <!-- Garage Section -->
+    <g transform="translate(14, 178)">
+      <text x="0" y="16" fill="#0f172a" font-size="13" font-weight="900">Veículos Cadastrados</text>
+      
+      <g transform="translate(0, 26)">
+        <rect width="382" height="60" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+        <text x="14" y="24" fill="#0f172a" font-size="12" font-weight="700">Toyota Corolla 2022 (Prata)</text>
+        <text x="14" y="44" fill="#64748b" font-size="10">Placa: BRA2E19 • 4 lugares • Ar-Condicionado</text>
+      </g>
+    </g>
+
+    <!-- Reviews Section -->
+    <g transform="translate(14, 284)">
+      <text x="0" y="16" fill="#0f172a" font-size="13" font-weight="900">Avaliações dos Passageiros</text>
+      
+      <g transform="translate(0, 26)">
+        <rect width="382" height="70" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+        <text x="12" y="22" fill="#0f172a" font-size="11" font-weight="700">Carlos Eduardo • 5.0 ★</text>
+        <text x="12" y="42" fill="#475569" font-size="10">"Excelente condutor, pontual e muito tranquilo na estrada."</text>
+        <text x="12" y="58" fill="#94a3b8" font-size="9">Outubro 2026 • Fortaleza x Juazeiro</text>
+      </g>
+
+      <g transform="translate(0, 104)">
+        <rect width="382" height="70" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+        <text x="12" y="22" fill="#0f172a" font-size="11" font-weight="700">Mariana Lima • 5.0 ★</text>
+        <text x="12" y="42" fill="#475569" font-size="10">"Carro limpo, ar funcionando perfeitamente. Recomendo!"</text>
+        <text x="12" y="58" fill="#94a3b8" font-size="9">Setembro 2026 • Fortaleza x Sobral</text>
+      </g>
+    </g>
+
+    <!-- Backend Spec Sticky Card -->
+    <g transform="translate(0, 760)">
+      <rect width="410" height="150" rx="10" fill="#161822" stroke="#6366f1" stroke-width="1.5" />
+      <text x="14" y="24" fill="#818cf8" font-size="11" font-weight="900">⚙️ BACKEND &amp; CONEXÕES (#/motorista)</text>
+      <text x="14" y="48" fill="#34d399" font-size="10" font-weight="700">GET /api/drivers/:id  •  GET /api/reviews?driver_id={}</text>
+      <text x="14" y="72" fill="#cbd5e1" font-size="10">State: driver_id, rating, total_trips, vehicles[], reviews[]</text>
+      <text x="14" y="96" fill="#c084fc" font-size="10" font-weight="700">Tabelas DB: users, vehicles, reviews</text>
+    </g>
+  </g>
+
+  <!-- ================= ROW 2 SCREENS (MIDDLE) ================= -->
+
+  <!-- 07. PUBLICAR NOVA VIAGEM -->
+  <g transform="translate(100, 1200)" filter="url(#f-shadow)">
+    <rect width="410" height="740" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" />
+    <rect width="410" height="56" rx="16" fill="#000000" />
+    <text x="16" y="34" fill="#ffffff" font-size="15" font-weight="900">07. Publicar Viagem</text>
+    <rect x="290" y="14" width="104" height="28" rx="6" fill="#d97706" />
+    <text x="300" y="32" fill="#ffffff" font-size="11" font-weight="700">#/publicar</text>
+
+    <g transform="translate(14, 68)">
+      <text x="0" y="16" fill="#0f172a" font-size="13" font-weight="900">Oferecer Carona (Condutor)</text>
+
+      <!-- Origin & Spot -->
+      <g transform="translate(0, 28)">
+        <rect width="382" height="42" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <text x="12" y="16" fill="#64748b" font-size="9" font-weight="700">ORIGEM &amp; PONTO DE EMBARQUE</text>
+        <text x="12" y="32" fill="#0f172a" font-size="11" font-weight="600">Recife, PE (Terminal TIP)</text>
+      </g>
+
+      <!-- Dest & Spot -->
+      <g transform="translate(0, 78)">
+        <rect width="382" height="42" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <text x="12" y="16" fill="#64748b" font-size="9" font-weight="700">DESTINO &amp; PONTO DE DESEMBARQUE</text>
+        <text x="12" y="32" fill="#0f172a" font-size="11" font-weight="600">Caruaru, PE (Caruaru Shopping)</text>
+      </g>
+
+      <!-- Date & Time -->
+      <g transform="translate(0, 128)">
+        <rect width="186" height="42" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <text x="12" y="16" fill="#64748b" font-size="9" font-weight="700">DATA</text>
+        <text x="12" y="32" fill="#0f172a" font-size="11" font-weight="600">10/10/2026</text>
+
+        <g transform="translate(196, 0)">
+          <rect width="186" height="42" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+          <text x="12" y="16" fill="#64748b" font-size="9" font-weight="700">HORÁRIO</text>
+          <text x="12" y="32" fill="#0f172a" font-size="11" font-weight="600">08:00</text>
+        </g>
+      </g>
+
+      <!-- Smart Pricing Box -->
+      <g transform="translate(0, 178)">
+        <rect width="382" height="70" rx="10" fill="#fef3c7" stroke="#fcd34d" stroke-width="1" />
+        <text x="14" y="24" fill="#92400e" font-size="11" font-weight="800">💡 PRECIFICAÇÃO INTELIGENTE SUGERIDA</text>
+        <text x="14" y="46" fill="#78350f" font-size="15" font-weight="900">R$ 35,00 / vaga</text>
+        <text x="14" y="62" fill="#92400e" font-size="10">Baseado na distância de 135 km (Recife x Caruaru)</text>
+      </g>
+
+      <!-- Vehicle Picker -->
+      <g transform="translate(0, 258)">
+        <rect width="382" height="42" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <text x="12" y="16" fill="#64748b" font-size="9" font-weight="700">VEÍCULO DA GARAGEM</text>
+        <text x="12" y="32" fill="#0f172a" font-size="11" font-weight="600">Toyota Corolla 2022 • Prata (BRA2E19)</text>
+      </g>
+
+      <!-- Submit CTA -->
+      <g transform="translate(0, 312)">
+        <rect width="382" height="48" rx="8" fill="#000000" />
+        <text x="130" y="30" fill="#ffffff" font-size="14" font-weight="900">Publicar Carona</text>
+      </g>
+    </g>
+
+    <!-- Backend Spec Sticky Card -->
+    <g transform="translate(0, 760)">
+      <rect width="410" height="150" rx="10" fill="#161822" stroke="#d97706" stroke-width="1.5" />
+      <text x="14" y="24" fill="#fbbf24" font-size="11" font-weight="900">⚙️ BACKEND &amp; CONEXÕES (#/publicar)</text>
+      <text x="14" y="48" fill="#34d399" font-size="10" font-weight="700">POST /api/rides</text>
+      <text x="14" y="72" fill="#cbd5e1" font-size="10">Payload: { origin, dest, departure_time, vehicle_id, price, seats }</text>
+      <text x="14" y="96" fill="#c084fc" font-size="10" font-weight="700">Tabelas DB: rides, vehicles</text>
+      <text x="14" y="120" fill="#94a3b8" font-size="9">Notificação: Disparo via Push / WhatsApp</text>
+    </g>
+  </g>
+
+  <!-- 05 & 06. MINHAS VIAGENS -->
+  <g transform="translate(780, 1200)" filter="url(#f-shadow)">
+    <rect width="410" height="740" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" />
+    <rect width="410" height="56" rx="16" fill="#000000" />
+    <text x="16" y="34" fill="#ffffff" font-size="15" font-weight="900">05 &amp; 06. Minhas Viagens</text>
+    <rect x="260" y="14" width="134" height="28" rx="6" fill="#059669" />
+    <text x="270" y="32" fill="#ffffff" font-size="11" font-weight="700">#/minhas-viagens</text>
+
+    <!-- Tab Bar -->
+    <g transform="translate(14, 68)">
+      <rect width="382" height="38" rx="8" fill="#f1f5f9" />
+      <rect width="191" height="38" rx="8" fill="#0f172a" />
+      <text x="45" y="24" fill="#ffffff" font-size="12" font-weight="800">Passageiro (1)</text>
+      <text x="235" y="24" fill="#64748b" font-size="12" font-weight="800">Motorista (2)</text>
+    </g>
+
+    <!-- Active Booking Card -->
+    <g transform="translate(14, 118)">
+      <rect width="382" height="180" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+      <text x="14" y="26" fill="#0f172a" font-size="14" font-weight="900">Fortaleza ➔ Juazeiro do Norte</text>
+      <rect x="270" y="12" width="98" height="22" rx="4" fill="#dcfce7" />
+      <text x="278" y="27" fill="#166534" font-size="10" font-weight="800">CONFIRMADO</text>
+
+      <text x="14" y="52" fill="#64748b" font-size="11">10 de Outubro às 07:00 • 1 vaga reservada</text>
+      <text x="14" y="70" fill="#059669" font-size="11" font-weight="700">Pago via PIX: R$ 68,25 (100% garantido)</text>
+      <text x="14" y="90" fill="#334155" font-size="11">Condutor: Marcos Silva • Toyota Corolla Prata</text>
+
+      <!-- Actions -->
+      <g transform="translate(14, 110)">
+        <rect width="170" height="36" rx="6" fill="#000000" />
+        <text x="50" y="23" fill="#ffffff" font-size="11" font-weight="800">Abrir Chat</text>
+
+        <g transform="translate(184, 0)">
+          <rect width="170" height="36" rx="6" fill="#ffffff" stroke="#ef4444" stroke-width="1" />
+          <text x="42" y="23" fill="#ef4444" font-size="11" font-weight="800">Cancelar Viagem</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- Backend Spec Sticky Card -->
+    <g transform="translate(0, 760)">
+      <rect width="410" height="150" rx="10" fill="#161822" stroke="#059669" stroke-width="1.5" />
+      <text x="14" y="24" fill="#34d399" font-size="11" font-weight="900">⚙️ BACKEND &amp; CONEXÕES (#/minhas-viagens)</text>
+      <text x="14" y="48" fill="#34d399" font-size="10" font-weight="700">GET /api/bookings/my  •  POST /api/bookings/:id/cancel</text>
+      <text x="14" y="72" fill="#cbd5e1" font-size="10">State: booking_status, payment_status, refund_amount</text>
+      <text x="14" y="96" fill="#c084fc" font-size="10" font-weight="700">Tabelas DB: bookings, rides, transactions</text>
+      <text x="14" y="120" fill="#94a3b8" font-size="9">Regra Estorno: 100% (&gt;2h de antecedência) / 50% (&lt;2h)</text>
+    </g>
+  </g>
+
+  <!-- 08. CHAT EM TEMPO REAL -->
+  <g transform="translate(1450, 1200)" filter="url(#f-shadow)">
+    <rect width="410" height="740" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" />
+    <rect width="410" height="56" rx="16" fill="#000000" />
+    <text x="16" y="34" fill="#ffffff" font-size="15" font-weight="900">08. Chat em Tempo Real</text>
+    <rect x="290" y="14" width="104" height="28" rx="6" fill="#06b6d4" />
+    <text x="304" y="32" fill="#ffffff" font-size="11" font-weight="700">#/chat/:id</text>
+
+    <!-- Chat Header Sub -->
+    <g transform="translate(14, 68)">
+      <rect width="382" height="42" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+      <circle cx="24" cy="21" r="12" fill="#cbd5e1" />
+      <text x="44" y="25" fill="#0f172a" font-size="11" font-weight="800">Marcos Silva (Condutor) • Fortaleza x Juazeiro</text>
+    </g>
+
+    <!-- Message Stream -->
+    <g transform="translate(14, 120)">
+      <!-- Bubble 1 (Driver) -->
+      <g transform="translate(0, 0)">
+        <rect width="280" height="56" rx="10" fill="#f1f5f9" />
+        <text x="12" y="22" fill="#0f172a" font-size="11">"Olá! Estarei no ponto de embarque da rodoviária às 06:45."</text>
+        <text x="12" y="44" fill="#94a3b8" font-size="9">06:30 • Marcos</text>
+      </g>
+
+      <!-- Bubble 2 (User) -->
+      <g transform="translate(102, 68)">
+        <rect width="280" height="56" rx="10" fill="#000000" />
+        <text x="12" y="22" fill="#ffffff" font-size="11">"Combinado! Estarei na saída principal de camisa azul."</text>
+        <text x="12" y="44" fill="#94a3b8" font-size="9">06:32 • Você</text>
+      </g>
+
+      <!-- Bubble 3 (Driver) -->
+      <g transform="translate(0, 136)">
+        <rect width="280" height="46" rx="10" fill="#f1f5f9" />
+        <text x="12" y="22" fill="#0f172a" font-size="11">"Perfeito, te vejo lá!"</text>
+        <text x="12" y="38" fill="#94a3b8" font-size="9">06:33 • Marcos</text>
+      </g>
+    </g>
+
+    <!-- Input Bar -->
+    <g transform="translate(14, 380)">
+      <rect width="310" height="44" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+      <text x="12" y="27" fill="#94a3b8" font-size="11">Digite sua mensagem...</text>
+      
+      <g transform="translate(320, 0)">
+        <rect width="62" height="44" rx="8" fill="#000000" />
+        <text x="14" y="27" fill="#ffffff" font-size="11" font-weight="800">Enviar</text>
+      </g>
+    </g>
+
+    <!-- Backend Spec Sticky Card -->
+    <g transform="translate(0, 760)">
+      <rect width="410" height="150" rx="10" fill="#161822" stroke="#06b6d4" stroke-width="1.5" />
+      <text x="14" y="24" fill="#67e8f9" font-size="11" font-weight="900">⚙️ WEBSOCKET &amp; REALTIME CHAT</text>
+      <text x="14" y="48" fill="#34d399" font-size="10" font-weight="700">WSS /realtime/v1/rides:{id}:chat</text>
+      <text x="14" y="72" fill="#cbd5e1" font-size="10">State: message_id, sender_id, message_text, timestamp</text>
+      <text x="14" y="96" fill="#c084fc" font-size="10" font-weight="700">Tabelas DB: chat_messages</text>
+      <text x="14" y="120" fill="#94a3b8" font-size="9">Latência: Sub-100ms via WebSocket Channel</text>
+    </g>
+  </g>
+
+  <!-- 09. AVALIAÇÃO DE VIAGEM -->
+  <g transform="translate(2120, 1200)" filter="url(#f-shadow)">
+    <rect width="410" height="740" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" />
+    <rect width="410" height="56" rx="16" fill="#000000" />
+    <text x="16" y="34" fill="#ffffff" font-size="15" font-weight="900">09. Avaliação de Viagem</text>
+    <rect x="290" y="14" width="104" height="28" rx="6" fill="#eab308" />
+    <text x="300" y="32" fill="#000000" font-size="11" font-weight="800">#/avaliar/:id</text>
+
+    <!-- Driver Info -->
+    <g transform="translate(14, 68)">
+      <circle cx="191" cy="40" r="30" fill="#cbd5e1" />
+      <text x="125" y="90" fill="#0f172a" font-size="16" font-weight="900">Marcos Silva</text>
+      <text x="110" y="110" fill="#64748b" font-size="11">Viagem Fortaleza ➔ Juazeiro</text>
+
+      <!-- 5 Stars -->
+      <g transform="translate(110, 126)">
+        <text x="0" y="24" fill="#eab308" font-size="28" letter-spacing="4">★★★★★</text>
+      </g>
+    </g>
+
+    <!-- Feedback Tags -->
+    <g transform="translate(14, 230)">
+      <text x="0" y="16" fill="#0f172a" font-size="12" font-weight="800">Elogios Rápidos:</text>
+      
+      <g transform="translate(0, 26)">
+        <rect width="80" height="28" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+        <text x="14" y="18" fill="#334155" font-size="10" font-weight="700">Pontual</text>
+
+        <rect x="86" width="110" height="28" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+        <text x="96" y="18" fill="#334155" font-size="10" font-weight="700">Direção Segura</text>
+
+        <rect x="202" width="90" height="28" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+        <text x="212" y="18" fill="#334155" font-size="10" font-weight="700">Carro Limpo</text>
+      </g>
+    </g>
+
+    <!-- Comment Box -->
+    <g transform="translate(14, 300)">
+      <rect width="382" height="70" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+      <text x="12" y="24" fill="#94a3b8" font-size="11">Escreva um comentário sobre a viagem...</text>
+    </g>
+
+    <!-- Submit CTA -->
+    <g transform="translate(14, 386)">
+      <rect width="382" height="46" rx="8" fill="#000000" />
+      <text x="135" y="28" fill="#ffffff" font-size="13" font-weight="800">Enviar Avaliação</text>
+    </g>
+
+    <!-- Backend Spec Sticky Card -->
+    <g transform="translate(0, 760)">
+      <rect width="410" height="150" rx="10" fill="#161822" stroke="#eab308" stroke-width="1.5" />
+      <text x="14" y="24" fill="#fde047" font-size="11" font-weight="900">⚙️ BACKEND &amp; CONEXÕES (#/avaliar)</text>
+      <text x="14" y="48" fill="#34d399" font-size="10" font-weight="700">POST /api/reviews</text>
+      <text x="14" y="72" fill="#cbd5e1" font-size="10">Payload: { rating (1-5), tags[], comment, driver_id }</text>
+      <text x="14" y="96" fill="#c084fc" font-size="10" font-weight="700">Tabelas DB: reviews, users</text>
+    </g>
+  </g>
+
+  <!-- ================= ROW 3 SCREENS (BOTTOM) ================= -->
+
+  <!-- 10. MEU PERFIL & GARAGEM -->
+  <g transform="translate(100, 2200)" filter="url(#f-shadow)">
+    <rect width="410" height="740" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" />
+    <rect width="410" height="56" rx="16" fill="#000000" />
+    <text x="16" y="34" fill="#ffffff" font-size="15" font-weight="900">10. Meu Perfil &amp; Garagem</text>
+    <rect x="300" y="14" width="94" height="28" rx="6" fill="#9333ea" />
+    <text x="316" y="32" fill="#ffffff" font-size="11" font-weight="700">#/perfil</text>
+
+    <!-- Profile Form -->
+    <g transform="translate(14, 68)">
+      <g transform="translate(0, 0)">
+        <rect width="382" height="42" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <text x="12" y="16" fill="#64748b" font-size="9" font-weight="700">NOME COMPLETO</text>
+        <text x="12" y="32" fill="#0f172a" font-size="11" font-weight="600">Rennan Silva</text>
+      </g>
+
+      <g transform="translate(0, 50)">
+        <rect width="382" height="42" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <text x="12" y="16" fill="#64748b" font-size="9" font-weight="700">WHATSAPP / TELEFONE</text>
+        <text x="12" y="32" fill="#0f172a" font-size="11" font-weight="600">(85) 99988-7766</text>
+      </g>
+
+      <g transform="translate(0, 100)">
+        <rect width="382" height="42" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <text x="12" y="16" fill="#64748b" font-size="9" font-weight="700">CHAVE PIX (PARA RECEBIMENTO DE REPASSES)</text>
+        <text x="12" y="32" fill="#059669" font-size="11" font-weight="700">85999887766 (Celular)</text>
+      </g>
+    </g>
+
+    <!-- Garage Section -->
+    <g transform="translate(14, 230)">
+      <text x="0" y="16" fill="#0f172a" font-size="13" font-weight="900">Minha Garagem (1 veículo ativo)</text>
+      
+      <g transform="translate(0, 26)">
+        <rect width="382" height="70" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+        <text x="14" y="24" fill="#0f172a" font-size="12" font-weight="700">Toyota Corolla 2022 • Prata</text>
+        <text x="14" y="44" fill="#64748b" font-size="10">Placa: BRA2E19 • 4 lugares para passageiros</text>
+        <text x="310" y="34" fill="#2563eb" font-size="11" font-weight="800">Editar</text>
+      </g>
+
+      <g transform="translate(0, 106)">
+        <rect width="382" height="42" rx="8" fill="#000000" />
+        <text x="120" y="26" fill="#ffffff" font-size="12" font-weight="800">+ Adicionar Novo Carro</text>
+      </g>
+    </g>
+
+    <!-- Backend Spec Sticky Card -->
+    <g transform="translate(0, 760)">
+      <rect width="410" height="150" rx="10" fill="#161822" stroke="#9333ea" stroke-width="1.5" />
+      <text x="14" y="24" fill="#c084fc" font-size="11" font-weight="900">⚙️ BACKEND &amp; CONEXÕES (#/perfil)</text>
+      <text x="14" y="48" fill="#34d399" font-size="10" font-weight="700">PUT /api/users/profile  •  POST /api/vehicles</text>
+      <text x="14" y="72" fill="#cbd5e1" font-size="10">State: name, phone, pix_key, vehicles[]</text>
+      <text x="14" y="96" fill="#c084fc" font-size="10" font-weight="700">Tabelas DB: users, vehicles</text>
+    </g>
+  </g>
+
+  <!-- 11. PAINEL ADMIN COOPERATIVA -->
+  <g transform="translate(780, 2200)" filter="url(#f-shadow)">
+    <rect width="410" height="740" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" />
+    <rect width="410" height="56" rx="16" fill="#000000" />
+    <text x="16" y="34" fill="#ffffff" font-size="15" font-weight="900">11. Painel Admin Cooperativa</text>
+    <rect x="300" y="14" width="94" height="28" rx="6" fill="#e11d48" />
+    <text x="314" y="32" fill="#ffffff" font-size="11" font-weight="700">#/admin</text>
+
+    <!-- KPI Metric Cards -->
+    <g transform="translate(14, 68)">
+      <g transform="translate(0, 0)">
+        <rect width="186" height="70" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+        <text x="12" y="22" fill="#64748b" font-size="10" font-weight="700">VOLUME TOTAL (GMV)</text>
+        <text x="12" y="48" fill="#0f172a" font-size="16" font-weight="900">R$ 142.800</text>
+      </g>
+
+      <g transform="translate(196, 0)">
+        <rect width="186" height="70" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+        <text x="12" y="22" fill="#64748b" font-size="10" font-weight="700">TAXA COOP (5%)</text>
+        <text x="12" y="48" fill="#059669" font-size="16" font-weight="900">R$ 7.140</text>
+      </g>
+    </g>
+
+    <!-- Driver Approvals List -->
+    <g transform="translate(14, 150)">
+      <text x="0" y="16" fill="#0f172a" font-size="13" font-weight="900">Aprovações de Condutores (3 pendentes)</text>
+      
+      <g transform="translate(0, 26)">
+        <rect width="382" height="60" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+        <text x="14" y="24" fill="#0f172a" font-size="12" font-weight="700">Roberto Santos • CNH B (Verificar)</text>
+        <text x="14" y="44" fill="#64748b" font-size="10">Honda Civic 2021 • Enviado há 2 horas</text>
+        <rect x="290" y="16" width="76" height="28" rx="6" fill="#059669" />
+        <text x="304" y="34" fill="#ffffff" font-size="10" font-weight="800">Aprovar</text>
+      </g>
+    </g>
+
+    <!-- Backend Spec Sticky Card -->
+    <g transform="translate(0, 760)">
+      <rect width="410" height="150" rx="10" fill="#161822" stroke="#e11d48" stroke-width="1.5" />
+      <text x="14" y="24" fill="#fda4af" font-size="11" font-weight="900">⚙️ BACKEND &amp; CONEXÕES (#/admin)</text>
+      <text x="14" y="48" fill="#34d399" font-size="10" font-weight="700">GET /api/admin/metrics  •  POST /api/admin/drivers/:id/approve</text>
+      <text x="14" y="72" fill="#cbd5e1" font-size="10">State: total_gmv, total_revenue, pending_drivers_count</text>
+      <text x="14" y="96" fill="#c084fc" font-size="10" font-weight="700">Tabelas DB: transactions, rides, bookings, users</text>
+    </g>
+  </g>
+
+</svg>

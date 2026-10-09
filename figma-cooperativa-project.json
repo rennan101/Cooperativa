@@ -1,0 +1,298 @@
+{
+  "$schema": "https://figma.com/schemas/plugin-manifest.json",
+  "project_name": "Cooperativa — Viagens Compartilhadas",
+  "version": "1.0.0",
+  "design_system": {
+    "name": "Uber Monochrome Transit Kiosk",
+    "theme": "Light",
+    "fonts": ["Inter", "Material Symbols Outlined"],
+    "colors": {
+      "jet_black": "#000000",
+      "paper_white": "#ffffff",
+      "mist_gray": "#f6f6f6",
+      "charcoal": "#333333",
+      "iron_gray": "#767676",
+      "border_gray": "#e5e7eb",
+      "accent_emerald": "#059669",
+      "accent_blue": "#2563eb"
+    },
+    "radii": {
+      "card": 8,
+      "button": 8,
+      "input": 8,
+      "pills": "PROIBIDO"
+    }
+  },
+  "screens": [
+    {
+      "id": "screen_01_home",
+      "name": "01. Home & Hero Transit",
+      "route": "#/",
+      "actor": "PUBLIC",
+      "frame_dimensions": { "width": 390, "height": 844 },
+      "components": ["Header", "Hero_Transit_Search", "Popular_Routes_Nordeste", "Social_Proof_Stats", "Footer"],
+      "backend_connections": {
+        "endpoints": [
+          { "method": "GET", "url": "/api/rides/highlights", "desc": "Carrega caronas populares de alta demanda" },
+          { "method": "GET", "url": "/api/stats/cooperative", "desc": "Estatísticas de impacto social e viagens realizadas" }
+        ],
+        "state_variables": {
+          "search_origin": "string",
+          "search_destination": "string",
+          "search_date": "YYYY-MM-DD",
+          "search_seats": "integer"
+        }
+      },
+      "outbound_routes": [
+        { "target_screen": "screen_02_buscar", "trigger": "OnSubmit(SearchForm)", "connector_color": "#2563eb" },
+        { "target_screen": "screen_07_publicar", "trigger": "OnClick(OfferRideCTA)", "connector_color": "#f59e0b" },
+        { "target_screen": "screen_04_motorista", "trigger": "OnClick(FeaturedDriverAvatar)", "connector_color": "#6366f1" }
+      ]
+    },
+    {
+      "id": "screen_02_buscar",
+      "name": "02. Busca e Resultados",
+      "route": "#/buscar",
+      "actor": "PASSENGER",
+      "frame_dimensions": { "width": 390, "height": 844 },
+      "components": ["Filter_Chips_Time_AC", "Ride_Result_Cards", "Vehicle_SVG_Dynamic_Color", "Bottom_Nav"],
+      "backend_connections": {
+        "endpoints": [
+          { "method": "GET", "url": "/api/rides?origin={origin}&dest={destination}&date={date}&seats={seats}", "desc": "Consulta viagens disponíveis com filtros" }
+        ],
+        "state_variables": {
+          "time_filter": "MORNING | AFTERNOON | NIGHT",
+          "only_ac": "boolean",
+          "luggage_allowed": "boolean",
+          "max_price": "decimal"
+        }
+      },
+      "outbound_routes": [
+        { "target_screen": "screen_03_viagem_detalhes", "trigger": "OnClick(RideCard)", "connector_color": "#2563eb" },
+        { "target_screen": "screen_04_motorista", "trigger": "OnClick(DriverProfileLink)", "connector_color": "#6366f1" }
+      ]
+    },
+    {
+      "id": "screen_03_viagem_detalhes",
+      "name": "03. Detalhes da Viagem & Reserva",
+      "route": "#/viagem/:id",
+      "actor": "PASSENGER",
+      "frame_dimensions": { "width": 390, "height": 844 },
+      "components": ["Route_Timeline_Stops", "Driver_Badge_Header", "Vehicle_Detailed_Specs", "Seat_Selector", "Pricing_Breakdown_5pct_Fee", "CTA_Reserve_PIX"],
+      "backend_connections": {
+        "endpoints": [
+          { "method": "GET", "url": "/api/rides/:id", "desc": "Dados completos da viagem e paradas" },
+          { "method": "POST", "url": "/api/bookings", "desc": "Cria pré-reserva com chave PIX temporária" }
+        ],
+        "state_variables": {
+          "ride_id": "uuid",
+          "seats_count": "integer",
+          "subtotal_amount": "decimal",
+          "fee_amount": "decimal (5%)",
+          "total_amount": "decimal"
+        }
+      },
+      "outbound_routes": [
+        { "target_screen": "modal_pix_dinamico", "trigger": "OnClick(CTA_Reserve_PIX)", "connector_color": "#10b981" },
+        { "target_screen": "screen_04_motorista", "trigger": "OnClick(ViewFullDriverProfile)", "connector_color": "#6366f1" }
+      ]
+    },
+    {
+      "id": "modal_pix_dinamico",
+      "name": "12. Modal PIX Dinâmico",
+      "route": "Overlay",
+      "actor": "PASSENGER",
+      "frame_dimensions": { "width": 390, "height": 844 },
+      "components": ["QR_Code_PIX", "Copia_e_Cola_Field", "Countdown_Timer_10m", "Copy_CTA", "Upload_Proof_Option"],
+      "backend_connections": {
+        "endpoints": [
+          { "method": "POST", "url": "/api/webhooks/pix/confirm", "desc": "Webhook acionado pelo gateway PIX" }
+        ],
+        "state_variables": {
+          "pix_code": "string",
+          "pix_qr_url": "string",
+          "expires_at": "timestamp"
+        }
+      },
+      "outbound_routes": [
+        { "target_screen": "screen_05_minhas_viagens_pax", "trigger": "OnPaymentConfirmed", "connector_color": "#10b981" }
+      ]
+    },
+    {
+      "id": "screen_04_motorista",
+      "name": "04. Perfil Público do Motorista",
+      "route": "#/motorista/:driverId",
+      "actor": "PUBLIC",
+      "frame_dimensions": { "width": 390, "height": 844 },
+      "components": ["Driver_Identity_Card", "Reputation_Rating_Stars", "Verified_Badge", "Vehicle_Fleet_Cards", "Passenger_Reviews_List"],
+      "backend_connections": {
+        "endpoints": [
+          { "method": "GET", "url": "/api/drivers/:id", "desc": "Perfil público, frota e avaliações consolidadas" }
+        ],
+        "state_variables": {
+          "driver_id": "uuid",
+          "rating": "float",
+          "total_trips": "integer"
+        }
+      },
+      "outbound_routes": [
+        { "target_screen": "screen_03_viagem_detalhes", "trigger": "OnClick(ActiveRideItem)", "connector_color": "#2563eb" }
+      ]
+    },
+    {
+      "id": "screen_05_minhas_viagens_pax",
+      "name": "05. Minhas Viagens (Passageiro)",
+      "route": "#/minhas-viagens",
+      "actor": "PASSENGER",
+      "frame_dimensions": { "width": 390, "height": 844 },
+      "components": ["Tab_Switcher", "Active_Booking_Card", "Payment_Status_Badge", "Open_Chat_CTA", "Cancel_With_Refund_Button"],
+      "backend_connections": {
+        "endpoints": [
+          { "method": "GET", "url": "/api/bookings/my", "desc": "Histórico e reservas ativas do passageiro" },
+          { "method": "POST", "url": "/api/bookings/:id/cancel", "desc": "Cancela e efetua estorno automático" }
+        ],
+        "state_variables": {
+          "booking_id": "uuid",
+          "booking_status": "CONFIRMED | PENDING | CANCELLED",
+          "payment_status": "PAID | REFUNDED"
+        }
+      },
+      "outbound_routes": [
+        { "target_screen": "screen_08_chat", "trigger": "OnClick(OpenChat)", "connector_color": "#06b6d4" },
+        { "target_screen": "screen_09_avaliar", "trigger": "OnTripCompleted", "connector_color": "#eab308" }
+      ]
+    },
+    {
+      "id": "screen_06_minhas_viagens_drv",
+      "name": "06. Painel de Controle (Motorista)",
+      "route": "#/minhas-viagens",
+      "actor": "DRIVER",
+      "frame_dimensions": { "width": 390, "height": 844 },
+      "components": ["Published_Rides_List", "Passenger_Approval_Queue", "Action_Buttons_Start_Complete", "Add_Vehicle_Shortcut"],
+      "backend_connections": {
+        "endpoints": [
+          { "method": "GET", "url": "/api/rides/driver-history", "desc": "Viagens criadas pelo condutor" },
+          { "method": "PUT", "url": "/api/bookings/:id/status", "desc": "Aprova ou rejeita solicitações de carona" },
+          { "method": "PUT", "url": "/api/rides/:id/start", "desc": "Inicia viagem e notifica passageiros" },
+          { "method": "PUT", "url": "/api/rides/:id/complete", "desc": "Finaliza viagem e liquida PIX na conta do motorista" }
+        ],
+        "state_variables": {
+          "ride_status": "SCHEDULED | IN_PROGRESS | COMPLETED",
+          "total_earnings": "decimal"
+        }
+      },
+      "outbound_routes": [
+        { "target_screen": "screen_08_chat", "trigger": "OnClick(OpenPassengerChat)", "connector_color": "#06b6d4" },
+        { "target_screen": "screen_10_perfil_garagem", "trigger": "OnClick(ManageVehicles)", "connector_color": "#a855f7" }
+      ]
+    },
+    {
+      "id": "screen_07_publicar",
+      "name": "07. Publicar Nova Viagem",
+      "route": "#/publicar",
+      "actor": "DRIVER",
+      "frame_dimensions": { "width": 390, "height": 844 },
+      "components": ["Nordeste_Location_Pickers", "Datetime_Selector", "Vehicle_Selector_With_Color_Preview", "Smart_Price_Suggestion_Widget", "Luggage_AC_Toggles", "Publish_Button"],
+      "backend_connections": {
+        "endpoints": [
+          { "method": "POST", "url": "/api/rides", "desc": "Publica nova oferta de carona" }
+        ],
+        "state_variables": {
+          "origin_city": "string",
+          "origin_spot": "string",
+          "dest_city": "string",
+          "dest_spot": "string",
+          "departure_time": "timestamp",
+          "vehicle_id": "uuid",
+          "price_per_seat": "decimal"
+        }
+      },
+      "outbound_routes": [
+        { "target_screen": "screen_06_minhas_viagens_drv", "trigger": "OnPublishSuccess", "connector_color": "#f59e0b" }
+      ]
+    },
+    {
+      "id": "screen_08_chat",
+      "name": "08. Chat em Tempo Real",
+      "route": "#/chat/:rideId",
+      "actor": "BOTH",
+      "frame_dimensions": { "width": 390, "height": 844 },
+      "components": ["Chat_Header_Ride_Details", "Message_Bubble_Driver", "Message_Bubble_Passenger", "Realtime_Input_Bar"],
+      "backend_connections": {
+        "endpoints": [
+          { "method": "WSS", "url": "wss://coop-viagens.supabase.co/realtime/v1/rides:{id}:chat", "desc": "Canal Realtime WebSocket para entrega de mensagens < 100ms" }
+        ],
+        "state_variables": {
+          "message_id": "uuid",
+          "sender_id": "uuid",
+          "message_text": "string",
+          "sent_at": "timestamp"
+        }
+      },
+      "outbound_routes": []
+    },
+    {
+      "id": "screen_09_avaliar",
+      "name": "09. Avaliação Pós-Viagem",
+      "route": "#/avaliar/:rideId",
+      "actor": "PASSENGER",
+      "frame_dimensions": { "width": 390, "height": 844 },
+      "components": ["Driver_Summary_Header", "Star_Rating_Selector_1_to_5", "Praise_Tags_Cloud", "Comment_Field", "Submit_Review_Button"],
+      "backend_connections": {
+        "endpoints": [
+          { "method": "POST", "url": "/api/reviews", "desc": "Grava avaliação e recalcula reputação do condutor" }
+        ],
+        "state_variables": {
+          "rating": "integer (1-5)",
+          "tags": "array[string]",
+          "comment": "string"
+        }
+      },
+      "outbound_routes": [
+        { "target_screen": "screen_01_home", "trigger": "OnReviewSubmitted", "connector_color": "#2563eb" }
+      ]
+    },
+    {
+      "id": "screen_10_perfil_garagem",
+      "name": "10. Meu Perfil & Garagem",
+      "route": "#/perfil",
+      "actor": "BOTH",
+      "frame_dimensions": { "width": 390, "height": 844 },
+      "components": ["User_Profile_Editor", "PIX_Key_Management", "Vehicle_Garage_Grid", "Color_Swatch_Selector", "Add_Vehicle_Modal_Trigger"],
+      "backend_connections": {
+        "endpoints": [
+          { "method": "PUT", "url": "/api/users/profile", "desc": "Atualiza nome, WhatsApp e chave PIX de repasse" },
+          { "method": "POST", "url": "/api/vehicles", "desc": "Cadastra novo veículo com marca, modelo, cor e placa" },
+          { "method": "DELETE", "url": "/api/vehicles/:id", "desc": "Remove veículo da frota" }
+        ],
+        "state_variables": {
+          "name": "string",
+          "phone": "string",
+          "pix_key": "string",
+          "vehicles": "array[Vehicle]"
+        }
+      },
+      "outbound_routes": []
+    },
+    {
+      "id": "screen_11_admin",
+      "name": "11. Painel Administrativo",
+      "route": "#/admin",
+      "actor": "ADMIN",
+      "frame_dimensions": { "width": 390, "height": 844 },
+      "components": ["GMV_Revenue_Cards", "Fee_5pct_Accumulated", "Driver_Validation_Queue", "Refund_Auditing_Log"],
+      "backend_connections": {
+        "endpoints": [
+          { "method": "GET", "url": "/api/admin/metrics", "desc": "Indicadores de desempenho, liquidação e segurança" },
+          { "method": "POST", "url": "/api/admin/drivers/:id/approve", "desc": "Aprova documentação e habilita condutor" }
+        ],
+        "state_variables": {
+          "total_gmv": "decimal",
+          "total_revenue": "decimal",
+          "pending_drivers_count": "integer"
+        }
+      },
+      "outbound_routes": []
+    }
+  ]
+}

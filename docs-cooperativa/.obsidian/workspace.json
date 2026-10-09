@@ -31,12 +31,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "PRD_Plataforma_Viagens_Profissionais.md",
+                "file": "BACKEND_INTEGRATION_SPEC.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "PRD_Plataforma_Viagens_Profissionais"
+              "title": "BACKEND_INTEGRATION_SPEC"
             }
           }
         ]
@@ -205,6 +205,12 @@
   },
   "active": "67324c470f7d7e7c",
   "lastOpenFiles": [
+    "MOC_Frontend.md",
+    "MOC_Geral.md",
+    "MOC_Perfis_Permissoes.md",
+    "PRD_Plataforma_Viagens_Profissionais.md",
+    "MOC_Regras_Negocio.md",
+    "BACKEND_INTEGRATION_SPEC.md",
     "sprints/Sprint_08_Dashboard_Gestao.md",
     "sprints/Sprint_07_Avaliacoes_Cooperativa.md",
     "sprints/Sprint_06_Mensageria_Notificacoes.md",
@@ -223,16 +229,11 @@
     "features/Busca_Compatibilidade_Rotas.md",
     "features/Publicacao_Viagem.md",
     "features/Cadastro_Autenticacao.md",
-    "MOC_Perfis_Permissoes.md",
-    "MOC_Regras_Negocio.md",
-    "MOC_Frontend.md",
     "design/Design_System_BlaBlaCar.md",
-    "MOC_Geral.md",
     "regras",
     "sprints",
     "design",
     "features",
-    "PRD_Plataforma_Viagens_Profissionais.md",
     "Bem-vindo.md"
   ]
 }

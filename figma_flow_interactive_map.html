@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cooperativa — Mapa de Telas, Rotas e Backend (Figma Interactive Board)</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            uber: {
+              black: '#000000',
+              white: '#ffffff',
+              gray: '#f6f6f6',
+              charcoal: '#333333',
+              iron: '#767676',
+              border: '#e5e7eb'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Material Symbols -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <!-- Google Fonts Inter -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      user-select: none;
+      background-color: #0d0e12;
+      color: #f1f5f9;
+      overflow: hidden;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    .canvas-container {
+      background-size: 32px 32px;
+      background-image: radial-gradient(circle, #2a2d3d 1px, rgba(0, 0, 0, 0) 1px);
+    }
+    .frame-card {
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
+    }
+    .frame-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.6);
+    }
+    .connector-path {
+      stroke-dasharray: 8 4;
+      animation: flowLine 30s linear infinite;
+    }
+    @keyframes flowLine {
+      to {
+        stroke-dashoffset: -1000;
+      }
+    }
+  </style>
+</head>
+<body class="w-screen h-screen flex flex-col">
+
+  <!-- Header / Top Bar -->
+  <header class="h-16 bg-[#16181f] border-b border-[#282c3f] px-6 flex items-center justify-between shrink-0 z-30 shadow-md">
+    <div class="flex items-center gap-4">
+      <div class="bg-white text-black p-2 rounded-lg font-bold flex items-center justify-center">
+        <span class="material-symbols-outlined text-xl">account_tree</span>
+      </div>
+      <div>
+        <h1 class="text-sm font-bold text-white tracking-wide uppercase">Cooperativa — Arquitetura de Telas & Backend</h1>
+        <p class="text-xs text-slate-400">11 Telas Mapeadas • Fluxos de Rotas Interativos • Conexão Completa Backend</p>
+      </div>
+    </div>
+
+    <!-- Center Mode Filter -->
+    <div class="flex items-center bg-[#202433] p-1 rounded-lg border border-[#31364d] text-xs">
+      <button onclick="setFilter('ALL')" id="filter-all" class="px-3 py-1.5 rounded-md font-medium transition-colors bg-white text-black font-semibold">Todas as Telas</button>
+      <button onclick="setFilter('PAX')" id="filter-pax" class="px-3 py-1.5 rounded-md font-medium transition-colors text-slate-300 hover:text-white">Fluxo Passageiro</button>
+      <button onclick="setFilter('DRV')" id="filter-drv" class="px-3 py-1.5 rounded-md font-medium transition-colors text-slate-300 hover:text-white">Fluxo Motorista</button>
+      <button onclick="setFilter('ADM')" id="filter-adm" class="px-3 py-1.5 rounded-md font-medium transition-colors text-slate-300 hover:text-white">Painel Admin</button>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="flex items-center gap-3">
+      <button onclick="resetZoom()" class="flex items-center gap-1 px-3 py-1.5 bg-[#202433] hover:bg-[#2c3247] border border-[#31364d] rounded-lg text-xs font-semibold text-white">
+        <span class="material-symbols-outlined text-sm">fit_screen</span> Centralizar
+      </button>
+      <button onclick="exportFigmaJson()" class="flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold text-white transition-colors">
+        <span class="material-symbols-outlined text-sm">download</span> Exportar Dados Figma
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Canvas Workspace -->
+  <div class="flex-1 relative overflow-hidden canvas-container" id="canvas-wrapper">
+    <div id="board" class="absolute left-10 top-10 transform-gpu origin-top-left transition-transform duration-75 ease-out p-12 min-w-[3400px] min-h-[2200px]">
+      
+      <!-- SVG Overlay for Route Connectors / Arrows -->
+      <svg id="svg-connectors" class="absolute inset-0 w-full h-full pointer-events-none z-10" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#3b82f6" />
+          </marker>
+          <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#10b981" />
+          </marker>
+          <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#f59e0b" />
+          </marker>
+        </defs>
+
+        <!-- Connections Lines -->
+        <!-- Home to Buscar -->
+        <path d="M 460 280 C 530 280, 560 280, 630 280" fill="none" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrow)" class="connector-path" />
+        <!-- Buscar to Viagem Details -->
+        <path d="M 990 280 C 1060 280, 1090 280, 1160 280" fill="none" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrow)" class="connector-path" />
+        <!-- Viagem to Modal PIX -->
+        <path d="M 1520 280 C 1590 280, 1620 280, 1690 280" fill="none" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrow-green)" class="connector-path" />
+        <!-- Modal PIX to Minhas Viagens -->
+        <path d="M 1870 540 C 1870 650, 1200 680, 1000 780" fill="none" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrow-green)" class="connector-path" />
+        
+        <!-- Home to Publicar -->
+        <path d="M 280 540 C 280 660, 280 720, 280 780" fill="none" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#arrow-amber)" class="connector-path" />
+        <!-- Publicar to Minhas Viagens (Driver) -->
+        <path d="M 460 980 C 540 980, 560 980, 640 980" fill="none" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#arrow-amber)" class="connector-path" />
+        
+        <!-- Minhas Viagens to Chat -->
+        <path d="M 1000 980 C 1080 980, 1100 980, 1180 980" fill="none" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrow)" class="connector-path" />
+        <!-- Minhas Viagens to Avaliar -->
+        <path d="M 1000 1080 C 1100 1200, 1100 1350, 1180 1420" fill="none" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrow)" class="connector-path" />
+
+        <!-- Minhas Viagens to Perfil -->
+        <path d="M 820 1280 C 820 1350, 820 1380, 820 1440" fill="none" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#arrow)" class="connector-path" />
+      </svg>
+
+      <!-- Grid of Frames / Screens -->
+      <div class="grid grid-cols-5 gap-16 relative z-20">
+
+        <!-- Screen 1: Home -->
+        <div id="screen-home" class="w-[360px] bg-[#1a1c26] border-2 border-blue-500/50 rounded-xl overflow-hidden frame-card shadow-xl cursor-pointer" onclick="selectScreen('home')">
+          <div class="bg-blue-600 px-4 py-2.5 flex items-center justify-between">
+            <span class="text-xs font-bold text-white tracking-wide uppercase">01. Home & Hero</span>
+            <span class="text-[11px] bg-black/40 px-2 py-0.5 rounded text-blue-200 font-mono">#/</span>
+          </div>
+          <div class="p-4 bg-white text-black min-h-[460px] text-xs flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="bg-black text-white p-2.5 rounded-lg flex items-center justify-between font-bold">
+                <span>Cooperativa</span>
+                <span class="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">Nordeste</span>
+              </div>
+              <div class="border border-gray-300 p-3 rounded-lg space-y-2 bg-gray-50">
+                <div class="font-bold text-gray-800">Para onde você quer ir?</div>
+                <input class="w-full border p-1.5 rounded bg-white text-[11px]" value="Fortaleza, CE" disabled />
+                <input class="w-full border p-1.5 rounded bg-white text-[11px]" value="Juazeiro do Norte, CE" disabled />
+                <button class="w-full bg-black text-white py-2 rounded font-bold">Buscar Viagens</button>
+              </div>
+              <div class="text-[10px] text-gray-500 font-medium">Rotas Populares: Sobral, Caruaru, Mossoró, Feira de Santana.</div>
+            </div>
+            <div class="bg-blue-50 border border-blue-200 p-2 rounded text-[10px] text-blue-900 font-semibold flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm text-blue-700">dns</span>
+              <span>Backend: GET /api/rides/highlights</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 2: Busca -->
+        <div id="screen-buscar" class="w-[360px] bg-[#1a1c26] border-2 border-blue-500/50 rounded-xl overflow-hidden frame-card shadow-xl cursor-pointer" onclick="selectScreen('buscar')">
+          <div class="bg-blue-600 px-4 py-2.5 flex items-center justify-between">
+            <span class="text-xs font-bold text-white tracking-wide uppercase">02. Busca & Filtros</span>
+            <span class="text-[11px] bg-black/40 px-2 py-0.5 rounded text-blue-200 font-mono">#/buscar</span>
+          </div>
+          <div class="p-4 bg-white text-black min-h-[460px] text-xs flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex items-center gap-1 text-[11px] text-gray-600 border-b pb-2">
+                <span class="font-bold text-black">Filtros:</span> Manhã • Com Ar • Bagagem
+              </div>
+              <div class="border border-gray-200 p-3 rounded-lg shadow-xs space-y-2">
+                <div class="flex items-center justify-between font-bold text-sm">
+                  <span>07:00 → 13:30</span>
+                  <span class="text-black text-base">R$ 65,00</span>
+                </div>
+                <div class="text-gray-600 text-[11px]">Marcos Silva (4.95 ★) • Corolla Prata</div>
+                <div class="flex items-center gap-2 text-[10px] text-gray-500">
+                  <span class="bg-gray-100 px-1.5 py-0.5 rounded">3 vagas</span>
+                  <span class="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">Ar-condicionado</span>
+                </div>
+              </div>
+            </div>
+            <div class="bg-blue-50 border border-blue-200 p-2 rounded text-[10px] text-blue-900 font-semibold flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm text-blue-700">filter_alt</span>
+              <span>Backend: GET /api/rides?origin&dest&date</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 3: Detalhes -->
+        <div id="screen-viagem" class="w-[360px] bg-[#1a1c26] border-2 border-blue-500/50 rounded-xl overflow-hidden frame-card shadow-xl cursor-pointer" onclick="selectScreen('viagem')">
+          <div class="bg-blue-600 px-4 py-2.5 flex items-center justify-between">
+            <span class="text-xs font-bold text-white tracking-wide uppercase">03. Detalhes & Reserva</span>
+            <span class="text-[11px] bg-black/40 px-2 py-0.5 rounded text-blue-200 font-mono">#/viagem/:id</span>
+          </div>
+          <div class="p-4 bg-white text-black min-h-[460px] text-xs flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="border-b pb-2">
+                <div class="text-xs font-bold">Fortaleza → Juazeiro do Norte</div>
+                <div class="text-gray-500 text-[11px]">490 km • Duração estimada: 6h 30m</div>
+              </div>
+              <div class="bg-gray-50 p-2.5 rounded-lg border text-[11px] space-y-1">
+                <div class="flex justify-between"><span>Subtotal (1 vaga):</span><b>R$ 65,00</b></div>
+                <div class="flex justify-between text-gray-500"><span>Taxa Cooperativa (5%):</span><span>R$ 3,25</span></div>
+                <div class="flex justify-between font-bold text-black border-t pt-1"><span>Total:</span><span>R$ 68,25</span></div>
+              </div>
+              <button class="w-full bg-black text-white py-2.5 rounded-lg font-bold">Reservar com PIX</button>
+            </div>
+            <div class="bg-blue-50 border border-blue-200 p-2 rounded text-[10px] text-blue-900 font-semibold flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm text-blue-700">payments</span>
+              <span>Backend: POST /api/bookings</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 12: Modal PIX -->
+        <div id="screen-pix" class="w-[360px] bg-[#1a1c26] border-2 border-emerald-500/60 rounded-xl overflow-hidden frame-card shadow-xl cursor-pointer" onclick="selectScreen('pix')">
+          <div class="bg-emerald-600 px-4 py-2.5 flex items-center justify-between">
+            <span class="text-xs font-bold text-white tracking-wide uppercase">12. Modal PIX Dinâmico</span>
+            <span class="text-[11px] bg-black/40 px-2 py-0.5 rounded text-emerald-100 font-mono">Overlay</span>
+          </div>
+          <div class="p-4 bg-white text-black min-h-[460px] text-xs flex flex-col justify-between">
+            <div class="space-y-3 text-center">
+              <div class="font-bold text-sm">Pague via PIX Imediato</div>
+              <div class="w-32 h-32 bg-gray-100 border-2 border-dashed border-gray-300 mx-auto rounded flex items-center justify-center text-[11px] text-gray-500">
+                [QR Code PIX]
+              </div>
+              <div class="bg-gray-50 p-2 rounded border text-[10px] font-mono break-all text-left">
+                00020126580014br.gov.bcb.pix...
+              </div>
+              <button class="w-full bg-emerald-700 text-white py-2 rounded font-bold">Copiar Código PIX</button>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 p-2 rounded text-[10px] text-emerald-900 font-semibold flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm text-emerald-700">sync</span>
+              <span>Gateway: Webhook Instant PIX</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 4: Perfil Motorista -->
+        <div id="screen-motorista" class="w-[360px] bg-[#1a1c26] border-2 border-indigo-500/50 rounded-xl overflow-hidden frame-card shadow-xl cursor-pointer" onclick="selectScreen('motorista')">
+          <div class="bg-indigo-600 px-4 py-2.5 flex items-center justify-between">
+            <span class="text-xs font-bold text-white tracking-wide uppercase">04. Perfil Motorista</span>
+            <span class="text-[11px] bg-black/40 px-2 py-0.5 rounded text-indigo-100 font-mono">#/motorista/:id</span>
+          </div>
+          <div class="p-4 bg-white text-black min-h-[460px] text-xs flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gray-200 rounded-full"></div>
+                <div>
+                  <div class="font-bold text-sm">Marcos Silva</div>
+                  <div class="text-amber-600 font-bold">4.95 ★ (142 viagens)</div>
+                </div>
+              </div>
+              <div class="border p-2.5 rounded-lg bg-gray-50 text-[11px] space-y-1">
+                <div class="font-bold">Veículo:</div>
+                <div>Toyota Corolla 2022 • Prata</div>
+                <div class="font-mono text-gray-500">Placa: BRA2E19</div>
+              </div>
+            </div>
+            <div class="bg-indigo-50 border border-indigo-200 p-2 rounded text-[10px] text-indigo-900 font-semibold flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm text-indigo-700">badge</span>
+              <span>Backend: GET /api/drivers/:id</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 7: Publicar -->
+        <div id="screen-publicar" class="w-[360px] bg-[#1a1c26] border-2 border-amber-500/50 rounded-xl overflow-hidden frame-card shadow-xl cursor-pointer" onclick="selectScreen('publicar')">
+          <div class="bg-amber-600 px-4 py-2.5 flex items-center justify-between">
+            <span class="text-xs font-bold text-white tracking-wide uppercase">07. Publicar Viagem</span>
+            <span class="text-[11px] bg-black/40 px-2 py-0.5 rounded text-amber-100 font-mono">#/publicar</span>
+          </div>
+          <div class="p-4 bg-white text-black min-h-[460px] text-xs flex flex-col justify-between">
+            <div class="space-y-2.5">
+              <div class="font-bold text-gray-800">Oferecer Carona (Motorista)</div>
+              <input class="w-full border p-1.5 rounded bg-white text-[11px]" placeholder="Origem" value="Recife, PE" disabled />
+              <input class="w-full border p-1.5 rounded bg-white text-[11px]" placeholder="Destino" value="Caruaru, PE" disabled />
+              <div class="flex gap-2">
+                <input class="w-1/2 border p-1.5 rounded bg-white text-[11px]" value="10/10/2026" disabled />
+                <input class="w-1/2 border p-1.5 rounded bg-white text-[11px]" value="08:00" disabled />
+              </div>
+              <div class="bg-amber-50 border border-amber-200 p-2 rounded text-[11px] text-amber-900 font-bold">
+                Preço Sugerido: R$ 35,00 / vaga
+              </div>
+              <button class="w-full bg-black text-white py-2 rounded font-bold">Publicar Viagem</button>
+            </div>
+            <div class="bg-amber-50 border border-amber-200 p-2 rounded text-[10px] text-amber-900 font-semibold flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm text-amber-700">add_road</span>
+              <span>Backend: POST /api/rides</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 5/6: Minhas Viagens -->
+        <div id="screen-minhas-viagens" class="w-[360px] bg-[#1a1c26] border-2 border-emerald-500/50 rounded-xl overflow-hidden frame-card shadow-xl cursor-pointer" onclick="selectScreen('minhas-viagens')">
+          <div class="bg-emerald-600 px-4 py-2.5 flex items-center justify-between">
+            <span class="text-xs font-bold text-white tracking-wide uppercase">05 & 06. Minhas Viagens</span>
+            <span class="text-[11px] bg-black/40 px-2 py-0.5 rounded text-emerald-100 font-mono">#/minhas-viagens</span>
+          </div>
+          <div class="p-4 bg-white text-black min-h-[460px] text-xs flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex gap-2 border-b pb-2 text-[11px] font-bold">
+                <span class="border-b-2 border-black pb-1">Passageiro (1)</span>
+                <span class="text-gray-400">Motorista (2)</span>
+              </div>
+              <div class="border p-2.5 rounded-lg bg-gray-50 space-y-1.5">
+                <div class="flex justify-between font-bold">
+                  <span>Fortaleza → Juazeiro</span>
+                  <span class="text-emerald-600 font-bold">Confirmado</span>
+                </div>
+                <div class="text-[10px] text-gray-500">10 de Out • 07:00 • 1 vaga</div>
+                <div class="flex gap-2 pt-1">
+                  <button class="flex-1 bg-black text-white py-1 rounded text-[10px]">Chat</button>
+                  <button class="flex-1 border border-red-500 text-red-600 py-1 rounded text-[10px]">Cancelar</button>
+                </div>
+              </div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 p-2 rounded text-[10px] text-emerald-900 font-semibold flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm text-emerald-700">confirmation_number</span>
+              <span>Backend: GET /api/bookings/my</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 8: Chat -->
+        <div id="screen-chat" class="w-[360px] bg-[#1a1c26] border-2 border-cyan-500/50 rounded-xl overflow-hidden frame-card shadow-xl cursor-pointer" onclick="selectScreen('chat')">
+          <div class="bg-cyan-600 px-4 py-2.5 flex items-center justify-between">
+            <span class="text-xs font-bold text-white tracking-wide uppercase">08. Chat em Tempo Real</span>
+            <span class="text-[11px] bg-black/40 px-2 py-0.5 rounded text-cyan-100 font-mono">#/chat/:id</span>
+          </div>
+          <div class="p-4 bg-white text-black min-h-[460px] text-xs flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="border-b pb-2 font-bold text-gray-700">Chat da Viagem #4902</div>
+              <div class="space-y-2 text-[11px]">
+                <div class="bg-gray-100 p-2 rounded text-left max-w-[80%]"><b>Marcos:</b> Olá! Estarei na entrada principal da rodoviária às 06:45.</div>
+                <div class="bg-black text-white p-2 rounded text-right ml-auto max-w-[80%]">Combinado! Estarei de camisa azul.</div>
+              </div>
+            </div>
+            <div class="bg-cyan-50 border border-cyan-200 p-2 rounded text-[10px] text-cyan-900 font-semibold flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm text-cyan-700">forum</span>
+              <span>Realtime: WSS /realtime/rides:chat</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 9: Avaliar -->
+        <div id="screen-avaliar" class="w-[360px] bg-[#1a1c26] border-2 border-yellow-500/50 rounded-xl overflow-hidden frame-card shadow-xl cursor-pointer" onclick="selectScreen('avaliar')">
+          <div class="bg-yellow-600 px-4 py-2.5 flex items-center justify-between">
+            <span class="text-xs font-bold text-white tracking-wide uppercase">09. Avaliação de Viagem</span>
+            <span class="text-[11px] bg-black/40 px-2 py-0.5 rounded text-yellow-100 font-mono">#/avaliar/:id</span>
+          </div>
+          <div class="p-4 bg-white text-black min-h-[460px] text-xs flex flex-col justify-between">
+            <div class="space-y-3 text-center">
+              <div class="font-bold text-sm">Como foi sua viagem com Marcos?</div>
+              <div class="text-amber-500 text-2xl tracking-widest">★★★★★</div>
+              <div class="flex flex-wrap gap-1 justify-center text-[10px]">
+                <span class="bg-gray-100 border px-2 py-1 rounded">Pontual</span>
+                <span class="bg-gray-100 border px-2 py-1 rounded">Direção Segura</span>
+                <span class="bg-gray-100 border px-2 py-1 rounded">Carro Limpo</span>
+              </div>
+              <button class="w-full bg-black text-white py-2 rounded font-bold">Enviar Avaliação</button>
+            </div>
+            <div class="bg-yellow-50 border border-yellow-200 p-2 rounded text-[10px] text-yellow-900 font-semibold flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm text-yellow-700">rate_review</span>
+              <span>Backend: POST /api/reviews</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 10: Perfil & Garagem -->
+        <div id="screen-perfil" class="w-[360px] bg-[#1a1c26] border-2 border-purple-500/50 rounded-xl overflow-hidden frame-card shadow-xl cursor-pointer" onclick="selectScreen('perfil')">
+          <div class="bg-purple-600 px-4 py-2.5 flex items-center justify-between">
+            <span class="text-xs font-bold text-white tracking-wide uppercase">10. Perfil & Garagem</span>
+            <span class="text-[11px] bg-black/40 px-2 py-0.5 rounded text-purple-100 font-mono">#/perfil</span>
+          </div>
+          <div class="p-4 bg-white text-black min-h-[460px] text-xs flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="space-y-1">
+                <label class="text-[10px] font-bold text-gray-600">Chave PIX (Para Repasse):</label>
+                <input class="w-full border p-1.5 rounded text-[11px] bg-gray-50 font-mono" value="85999887766" disabled />
+              </div>
+              <div class="border p-2.5 rounded-lg bg-gray-50 space-y-1">
+                <div class="font-bold flex justify-between"><span>Veículo Principal</span><span class="text-xs text-blue-600">Editar</span></div>
+                <div class="text-[11px]">Toyota Corolla • Prata (BRA2E19)</div>
+              </div>
+            </div>
+            <div class="bg-purple-50 border border-purple-200 p-2 rounded text-[10px] text-purple-900 font-semibold flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm text-purple-700">garage</span>
+              <span>Backend: PUT /api/users/profile</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 11: Admin -->
+        <div id="screen-admin" class="w-[360px] bg-[#1a1c26] border-2 border-rose-500/50 rounded-xl overflow-hidden frame-card shadow-xl cursor-pointer" onclick="selectScreen('admin')">
+          <div class="bg-rose-600 px-4 py-2.5 flex items-center justify-between">
+            <span class="text-xs font-bold text-white tracking-wide uppercase">11. Painel Admin</span>
+            <span class="text-[11px] bg-black/40 px-2 py-0.5 rounded text-rose-100 font-mono">#/admin</span>
+          </div>
+          <div class="p-4 bg-white text-black min-h-[460px] text-xs flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="grid grid-cols-2 gap-2">
+                <div class="bg-gray-100 p-2 rounded">
+                  <div class="text-[10px] text-gray-500">GMV Bruto</div>
+                  <div class="font-bold text-sm">R$ 142.800</div>
+                </div>
+                <div class="bg-gray-100 p-2 rounded">
+                  <div class="text-[10px] text-gray-500">Taxa 5%</div>
+                  <div class="font-bold text-sm text-emerald-700">R$ 7.140</div>
+                </div>
+              </div>
+              <div class="text-[11px] border-t pt-2 space-y-1">
+                <div class="font-bold">Aprovações de Motoristas (3 pendentes)</div>
+                <div class="font-bold text-amber-700">Auditoria de Estornos (0 disputas)</div>
+              </div>
+            </div>
+            <div class="bg-rose-50 border border-rose-200 p-2 rounded text-[10px] text-rose-900 font-semibold flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm text-rose-700">admin_panel_settings</span>
+              <span>Backend: GET /api/admin/metrics</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Inspector / Sidebar (Variables & Specs) -->
+    <div id="inspector-panel" class="absolute right-0 top-0 bottom-0 w-96 bg-[#161822] border-l border-[#282c3f] p-6 overflow-y-auto shadow-2xl z-40">
+      <div class="flex items-center justify-between pb-4 border-b border-[#282c3f]">
+        <h2 id="inspector-title" class="font-bold text-sm text-white uppercase tracking-wider">Variáveis de Backend</h2>
+        <span id="inspector-badge" class="px-2 py-0.5 rounded text-xs bg-blue-500/20 text-blue-400 font-mono">#/</span>
+      </div>
+      
+      <div id="inspector-content" class="mt-4 space-y-5 text-xs text-slate-300">
+        <!-- Dynamic content filled on click -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SCREEN_DATA = {
+      home: {
+        title: "01. Home & Hero Transit",
+        route: "#/",
+        role: "Todos (Público)",
+        variables: [
+          { name: "search_origin", type: "string", desc: "Cidade/Local de embarque selecionado" },
+          { name: "search_destination", type: "string", desc: "Cidade/Local de desembarque" },
+          { name: "search_date", type: "date (YYYY-MM-DD)", desc: "Data de partida pretendida" },
+          { name: "search_seats", type: "number (1-4)", desc: "Quantidade de assentos solicitados" }
+        ],
+        endpoints: [
+          { method: "GET", path: "/api/rides/highlights", desc: "Carrega caronas populares e de alta demanda" },
+          { method: "GET", path: "/api/stats/cooperative", desc: "Estatísticas em tempo real (viagens, passageiros, notas)" }
+        ],
+        dbEntities: ["rides", "users"]
+      },
+      buscar: {
+        title: "02. Busca e Filtros",
+        route: "#/buscar",
+        role: "Passageiro",
+        variables: [
+          { name: "time_filter", type: "enum", desc: "MORNING (05-11h), AFTERNOON (12-17h), NIGHT (18-23h)" },
+          { name: "only_ac", type: "boolean", desc: "Filtro de apenas carros com ar-condicionado" },
+          { name: "luggage_allowed", type: "boolean", desc: "Filtro de bagagem inclusa no porta-malas" },
+          { name: "max_price", type: "decimal", desc: "Teto máximo de preço por assento" }
+        ],
+        endpoints: [
+          { method: "GET", path: "/api/rides?origin={}&dest={}&date={}", desc: "Retorna a lista filtrada de caronas disponíveis" }
+        ],
+        dbEntities: ["rides", "vehicles", "users"]
+      },
+      viagem: {
+        title: "03. Detalhes da Viagem & Reserva",
+        route: "#/viagem/:id",
+        role: "Passageiro",
+        variables: [
+          { name: "ride_id", type: "uuid", desc: "Identificador único da viagem selecionada" },
+          { name: "seats_count", type: "integer", desc: "Número de vagas que o passageiro está reservando" },
+          { name: "subtotal_amount", type: "decimal", desc: "price_per_seat * seats_count" },
+          { name: "fee_amount", type: "decimal", desc: "subtotal * 0.05 (Taxa 5% cooperativa)" },
+          { name: "total_amount", type: "decimal", desc: "subtotal + fee_amount" }
+        ],
+        endpoints: [
+          { method: "POST", path: "/api/bookings", desc: "Cria registro de reserva com status PENDING_PIX" }
+        ],
+        dbEntities: ["bookings", "rides", "users"]
+      },
+      pix: {
+        title: "12. Modal PIX Dinâmico",
+        route: "Overlay / Modal",
+        role: "Passageiro / Gateway",
+        variables: [
+          { name: "pix_code", type: "string (EMV)", desc: "Código PIX Copia e Cola gerado pelo gateway" },
+          { name: "pix_qr_base64", type: "string", desc: "Imagem do QR Code em Base64" },
+          { name: "expires_in_seconds", type: "integer (600)", desc: "Tempo limite de 10 minutos para expiração" }
+        ],
+        endpoints: [
+          { method: "POST", path: "/api/webhooks/pix", desc: "Notificação instantânea de confirmação do Banco Central" }
+        ],
+        dbEntities: ["bookings", "transactions"]
+      },
+      motorista: {
+        title: "04. Perfil Público do Motorista",
+        route: "#/motorista/:driverId",
+        role: "Passageiro / Condutor",
+        variables: [
+          { name: "driver_id", type: "uuid", desc: "ID do motorista cooperado" },
+          { name: "rating", type: "float", desc: "Nota média calculada das avaliações (ex: 4.95)" },
+          { name: "total_trips", type: "integer", desc: "Quantidade total de caronas completadas" },
+          { name: "vehicles", type: "array", desc: "Lista de veículos cadastrados e validados" }
+        ],
+        endpoints: [
+          { method: "GET", path: "/api/drivers/:id", desc: "Dados completos de reputação e viagens ativas" }
+        ],
+        dbEntities: ["users", "vehicles", "reviews"]
+      },
+      publicar: {
+        title: "07. Publicar Viagem",
+        route: "#/publicar",
+        role: "Motorista",
+        variables: [
+          { name: "origin_city & origin_spot", type: "string", desc: "Ponto de encontro exato de saída" },
+          { name: "dest_city & dest_spot", type: "string", desc: "Ponto de desembarque final" },
+          { name: "departure_datetime", type: "timestamp", desc: "Data e horário de partida" },
+          { name: "price_per_seat", type: "decimal", desc: "Valor por passageiro (com precificação inteligente)" }
+        ],
+        endpoints: [
+          { method: "POST", path: "/api/rides", desc: "Insere nova oferta de viagem no banco de dados" }
+        ],
+        dbEntities: ["rides", "vehicles"]
+      },
+      "minhas-viagens": {
+        title: "05 & 06. Minhas Viagens",
+        route: "#/minhas-viagens",
+        role: "Passageiro & Motorista",
+        variables: [
+          { name: "booking_status", type: "enum", desc: "CONFIRMED, PENDING_APPROVAL, CANCELLED" },
+          { name: "payment_status", type: "enum", desc: "PAID, PENDING_PIX, REFUNDED" }
+        ],
+        endpoints: [
+          { method: "GET", path: "/api/bookings/my", desc: "Lista todas as viagens reservadas pelo usuário" },
+          { method: "POST", path: "/api/bookings/:id/cancel", desc: "Cancela reserva e calcula estorno PIX" }
+        ],
+        dbEntities: ["bookings", "rides", "transactions"]
+      },
+      chat: {
+        title: "08. Chat em Tempo Real",
+        route: "#/chat/:rideId",
+        role: "Passageiro & Motorista",
+        variables: [
+          { name: "message_id", type: "uuid", desc: "ID único da mensagem" },
+          { name: "sender_id", type: "uuid", desc: "ID do remetente" },
+          { name: "message_text", type: "text", desc: "Conteúdo da mensagem enviada" }
+        ],
+        endpoints: [
+          { method: "WSS", path: "/realtime/v1/rides:{id}:chat", desc: "Canal bidirecional WebSocket para mensageria" }
+        ],
+        dbEntities: ["chat_messages"]
+      },
+      avaliar: {
+        title: "09. Avaliação de Viagem",
+        route: "#/avaliar/:rideId",
+        role: "Passageiro",
+        variables: [
+          { name: "rating", type: "integer (1-5)", desc: "Nota em estrelas" },
+          { name: "tags", type: "array", desc: "Tags de elogio rápido selecionadas" },
+          { name: "comment", type: "text", desc: "Comentário detalhado da experiência" }
+        ],
+        endpoints: [
+          { method: "POST", path: "/api/reviews", desc: "Grava avaliação e recalcula nota média do motorista" }
+        ],
+        dbEntities: ["reviews", "users"]
+      },
+      perfil: {
+        title: "10. Meu Perfil & Garagem",
+        route: "#/perfil",
+        role: "Ambos",
+        variables: [
+          { name: "pix_key", type: "string", desc: "Chave PIX cadastrada para recebimento" },
+          { name: "vehicle_specs", type: "object", desc: "Marca, modelo, cor exata (swatch) e placa" }
+        ],
+        endpoints: [
+          { method: "PUT", path: "/api/users/profile", desc: "Atualiza dados cadastrais" },
+          { method: "POST", path: "/api/vehicles", desc: "Cadastra novo veículo na garagem" }
+        ],
+        dbEntities: ["users", "vehicles"]
+      },
+      admin: {
+        title: "11. Painel Admin Cooperativa",
+        route: "#/admin",
+        role: "Administrador",
+        variables: [
+          { name: "total_gmv", type: "decimal", desc: "Volume total transacionado na plataforma" },
+          { name: "coop_revenue", type: "decimal", desc: "Receita líquida da taxa de 5%" }
+        ],
+        endpoints: [
+          { method: "GET", path: "/api/admin/metrics", desc: "Relatório consolidado de métricas financeiras" }
+        ],
+        dbEntities: ["transactions", "rides", "bookings", "users"]
+      }
+    };
+
+    function selectScreen(key) {
+      const data = SCREEN_DATA[key];
+      if (!data) return;
+
+      document.getElementById('inspector-title').innerText = data.title;
+      document.getElementById('inspector-badge').innerText = data.route;
+
+      let html = `
+        <div class="bg-[#1e2230] p-3 rounded-lg border border-[#2d3348]">
+          <span class="text-slate-400 block text-[10px] uppercase font-bold">Ator Principal:</span>
+          <span class="text-white font-semibold">${data.role}</span>
+        </div>
+
+        <div>
+          <h3 class="font-bold text-white uppercase text-[11px] mb-2 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-blue-400">code</span>
+            Variáveis de Estado & Payload
+          </h3>
+          <div class="space-y-2">
+            ${data.variables.map(v => `
+              <div class="bg-[#12141c] p-2.5 rounded border border-[#282c3f]">
+                <div class="flex justify-between font-mono text-blue-300 font-bold">
+                  <span>${v.name}</span>
+                  <span class="text-[10px] text-slate-400">${v.type}</span>
+                </div>
+                <div class="text-[11px] text-slate-300 mt-1">${v.desc}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div>
+          <h3 class="font-bold text-white uppercase text-[11px] mb-2 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-emerald-400">api</span>
+            Endpoints / Conexões
+          </h3>
+          <div class="space-y-2">
+            ${data.endpoints.map(e => `
+              <div class="bg-[#12141c] p-2.5 rounded border border-[#282c3f]">
+                <div class="flex items-center gap-2">
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${e.method === 'GET' ? 'bg-blue-900/60 text-blue-300' : e.method === 'POST' ? 'bg-emerald-900/60 text-emerald-300' : 'bg-purple-900/60 text-purple-300'}">${e.method}</span>
+                  <span class="font-mono text-white text-[11px]">${e.path}</span>
+                </div>
+                <div class="text-[10px] text-slate-400 mt-1">${e.desc}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div>
+          <h3 class="font-bold text-white uppercase text-[11px] mb-2 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-purple-400">database</span>
+            Tabelas Relacionadas
+          </h3>
+          <div class="flex flex-wrap gap-1.5">
+            ${data.dbEntities.map(ent => `<span class="bg-[#202538] text-purple-200 px-2 py-1 rounded font-mono text-[10px] border border-[#343b56]">${ent}</span>`).join('')}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('inspector-content').innerHTML = html;
+    }
+
+    // Canvas Zoom & Pan
+    let scale = 0.85;
+    const board = document.getElementById('board');
+    function applyTransform() {
+      board.style.transform = `scale(${scale})`;
+    }
+
+    function resetZoom() {
+      scale = 0.85;
+      applyTransform();
+    }
+
+    function setFilter(type) {
+      document.querySelectorAll('#filter-all, #filter-pax, #filter-drv, #filter-adm').forEach(btn => {
+        btn.className = "px-3 py-1.5 rounded-md font-medium transition-colors text-slate-300 hover:text-white";
+      });
+
+      if (type === 'ALL') {
+        document.getElementById('filter-all').className = "px-3 py-1.5 rounded-md font-medium transition-colors bg-white text-black font-semibold";
+        document.querySelectorAll('.frame-card').forEach(f => f.style.opacity = '1');
+      } else if (type === 'PAX') {
+        document.getElementById('filter-pax').className = "px-3 py-1.5 rounded-md font-medium transition-colors bg-white text-black font-semibold";
+        document.querySelectorAll('.frame-card').forEach(f => f.style.opacity = '0.25');
+        ['screen-home', 'screen-buscar', 'screen-viagem', 'screen-pix', 'screen-minhas-viagens', 'screen-chat', 'screen-avaliar'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.opacity = '1';
+        });
+      } else if (type === 'DRV') {
+        document.getElementById('filter-drv').className = "px-3 py-1.5 rounded-md font-medium transition-colors bg-white text-black font-semibold";
+        document.querySelectorAll('.frame-card').forEach(f => f.style.opacity = '0.25');
+        ['screen-home', 'screen-publicar', 'screen-minhas-viagens', 'screen-chat', 'screen-motorista', 'screen-perfil'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.opacity = '1';
+        });
+      } else if (type === 'ADM') {
+        document.getElementById('filter-adm').className = "px-3 py-1.5 rounded-md font-medium transition-colors bg-white text-black font-semibold";
+        document.querySelectorAll('.frame-card').forEach(f => f.style.opacity = '0.25');
+        const el = document.getElementById('screen-admin');
+        if (el) el.style.opacity = '1';
+      }
+    }
+
+    function exportFigmaJson() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(SCREEN_DATA, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "cooperativa-figma-screens-and-backend.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    // Initialize Default View
+    applyTransform();
+    selectScreen('home');
+  </script>
+</body>
+</html>
