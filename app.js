@@ -465,6 +465,7 @@ const INITIAL_STATE = {
         id: 'veh-001',
         brand: 'Toyota',
         model: 'Corolla Sedan 2.0',
+        color: 'prata',
         plate: 'BRA-2E19',
         renavam: '98765432101',
         year: 2023,
@@ -479,6 +480,7 @@ const INITIAL_STATE = {
       state: 'CE',
       brand: 'Toyota',
       model: 'Corolla Sedan 2.0',
+      color: 'prata',
       renavam: '98765432101',
       year: 2023,
       hasAC: true,
@@ -514,6 +516,7 @@ const INITIAL_STATE = {
       vehicle: {
         brand: 'Toyota',
         model: 'Corolla 2.0',
+        color: 'prata',
         plate: 'CE-FOR-2023',
         year: 2023,
         hasAC: true,
@@ -543,6 +546,7 @@ const INITIAL_STATE = {
       vehicle: {
         brand: 'Honda',
         model: 'Civic Touring',
+        color: 'preto',
         plate: 'PE-REC-9988',
         year: 2023,
         hasAC: true,
@@ -572,6 +576,7 @@ const INITIAL_STATE = {
       vehicle: {
         brand: 'Volkswagen',
         model: 'T-Cross',
+        color: 'vermelho',
         plate: 'BA-SSA-4411',
         year: 2022,
         hasAC: true,
@@ -601,6 +606,7 @@ const INITIAL_STATE = {
       vehicle: {
         brand: 'Jeep',
         model: 'Renegade Longitude',
+        color: 'azul',
         plate: 'PB-JPA-5522',
         year: 2023,
         hasAC: true,
@@ -736,7 +742,7 @@ class AppStore {
     renderHeader();
   }
 
-  addVehicle({ brand, model, plate, renavam, year, hasAC, hasUSB, isPrimary }) {
+  addVehicle({ brand, model, plate, renavam, year, color, hasAC, hasUSB, isPrimary }) {
     if (!Array.isArray(this.state.currentUser.vehicles)) {
       this.state.currentUser.vehicles = [];
     }
@@ -752,6 +758,7 @@ class AppStore {
       id: newId,
       brand: (brand || '').trim(),
       model: (model || '').trim(),
+      color: (color || 'branco').trim().toLowerCase(),
       plate: (plate || '').toUpperCase().trim(),
       renavam: (renavam || '').trim(),
       year: parseInt(year, 10) || new Date().getFullYear(),
@@ -768,7 +775,7 @@ class AppStore {
     renderApp();
   }
 
-  updateVehicle(vehicleId, { brand, model, plate, renavam, year, hasAC, hasUSB, isPrimary }) {
+  updateVehicle(vehicleId, { brand, model, plate, renavam, year, color, hasAC, hasUSB, isPrimary }) {
     if (!Array.isArray(this.state.currentUser.vehicles)) return;
     const idx = this.state.currentUser.vehicles.findIndex(v => v.id === vehicleId);
     if (idx === -1) return;
@@ -781,6 +788,7 @@ class AppStore {
       ...this.state.currentUser.vehicles[idx],
       brand: (brand || '').trim(),
       model: (model || '').trim(),
+      color: (color || this.state.currentUser.vehicles[idx].color || 'branco').trim().toLowerCase(),
       plate: (plate || '').toUpperCase().trim(),
       renavam: (renavam || '').trim(),
       year: parseInt(year, 10) || this.state.currentUser.vehicles[idx].year,
@@ -1354,6 +1362,7 @@ const DRIVERS_DATABASE = {
     vehicle: {
       brand: 'Toyota',
       model: 'Corolla 2.0 XEi',
+      color: 'prata',
       plate: 'CE-FOR-2023',
       year: 2023,
       hasAC: true,
@@ -1382,6 +1391,7 @@ const DRIVERS_DATABASE = {
     vehicle: {
       brand: 'Honda',
       model: 'Civic Touring 1.5 Turbo',
+      color: 'preto',
       plate: 'PE-REC-9988',
       year: 2023,
       hasAC: true,
@@ -1408,6 +1418,7 @@ const DRIVERS_DATABASE = {
     vehicle: {
       brand: 'Jeep',
       model: 'Compass Limited',
+      color: 'vermelho',
       plate: 'BA-SAL-1020',
       year: 2024,
       hasAC: true,
@@ -1597,15 +1608,69 @@ function selectVehicleModel(brand, model) {
   const input = document.getElementById('veh-brand-model-input');
   const brandInput = document.getElementById('veh-brand');
   const modelInput = document.getElementById('veh-model');
+  const colorInput = document.getElementById('veh-form-color');
   const dropdown = document.getElementById('veh-model-dropdown');
   const previewImg = document.getElementById('veh-modal-preview-img');
 
   if (input) input.value = `${brand} ${model}`;
   if (brandInput) brandInput.value = brand;
   if (modelInput) modelInput.value = model;
-  if (previewImg) previewImg.src = getVehicleImage(brand, model);
+  
+  const currentColor = colorInput ? colorInput.value : 'branco';
+  if (previewImg) previewImg.src = getVehicleImage(brand, model, currentColor);
 
   if (dropdown) dropdown.classList.add('hidden');
+}
+
+// ==========================================
+// PALETA E DINÂMICA DE CORES DE VEÍCULOS
+// ==========================================
+
+const VEHICLE_COLORS = [
+  { id: 'branco', name: 'Branco', hex: '#FFFFFF', stops: ['#CECBCB', '#FFFFFF'], border: 'border-slate-300', textClass: 'text-slate-800' },
+  { id: 'prata', name: 'Prata', hex: '#CBD5E1', stops: ['#94A3B8', '#F1F5F9'], border: 'border-slate-400', textClass: 'text-slate-800' },
+  { id: 'cinza', name: 'Cinza / Chumbo', hex: '#4B5563', stops: ['#374151', '#6B7280'], border: 'border-gray-600', textClass: 'text-white' },
+  { id: 'preto', name: 'Preto', hex: '#18181B', stops: ['#18181B', '#474747'], border: 'border-black', textClass: 'text-white' },
+  { id: 'vermelho', name: 'Vermelho', hex: '#DC2626', stops: ['#7F1D1D', '#EF4444'], border: 'border-red-600', textClass: 'text-white' },
+  { id: 'azul', name: 'Azul', hex: '#2563EB', stops: ['#1E3A8A', '#60A5FA'], border: 'border-blue-600', textClass: 'text-white' },
+  { id: 'vinho', name: 'Vinho / Bordô', hex: '#831843', stops: ['#500724', '#BE185D'], border: 'border-pink-900', textClass: 'text-white' },
+  { id: 'verde', name: 'Verde', hex: '#059669', stops: ['#064E3B', '#34D399'], border: 'border-emerald-600', textClass: 'text-white' },
+  { id: 'amarelo', name: 'Amarelo / Dourado', hex: '#EAB308', stops: ['#713F12', '#FACC15'], border: 'border-amber-500', textClass: 'text-slate-900' }
+];
+
+function normalizeVehicleColor(color) {
+  if (!color) return 'branco';
+  const c = String(color).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  if (c.includes('pret') || c.includes('black')) return 'preto';
+  if (c.includes('prat') || c.includes('silver')) return 'prata';
+  if (c.includes('cinz') || c.includes('chumb') || c.includes('gray') || c.includes('grey') || c.includes('grafit')) return 'cinza';
+  if (c.includes('verm') || c.includes('red')) return 'vermelho';
+  if (c.includes('azul') || c.includes('blue')) return 'azul';
+  if (c.includes('vinh') || c.includes('bordo') || c.includes('wine')) return 'vinho';
+  if (c.includes('verd') || c.includes('green')) return 'verde';
+  if (c.includes('amar') || c.includes('dourad') || c.includes('yellow') || c.includes('gold')) return 'amarelo';
+  return 'branco';
+}
+
+function getVehicleColorName(colorId) {
+  const norm = normalizeVehicleColor(colorId);
+  const found = VEHICLE_COLORS.find(c => c.id === norm);
+  return found ? found.name : 'Branco';
+}
+
+function getVehicleColorObj(colorId) {
+  const norm = normalizeVehicleColor(colorId);
+  return VEHICLE_COLORS.find(c => c.id === norm) || VEHICLE_COLORS[0];
+}
+
+function colorizeVehicleSvg(svgStr, colorId) {
+  const norm = normalizeVehicleColor(colorId);
+  const colorDef = VEHICLE_COLORS.find(c => c.id === norm) || VEHICLE_COLORS[0];
+  const [stop0, stop1] = colorDef.stops;
+  return svgStr.replace(/<linearGradient id="paint[45]_linear[^>]*>([\s\S]*?)<\/linearGradient>/g, (match) => {
+    return match.replace(/<stop\s+stop-color="[^"]*"\/>/g, `<stop stop-color="${stop0}"/>`)
+                .replace(/<stop\s+offset="[^"]*"\s+stop-color="[^"]*"\/>/g, `<stop offset="1" stop-color="${stop1}"/>`);
+  });
 }
 
 // Mapeamento e Resolução de Renders de Veículos (estilo Uber, 99, inDrive, Bolt)
@@ -1650,18 +1715,30 @@ function getVehicleCategory(brand = '', model = '') {
   return 'sedan';
 }
 
-function getVehicleImage(vehicleOrBrand, model = '') {
+function getVehicleImage(vehicleOrBrand, model = '', color = '') {
   let brand = '';
   let mod = '';
+  let col = '';
+
   if (typeof vehicleOrBrand === 'object' && vehicleOrBrand !== null) {
     brand = vehicleOrBrand.brand || '';
     mod = vehicleOrBrand.model || '';
+    col = vehicleOrBrand.color || color || '';
   } else {
     brand = vehicleOrBrand || '';
     mod = model || '';
+    col = color || '';
   }
 
   const category = getVehicleCategory(brand, mod);
+  const normColor = normalizeVehicleColor(col);
+
+  if (typeof VEHICLE_SVG_TEMPLATES !== 'undefined' && VEHICLE_SVG_TEMPLATES && VEHICLE_SVG_TEMPLATES[category]) {
+    const rawSvg = VEHICLE_SVG_TEMPLATES[category];
+    const coloredSvg = colorizeVehicleSvg(rawSvg, normColor);
+    return `data:image/svg+xml;utf8,${encodeURIComponent(coloredSvg)}`;
+  }
+
   return `assets/vehicles/${category}.svg`;
 }
 
@@ -1855,10 +1932,10 @@ function renderRideCard(ride) {
         <div class="flex items-center gap-2.5 text-uber-iron shrink-0">
           ${ride.vehicle.hasAC ? `<span title="Ar-condicionado" class="flex items-center">${icon('ac_unit', { size: 'sm', className: 'text-uber-iron' })}</span>` : ''}
           ${ride.vehicle.hasUSB ? `<span title="Carregador USB" class="flex items-center">${icon('usb', { size: 'sm', className: 'text-uber-iron' })}</span>` : ''}
-          <div class="flex items-center gap-1.5 bg-uber-gray px-2 py-1 rounded-md border border-uber-border">
+          <div class="flex items-center gap-1.5 bg-uber-gray px-2.5 py-1 rounded-md border border-uber-border">
             <img src="${getVehicleImage(ride.vehicle)}" alt="${ride.vehicle.model}" class="w-8 h-5 object-contain shrink-0" />
-            <span title="${ride.vehicle.model}" class="text-xs text-uber-black font-semibold hidden sm:inline truncate max-w-[120px]">
-              ${ride.vehicle.model}
+            <span title="${ride.vehicle.model} • ${getVehicleColorName(ride.vehicle.color)}" class="text-xs text-uber-black font-semibold hidden sm:inline truncate max-w-[140px]">
+              ${ride.vehicle.model} • <span class="text-uber-charcoal font-normal">${getVehicleColorName(ride.vehicle.color)}</span>
             </span>
           </div>
         </div>
@@ -2240,8 +2317,13 @@ function viewRideDetails(rideId) {
             <div>
               <span class="text-[10px] font-bold text-uber-iron uppercase tracking-wider block">Veículo Confirmado</span>
               <h4 class="text-sm sm:text-base font-bold text-uber-black">${ride.vehicle.brand} ${ride.vehicle.model}</h4>
-              <div class="flex items-center gap-2 mt-1 text-xs text-uber-charcoal">
+              <div class="flex items-center gap-2 mt-1 text-xs text-uber-charcoal flex-wrap">
                 <span class="font-mono font-bold bg-uber-gray px-1.5 py-0.5 rounded border border-uber-border text-[11px]">${ride.vehicle.plate}</span>
+                <span class="text-uber-border">•</span>
+                <span class="inline-flex items-center gap-1 font-medium">
+                  <span class="w-2.5 h-2.5 rounded-xs inline-block border ${getVehicleColorObj(ride.vehicle.color).border}" style="background-color: ${getVehicleColorObj(ride.vehicle.color).hex}"></span>
+                  <span>Cor ${getVehicleColorName(ride.vehicle.color)}</span>
+                </span>
                 <span class="text-uber-border">•</span>
                 <span>Ano ${ride.vehicle.year}</span>
               </div>
@@ -3397,7 +3479,9 @@ function viewProfile() {
                   </button>
                 </div>
               ` : `
-                ${currentUser.vehicles.map(veh => `
+                ${currentUser.vehicles.map(veh => {
+                  const colorObj = getVehicleColorObj(veh.color);
+                  return `
                   <div class="p-3.5 sm:p-4 bg-uber-gray border border-uber-border rounded-xl flex flex-col gap-3 transition-all hover:border-uber-charcoal">
                     <div class="flex items-start justify-between gap-3">
                       <div class="flex items-center gap-3 min-w-0">
@@ -3419,7 +3503,16 @@ function viewProfile() {
                               </button>
                             `}
                           </div>
-                          <p class="text-[11px] text-uber-iron mt-0.5">Ano ${veh.year} • Placa ${veh.plate}</p>
+                          <div class="flex items-center gap-2 text-[11px] text-uber-iron mt-0.5 flex-wrap">
+                            <span>Ano ${veh.year}</span>
+                            <span class="text-uber-border">•</span>
+                            <span class="font-mono font-semibold">${veh.plate}</span>
+                            <span class="text-uber-border">•</span>
+                            <span class="inline-flex items-center gap-1 font-medium text-uber-charcoal">
+                              <span class="w-2 h-2 rounded-xs inline-block border ${colorObj.border}" style="background-color: ${colorObj.hex}"></span>
+                              <span>${colorObj.name}</span>
+                            </span>
+                          </div>
                         </div>
                       </div>
 
@@ -3452,8 +3545,11 @@ function viewProfile() {
                         <p class="font-mono font-bold text-uber-black mt-0.5 text-xs">${veh.plate}</p>
                       </div>
                       <div class="p-2.5 bg-white border border-uber-border rounded-lg">
-                        <span class="font-medium text-uber-iron block text-[10px] uppercase tracking-wider">RENAVAM</span>
-                        <p class="font-mono font-bold text-uber-black mt-0.5 text-xs">${veh.renavam || 'Não inf.'}</p>
+                        <span class="font-medium text-uber-iron block text-[10px] uppercase tracking-wider">Cor</span>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                          <span class="w-3 h-3 rounded-xs inline-block border ${colorObj.border}" style="background-color: ${colorObj.hex}"></span>
+                          <span class="font-bold text-uber-black text-xs truncate">${colorObj.name}</span>
+                        </div>
                       </div>
                       <div class="p-2.5 bg-white border border-uber-border rounded-lg">
                         <span class="font-medium text-uber-iron block text-[10px] uppercase tracking-wider">Ano</span>
@@ -3469,7 +3565,7 @@ function viewProfile() {
                       </div>
                     </div>
                   </div>
-                `).join('')}
+                `;}).join('')}
               `}
             </div>
           </div>
@@ -3503,6 +3599,43 @@ function handleSaveFullProfile(e) {
 // 7.1 MODAIS DE VEÍCULOS (CADASTRO, EDIÇÃO, EXCLUSÃO)
 // ==========================================
 
+function selectVehicleColor(colorId) {
+  const normColor = normalizeVehicleColor(colorId);
+  const colorInput = document.getElementById('veh-form-color');
+  if (colorInput) colorInput.value = normColor;
+
+  // Atualizar visual dos botões/swatches
+  const buttons = document.querySelectorAll('.veh-color-btn');
+  buttons.forEach(btn => {
+    const isSelected = btn.getAttribute('data-color-id') === normColor;
+    if (isSelected) {
+      btn.classList.add('ring-2', 'ring-black', 'border-black', 'bg-neutral-100');
+      btn.classList.remove('border-uber-border');
+      const checkIcon = btn.querySelector('.color-check-icon');
+      if (checkIcon) checkIcon.classList.remove('opacity-0');
+    } else {
+      btn.classList.remove('ring-2', 'ring-black', 'border-black', 'bg-neutral-100');
+      btn.classList.add('border-uber-border');
+      const checkIcon = btn.querySelector('.color-check-icon');
+      if (checkIcon) checkIcon.classList.add('opacity-0');
+    }
+  });
+
+  // Atualizar preview da imagem do carro com a nova cor
+  const brand = document.getElementById('veh-brand')?.value || '';
+  const model = document.getElementById('veh-model')?.value || '';
+  const previewImg = document.getElementById('veh-modal-preview-img');
+  const previewLegend = document.getElementById('veh-modal-preview-legend');
+  
+  if (previewImg) {
+    previewImg.src = getVehicleImage(brand, model, normColor);
+  }
+  if (previewLegend) {
+    const colorName = getVehicleColorName(normColor);
+    previewLegend.textContent = `${brand || 'Veículo'} ${model || ''} • Cor ${colorName}`;
+  }
+}
+
 function openVehicleModal(vehicleId = null) {
   const modalRoot = document.getElementById('modal-root');
   if (!modalRoot) return;
@@ -3514,6 +3647,7 @@ function openVehicleModal(vehicleId = null) {
 
   const currentYear = new Date().getFullYear();
   const selectedYear = veh ? veh.year : currentYear;
+  const selectedColor = veh ? (veh.color || 'branco') : 'branco';
 
   // Generate Year Options
   let yearOptions = '';
@@ -3535,7 +3669,7 @@ function openVehicleModal(vehicleId = null) {
             </div>
             <div>
               <h3 class="font-bold text-lg text-uber-black leading-tight">${isEdit ? 'Editar Veículo' : 'Cadastrar Novo Veículo'}</h3>
-              <p class="text-xs text-uber-iron font-normal">Informações para viagens e conformidade com a Cooperativa</p>
+              <p class="text-xs text-uber-iron font-normal">Informações para viagens e identificação visual pelos passageiros</p>
             </div>
           </div>
           <button type="button" onclick="closeModal()" class="text-uber-iron hover:text-uber-black p-1.5 rounded-lg hover:bg-uber-gray transition-colors cursor-pointer" aria-label="Fechar">
@@ -3547,11 +3681,11 @@ function openVehicleModal(vehicleId = null) {
           <!-- Real-time Vehicle Visual Preview Card (Uber Style) -->
           <div class="p-3 bg-uber-gray border border-uber-border rounded-xl flex items-center gap-3.5">
             <div class="w-20 h-13 bg-white border border-uber-border rounded-lg flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs">
-              <img id="veh-modal-preview-img" src="${getVehicleImage(brandVal, modelVal)}" alt="Prévia do Veículo" class="w-full h-full object-contain" />
+              <img id="veh-modal-preview-img" src="${getVehicleImage(brandVal, modelVal, selectedColor)}" alt="Prévia do Veículo" class="w-full h-full object-contain" />
             </div>
             <div class="min-w-0">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-uber-iron block">Render do Modelo</span>
-              <span class="text-xs font-bold text-uber-black truncate block">Atualizado automaticamente conforme o modelo</span>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-uber-iron block">Render e Cor em Tempo Real</span>
+              <span id="veh-modal-preview-legend" class="text-xs font-bold text-uber-black truncate block">${brandVal || 'Veículo'} ${modelVal || ''} • Cor ${getVehicleColorName(selectedColor)}</span>
             </div>
           </div>
 
@@ -3617,6 +3751,30 @@ function openVehicleModal(vehicleId = null) {
               class="hidden absolute top-full left-0 right-0 mt-1.5 bg-white border border-uber-border rounded-xl shadow-2xl z-[100] max-h-56 overflow-y-auto divide-y divide-gray-100"
             ></div>
             <span class="text-[10px] text-uber-iron mt-1 block">Selecione na lista de veículos do Brasil ou digite o modelo</span>
+          </div>
+
+          <!-- Cor do Veículo (Seletor Visual de Amostras Automotivas) -->
+          <div>
+            <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-2">Cor do Carro</label>
+            <input type="hidden" id="veh-form-color" value="${selectedColor}" />
+            <div class="grid grid-cols-3 sm:grid-cols-5 gap-2">
+              ${VEHICLE_COLORS.map(c => `
+                <button
+                  type="button"
+                  data-color-id="${c.id}"
+                  onclick="selectVehicleColor('${c.id}')"
+                  class="veh-color-btn p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${c.id === selectedColor ? 'ring-2 ring-black border-black bg-neutral-100' : 'border-uber-border hover:bg-neutral-50'}"
+                >
+                  <div class="w-6 h-6 rounded-md shadow-2xs flex items-center justify-center border ${c.border}" style="background-color: ${c.hex}">
+                    <div class="color-check-icon ${c.id === selectedColor ? '' : 'opacity-0'} ${c.textClass} text-xs font-bold">
+                      ${icon('check', { size: 'sm' })}
+                    </div>
+                  </div>
+                  <span class="text-[11px] font-semibold text-uber-black truncate max-w-full leading-none">${c.name.split(' ')[0]}</span>
+                </button>
+              `).join('')}
+            </div>
+            <span class="text-[10px] text-uber-iron mt-1.5 block">A cor exata será aplicada no ícone do carro para identificação pelos passageiros</span>
           </div>
 
           <!-- Ano de Fabricação/Modelo -->
@@ -3706,6 +3864,7 @@ function handleSaveVehicle(e, vehicleId = null) {
   const rawInput = document.getElementById('veh-brand-model-input').value.trim();
   let brand = document.getElementById('veh-brand').value.trim();
   let model = document.getElementById('veh-model').value.trim();
+  const color = (document.getElementById('veh-form-color')?.value || 'branco').trim().toLowerCase();
   const year = parseInt(document.getElementById('veh-form-year').value, 10);
   const hasAC = document.getElementById('veh-form-has-ac').checked;
   const hasUSB = document.getElementById('veh-form-has-usb').checked;
@@ -3729,10 +3888,10 @@ function handleSaveVehicle(e, vehicleId = null) {
   }
 
   if (vehicleId) {
-    store.updateVehicle(vehicleId, { brand, model, plate, renavam, year, hasAC, hasUSB, isPrimary });
+    store.updateVehicle(vehicleId, { brand, model, plate, renavam, year, color, hasAC, hasUSB, isPrimary });
     showToast('Veículo atualizado com sucesso!', 'success');
   } else {
-    store.addVehicle({ brand, model, plate, renavam, year, hasAC, hasUSB, isPrimary });
+    store.addVehicle({ brand, model, plate, renavam, year, color, hasAC, hasUSB, isPrimary });
     showToast('Novo veículo cadastrado com sucesso!', 'success');
   }
 
@@ -4143,18 +4302,25 @@ function viewDriverProfile(driverId) {
               <img src="${getVehicleImage(driver.vehicle)}" alt="${driver.vehicle.brand} ${driver.vehicle.model}" class="w-full h-full object-contain" />
             </div>
 
-            <div class="flex-1 w-full grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+            <div class="flex-1 w-full grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
               <div class="p-2.5 bg-uber-gray border border-uber-border rounded-lg">
                 <span class="font-semibold text-uber-iron block text-[10px] uppercase tracking-wider">Modelo</span>
                 <p class="font-bold text-uber-black mt-0.5 text-xs">${driver.vehicle.brand} ${driver.vehicle.model}</p>
               </div>
               <div class="p-2.5 bg-uber-gray border border-uber-border rounded-lg">
+                <span class="font-semibold text-uber-iron block text-[10px] uppercase tracking-wider">Cor</span>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="w-3 h-3 rounded-xs inline-block border ${getVehicleColorObj(driver.vehicle.color).border}" style="background-color: ${getVehicleColorObj(driver.vehicle.color).hex}"></span>
+                  <span class="font-bold text-uber-black text-xs truncate">${getVehicleColorName(driver.vehicle.color)}</span>
+                </div>
+              </div>
+              <div class="p-2.5 bg-uber-gray border border-uber-border rounded-lg">
                 <span class="font-semibold text-uber-iron block text-[10px] uppercase tracking-wider">Placa</span>
                 <p class="font-mono font-bold text-uber-black mt-0.5 text-xs">${driver.vehicle.plate}</p>
               </div>
-              <div class="p-2.5 bg-uber-gray border border-uber-border rounded-lg col-span-2 sm:col-span-1">
+              <div class="p-2.5 bg-uber-gray border border-uber-border rounded-lg">
                 <span class="font-semibold text-uber-iron block text-[10px] uppercase tracking-wider">Conforto</span>
-                <p class="font-bold text-uber-black mt-0.5 text-xs">${driver.vehicle.hasAC ? 'Ar-condicionado' : ''} ${driver.vehicle.hasUSB ? '• USB' : ''}</p>
+                <p class="font-bold text-uber-black mt-0.5 text-xs">${driver.vehicle.hasAC ? 'Ar' : ''} ${driver.vehicle.hasUSB ? '• USB' : ''}</p>
               </div>
             </div>
           </div>
