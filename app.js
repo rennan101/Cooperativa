@@ -1423,6 +1423,9 @@ function renderHeader() {
       </div>
     </div>
   `;
+
+  // Reaplica o estado do badge de não lidas após re-renderizar o header
+  updateNotificationBadge();
 }
 
 function renderMobileNav() {
@@ -7844,7 +7847,6 @@ function ensureHeroVideoPlays() {
 window.addEventListener('hashchange', renderApp);
 window.addEventListener('DOMContentLoaded', () => {
   loadNotifications();
-  updateNotificationBadge();
   // Semear notificações de exemplo na primeira visita (badge + dropdown)
   if (!localStorage.getItem('coop.notif.seeded')) {
     pushNotification({ title: 'Nova mensagem de Marcos Silva', body: '"Chego em 5 minutos no ponto de embarque."', icon: 'chat_bubble', href: '#/minhas-viagens', category: 'message' });
@@ -7852,6 +7854,10 @@ window.addEventListener('DOMContentLoaded', () => {
     pushNotification({ title: 'Reserva confirmada', body: 'Fortaleza → Juazeiro do Norte · 06:30', icon: 'event_available', href: '#/minhas-viagens', category: 'booking' });
     localStorage.setItem('coop.notif.seeded', '1');
   }
+  renderFooter();
+  renderApp();
+  // Atualiza o badge DEPOIS do render (o elemento notif-badge só existe após renderApp)
+  updateNotificationBadge();
   // Fecha o dropdown de notificações ao clicar fora ou pressionar Esc
   document.addEventListener('click', (e) => {
     const panel = document.getElementById('notification-panel');
@@ -7866,7 +7872,5 @@ window.addEventListener('DOMContentLoaded', () => {
       if (panel) panel.style.display = 'none';
     }
   });
-  renderFooter();
-  renderApp();
 });
 
