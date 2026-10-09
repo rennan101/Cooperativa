@@ -6275,9 +6275,64 @@ function updateAdminRatesSimulator() {
   container.innerHTML = renderAdminSimulatorHtml(total, signalVal, arrivalVal, driverVal, platformVal, earlyRefundVal, earlyRetentionVal, settings);
 }
 
-function handleSavePlatformSettings() {
+function executeSavePlatformSettings() {
   store.saveState();
+  closeModal();
   showToast('Porcentagens e taxas salvas com sucesso!', 'success');
+}
+
+function handleSavePlatformSettings() {
+  const modalRoot = document.getElementById('modal-root');
+  if (!modalRoot) return;
+
+  const settings = store.state.platformSettings || DEFAULT_PLATFORM_SETTINGS;
+
+  modalRoot.innerHTML = `
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-uber-black/80 backdrop-blur-xs animate-fade-in" onclick="if(event.target === this) closeModal()">
+      <div class="bg-white rounded-2xl border border-uber-border shadow-2xl max-w-md w-full p-5 sm:p-6 text-left space-y-4">
+        <div class="flex items-center gap-3 pb-3 border-b border-uber-border">
+          <div class="w-10 h-10 bg-uber-gray text-uber-black rounded-xl flex items-center justify-center border border-uber-border">
+            ${icon('save', { size: 'md' })}
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-uber-black">Confirmar Alterações</h3>
+            <p class="text-xs text-uber-iron font-normal">Resumo das configurações da plataforma</p>
+          </div>
+        </div>
+
+        <div class="p-3.5 bg-uber-gray rounded-xl border border-uber-border space-y-1.5 text-xs max-h-64 overflow-y-auto">
+          <p><strong>Repasse ao motorista:</strong> ${settings.driverPayoutPercent}%</p>
+          <p><strong>Taxa da cooperativa:</strong> ${settings.platformFeePercent}%</p>
+          <p><strong>Sinal na reserva (PIX):</strong> ${settings.signalPercent}%</p>
+          <p><strong>Pagamento na chegada:</strong> ${settings.payOnArrivalPercent}%</p>
+          <p><strong>Estorno (>1h):</strong> ${settings.earlyRefundPercent}%</p>
+          <p><strong>Retenção (>1h):</strong> ${settings.earlyRetentionPercent}%</p>
+          <p><strong>Estorno (<1h):</strong> ${settings.lateRefundPercent}%</p>
+          <p><strong>Retenção (<1h):</strong> ${settings.lateRetentionPercent}%</p>
+        </div>
+
+        <div class="flex gap-2.5 pt-2 border-t border-uber-border">
+          <button onclick="closeModal()" class="flex-1 h-11 font-semibold border border-uber-border bg-white text-uber-charcoal rounded-lg hover:bg-uber-gray text-xs transition-colors">
+            Cancelar
+          </button>
+          <button onclick="executeSavePlatformSettings()" class="flex-1 h-11 font-bold bg-uber-black text-white hover:bg-neutral-900 rounded-lg flex items-center justify-center gap-1.5 text-xs transition-colors">
+            ${icon('check', { size: 'sm' })}
+            <span>Confirmar e Salvar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Adiciona o listener de Esc diretamente no modalRoot se quiser,
+  // mas o evento de teclado global também resolve.
+  const escListener = (e) => {
+    if (e.key === 'Escape') {
+      closeModal();
+      document.removeEventListener('keydown', escListener);
+    }
+  };
+  document.addEventListener('keydown', escListener);
 }
 
 function handleResetPlatformSettings() {
