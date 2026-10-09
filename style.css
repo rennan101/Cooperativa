@@ -143,6 +143,26 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
   animation: slideFromLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Tooltip Hover for Desktop */
+.has-tooltip {
+  position: relative;
+}
+.has-tooltip .tooltip-box {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  transform: translateY(4px);
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .has-tooltip:hover .tooltip-box {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
 
 
 
