@@ -779,6 +779,11 @@ class AppStore {
           const primaryVeh = this.state.currentUser.vehicles.find(v => v.isPrimary) || this.state.currentUser.vehicles[0];
           this.state.currentUser.vehicle = primaryVeh;
         }
+        // Migração suave para notificações (estado salvo antes da feature)
+        if (!Array.isArray(this.state.notifications)) {
+          this.state.notifications = [];
+          this.saveState();
+        }
       } catch (e) {
         this.state = JSON.parse(JSON.stringify(INITIAL_STATE));
       }
@@ -1232,6 +1237,7 @@ function showToast(message, type = 'info') {
 // NOTIFICAÇÕES: store methods + dropdown
 // ==========================================
 function pushNotification({ title, body, icon = 'notifications', href = null, category = 'system' }) {
+  if (!Array.isArray(store.state.notifications)) store.state.notifications = [];
   const n = {
     id: 'notif-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
     category,
