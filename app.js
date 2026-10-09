@@ -461,6 +461,7 @@ const DEFAULT_PLATFORM_SETTINGS = {
 
 const INITIAL_STATE = {
   role: 'PASSENGER', // 'PASSENGER' | 'DRIVER' | 'ADMIN'
+  notifications: [], // Central de notificações (badge + dropdown no header)
   platformSettings: { ...DEFAULT_PLATFORM_SETTINGS },
   currentUser: {
     id: 'user-001',
@@ -1227,6 +1228,120 @@ function showToast(message, type = 'info') {
 // 5. LAYOUT FIXO: HEADER, NAV, FOOTER
 // ==========================================
 
+// ==========================================
+// NOTIFICAÇÕES: store methods + dropdown
+// ==========================================
+function pushNotification({ title, body, icon = 'notifications', href = null, category = 'system' }) {
+  const n = {
+    id: 'notif-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+    category,
+    title,
+    body: body || '',
+    icon,
+    href,
+    read: false,
+    createdAt: new Date().toISOString(),
+  };
+  store.state.notifications.unshift(n);
+  saveNotifications();
+  updateNotificationBadge();
+  return n;
+}
+
+function saveNotifications() {
+  try {
+    localStorage.setItem('coop.notifications', JSON.stringify(store.state.notifications));
+  } catch (e) { /* storage indisponível */ }
+}
+
+function loadNotifications() {
+  try {
+    const raw = localStorage.getItem('coop.notifications');
+    if (raw) store.state.notifications = JSON.parse(raw) || [];
+  } catch (e) { /* ignora */ }
+}
+
+function unreadCount() {
+  return store.state.notifications.filter(n => !n.read).length;
+}
+
+function updateNotificationBadge() {
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  const count = unreadCount();
+  if (count > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = count > 99 ? '99+' : count;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function toggleNotificationCenter() {
+  const panel = document.getElementById('notification-panel');
+  const isOpen = panel && panel.style.display !== 'none';
+  if (isOpen) { panel.style.display = 'none'; return; }
+  renderNotificationPanel();
+  if (panel) panel.style.display = 'block';
+}
+
+function markNotificationRead(id) {
+  const n = store.state.notifications.find(x => x.id === id);
+  if (n && !n.read) { n.read = true; saveNotifications(); }
+  updateNotificationBadge();
+  renderNotificationPanel();
+}
+
+function markAllNotificationsRead() {
+  store.state.notifications.forEach(n => { n.read = true; });
+  saveNotifications();
+  updateNotificationBadge();
+  renderNotificationPanel();
+}
+
+function timeAgo(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'agora';
+  if (m < 60) return `${m}min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
+
+function renderNotificationPanel() {
+  const panel = document.getElementById('notification-panel');
+  if (!panel) return;
+  const list = store.state.notifications;
+  const items = list.length ? list.map(n => `
+    <button onclick="markNotificationRead('${n.id}')${n.href ? `; window.location.hash='${n.href}'` : ''}"
+      class="w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-uber-gray transition-colors ${n.read ? '' : 'bg-uber-gray/60'}">
+      <span class="shrink-0 mt-0.5 w-7 h-7 rounded-full flex items-center justify-center ${n.read ? 'bg-uber-gray text-uber-iron' : 'bg-uber-black text-white'}">
+        ${icon(n.icon, { size: 'sm' })}
+      </span>
+      <span class="min-w-0 flex-1">
+        <span class="block text-xs font-bold text-uber-black truncate">${n.title}</span>
+        ${n.body ? `<span class="block text-[11px] text-uber-iron font-normal truncate">${n.body}</span>` : ''}
+      </span>
+      <span class="shrink-0 text-[10px] text-uber-slate font-semibold">${timeAgo(n.createdAt)}</span>
+    </button>
+  `).join('') : `
+    <div class="px-4 py-10 text-center">
+      ${icon('notifications_off', { size: 'lg', className: 'text-uber-border mx-auto' })}
+      <p class="mt-2 text-xs font-semibold text-uber-iron">Nenhuma notificação</p>
+    </div>
+  `;
+  panel.innerHTML = `
+    <div class="flex items-center justify-between px-4 py-3 border-b border-uber-border">
+      <span class="text-sm font-extrabold text-uber-black">Notificações</span>
+      ${unreadCount() > 0 ? `<button onclick="markAllNotificationsRead()" class="text-[11px] font-bold text-uber-iron hover:text-uber-black transition-colors">Marcar todas como lidas</button>` : ''}
+    </div>
+    <div class="max-h-96 overflow-y-auto divide-y divide-uber-border">
+      ${items}
+    </div>
+  `;
+}
+
 function renderHeader() {
   const headerRoot = document.getElementById('header-root');
   const role = store.state.role;
@@ -1281,6 +1396,21 @@ function renderHeader() {
 
       <!-- Role Switcher & Profile Quick Action -->
       <div class="flex items-center gap-3 shrink-0">
+        <!-- Notifications Bell + Badge -->
+        <div class="relative">
+          <button onclick="toggleNotificationCenter()" title="Notificações"
+            class="relative h-8 w-8 flex items-center justify-center rounded-lg hover:bg-uber-charcoal transition-colors">
+            ${icon('notifications', { size: 'sm' })}
+            <span id="notif-badge"
+              class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold leading-none"
+              style="display:none">0</span>
+          </button>
+          <!-- Notification dropdown -->
+          <div id="notification-panel"
+            class="hidden absolute right-0 top-10 w-80 sm:w-96 bg-white rounded-xl border border-uber-border shadow-2xl z-50 overflow-hidden"
+            style="display:none"></div>
+        </div>
+
         <a href="#/perfil" class="flex items-center gap-2 text-xs sm:text-sm font-semibold text-white hover:opacity-90">
           <img src="${avatar}" alt="Avatar" class="w-6 h-6 rounded-full object-cover bg-uber-gray border border-white/30" />
           <span class="hidden sm:inline">${store.state.currentUser.name.split(' ')[0]}</span>
@@ -7713,6 +7843,29 @@ function ensureHeroVideoPlays() {
 
 window.addEventListener('hashchange', renderApp);
 window.addEventListener('DOMContentLoaded', () => {
+  loadNotifications();
+  updateNotificationBadge();
+  // Semear notificações de exemplo na primeira visita (badge + dropdown)
+  if (!localStorage.getItem('coop.notif.seeded')) {
+    pushNotification({ title: 'Nova mensagem de Marcos Silva', body: '"Chego em 5 minutos no ponto de embarque."', icon: 'chat_bubble', href: '#/minhas-viagens', category: 'message' });
+    pushNotification({ title: 'Pagamento do sinal confirmado', body: 'R$ 37,50 · PIX identificado', icon: 'payments', href: '#/minhas-viagens', category: 'payment' });
+    pushNotification({ title: 'Reserva confirmada', body: 'Fortaleza → Juazeiro do Norte · 06:30', icon: 'event_available', href: '#/minhas-viagens', category: 'booking' });
+    localStorage.setItem('coop.notif.seeded', '1');
+  }
+  // Fecha o dropdown de notificações ao clicar fora ou pressionar Esc
+  document.addEventListener('click', (e) => {
+    const panel = document.getElementById('notification-panel');
+    if (!panel || panel.style.display === 'none') return;
+    if (!panel.contains(e.target) && !e.target.closest('[onclick*="toggleNotificationCenter"]')) {
+      panel.style.display = 'none';
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const panel = document.getElementById('notification-panel');
+      if (panel) panel.style.display = 'none';
+    }
+  });
   renderFooter();
   renderApp();
 });
