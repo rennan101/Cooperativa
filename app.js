@@ -822,6 +822,30 @@ class AppStore {
       this.state = JSON.parse(JSON.stringify(INITIAL_STATE));
       this.saveState();
     }
+
+    // Persistência de sessão (DEMO ONLY)
+    const sessionId = localStorage.getItem('coop.session');
+    if (sessionId) {
+      const accountsStr = localStorage.getItem('coop.accounts');
+      if (accountsStr) {
+        try {
+          const accounts = JSON.parse(accountsStr);
+          const acc = accounts.find(a => a.id === sessionId);
+          if (acc) {
+            this.state.currentUser = {
+              ...this.state.currentUser,
+              id: acc.id,
+              name: acc.name,
+              email: acc.email,
+              cpf: acc.cpf,
+              phone: acc.phone,
+              wallet: acc.wallet || { balance: 0, pending: 0, transactions: [] }
+            };
+            this.state.role = acc.role;
+          }
+        } catch (err) {}
+      }
+    }
   }
 
   saveState() {
@@ -7195,7 +7219,11 @@ function viewProfile() {
           </div>
         ` : ''}
 
-        <div class="pt-2 text-center">
+        <div class="pt-4 flex flex-col items-center gap-3">
+          <button onclick="handleLogout()" class="px-6 py-2 bg-red-50 text-red-600 font-bold text-sm border border-red-200 hover:bg-red-100 rounded-xl transition-colors flex items-center gap-2">
+            ${icon('logout', { size: 'sm' })} Sair da conta
+          </button>
+
           <button onclick="store.resetToDefaults(); showToast('Dados de demonstração restaurados.', 'info');" class="text-xs text-uber-iron hover:text-red-600 underline font-normal transition-colors">
             Restaurar Dados de Demonstração (Reset Local)
           </button>
@@ -7203,6 +7231,13 @@ function viewProfile() {
       </div>
     </div>
   `;
+}
+
+function handleLogout() {
+  clearLocalSession();
+  store.state.role = 'PASSENGER';
+  store.saveState();
+  window.location.hash = '#/login';
 }
 
 function handleSaveFullProfile(e) {
@@ -8329,6 +8364,31 @@ function viewLogin() {
   `;
 }
 
+// --------------------------------------------------
+// AUTH HELPERS (DEMO ONLY - LOCALSTORAGE)
+// --------------------------------------------------
+function getLocalAccounts() {
+  const data = localStorage.getItem('coop.accounts');
+  return data ? JSON.parse(data) : [];
+}
+
+function saveLocalAccounts(accounts) {
+  localStorage.setItem('coop.accounts', JSON.stringify(accounts));
+}
+
+function getLocalSession() {
+  return localStorage.getItem('coop.session');
+}
+
+function setLocalSession(id) {
+  localStorage.setItem('coop.session', id);
+}
+
+function clearLocalSession() {
+  localStorage.removeItem('coop.session');
+}
+
+
 function handleLoginSubmit(e) {
   e.preventDefault();
   const emailInput = document.getElementById('login-email');
@@ -8368,8 +8428,39 @@ function handleLoginSubmit(e) {
 
   if (hasError) return;
 
-  // Sem backend real
-  showToast('Login será habilitado em breve.', 'info');
+  const accounts = getLocalAccounts();
+  const acc = accounts.find(a => a.email === email);
+
+  if (!acc) {
+    if (emailErr) { emailErr.textContent = 'Conta não encontrada.'; emailErr.classList.remove('hidden'); }
+    if (emailInput) emailInput.classList.add('border-red-500');
+    return;
+  }
+
+  // DEMO ONLY: sem backend
+  if (acc.password !== pass) {
+    if (passErr) { passErr.textContent = 'Senha incorreta.'; passErr.classList.remove('hidden'); }
+    if (passInput) passInput.classList.add('border-red-500');
+    return;
+  }
+
+  setLocalSession(acc.id);
+  store.state.currentUser = {
+    id: acc.id,
+    name: acc.name,
+    email: acc.email,
+    cpf: acc.cpf,
+    phone: acc.phone,
+    avatarUrl: DEFAULT_BLANK_AVATAR,
+    wallet: acc.wallet || { balance: 0, pending: 0, transactions: [] },
+    vehicles: [],
+    vehicle: null
+  };
+  store.state.role = acc.role;
+  store.saveState();
+  
+  showToast('Bem-vindo de volta!', 'success');
+  window.location.hash = '#/';
 }
 
 // --------------------------------------------------
@@ -8563,8 +8654,47 @@ function handleRegisterPassengerSubmit(e) {
 
   if (hasError) return;
 
-  // Sem backend real
-  showToast('Cadastro de passageiro será habilitado em breve.', 'info');
+  const accounts = getLocalAccounts();
+  if (accounts.some(a => a.email === email)) {
+    if (emailErr) { emailErr.textContent = 'Email já cadastrado.'; emailErr.classList.remove('hidden'); }
+    if (emailInput) emailInput.classList.add('border-red-500');
+    return;
+  }
+
+  const newId = 'user-' + Date.now();
+  // DEMO ONLY: sem backend
+  const newAccount = {
+    id: newId,
+    name,
+    cpf,
+    email,
+    phone: phoneDigits,
+    password: pass,
+    role: 'PASSENGER',
+    wallet: { balance: 0, pending: 0, transactions: [] },
+    createdAt: new Date().toISOString()
+  };
+
+  accounts.push(newAccount);
+  saveLocalAccounts(accounts);
+  setLocalSession(newId);
+
+  store.state.currentUser = {
+    id: newAccount.id,
+    name: newAccount.name,
+    email: newAccount.email,
+    cpf: newAccount.cpf,
+    phone: newAccount.phone,
+    avatarUrl: DEFAULT_BLANK_AVATAR,
+    wallet: newAccount.wallet,
+    vehicles: [],
+    vehicle: null
+  };
+  store.state.role = newAccount.role;
+  store.saveState();
+
+  showToast('Boas-vindas à Cooperativa!', 'success');
+  window.location.hash = '#/';
 }
 
 // --------------------------------------------------
@@ -8864,8 +8994,52 @@ function handleRegisterDriverSubmit(e) {
 
   if (hasError) return;
 
-  // Sem backend real
-  showToast('Documentos recebidos para análise! A ativação será liberada em breve.', 'success');
+  const accounts = getLocalAccounts();
+  if (accounts.some(a => a.email === email)) {
+    if (emailErr) { emailErr.textContent = 'Email já cadastrado.'; emailErr.classList.remove('hidden'); }
+    if (emailInput) emailInput.classList.add('border-red-500');
+    return;
+  }
+
+  const newId = 'driver-' + Date.now();
+  // DEMO ONLY: sem backend
+  const newAccount = {
+    id: newId,
+    name,
+    cpf,
+    email,
+    phone: phoneDigits,
+    password: pass,
+    role: 'DRIVER',
+    verified: false,
+    documents: {
+      cnh: authDriverUploads.cnh,
+      antecedentes: authDriverUploads.criminalRecord
+    },
+    wallet: { balance: 0, pending: 0, transactions: [] },
+    createdAt: new Date().toISOString()
+  };
+
+  accounts.push(newAccount);
+  saveLocalAccounts(accounts);
+  setLocalSession(newId);
+
+  store.state.currentUser = {
+    id: newAccount.id,
+    name: newAccount.name,
+    email: newAccount.email,
+    cpf: newAccount.cpf,
+    phone: newAccount.phone,
+    avatarUrl: DEFAULT_BLANK_AVATAR,
+    wallet: newAccount.wallet,
+    vehicles: [],
+    vehicle: null
+  };
+  store.state.role = newAccount.role;
+  store.saveState();
+
+  showToast('Boas-vindas à Cooperativa!', 'success');
+  window.location.hash = '#/';
 }
 
 function handleDriverDocUpload(event, docType) {
