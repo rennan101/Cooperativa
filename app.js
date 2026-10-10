@@ -1059,6 +1059,17 @@ class AppStore {
     ride.availableSeats = Math.max(0, ride.availableSeats - seats);
     this.state.bookings.unshift(newBooking);
     this.saveState();
+
+    pushNotification({
+      title: 'Nova solicitação de reserva',
+      body: `O passageiro ${this.state.currentUser.name} solicitou ${seats} vaga(s).`,
+      icon: 'person_add',
+      href: '#/minhas-viagens',
+      category: 'booking',
+      role: 'DRIVER',
+      userId: ride.driverId
+    });
+
     return newBooking;
   }
 
@@ -1092,6 +1103,29 @@ class AppStore {
     const ride = this.state.rides.find(r => r.id === booking.rideId);
     if (ride) {
       ride.availableSeats += booking.seatsBooked;
+
+      // Notifications for Cancellation
+      if (this.state.role === 'PASSENGER' || this.state.currentUser.id === booking.passengerId) {
+        pushNotification({
+          title: 'Reserva cancelada',
+          body: `O passageiro ${booking.passengerName} cancelou a reserva.`,
+          icon: 'event_busy',
+          href: '#/minhas-viagens',
+          category: 'booking',
+          role: 'DRIVER',
+          userId: ride.driverId
+        });
+      } else {
+        pushNotification({
+          title: 'Viagem cancelada',
+          body: `O motorista cancelou a viagem para ${ride.destinationCity}.`,
+          icon: 'event_busy',
+          href: '#/minhas-viagens',
+          category: 'booking',
+          role: 'PASSENGER',
+          userId: booking.passengerId
+        });
+      }
     }
 
     const settings = this.state.platformSettings || DEFAULT_PLATFORM_SETTINGS;
@@ -9249,8 +9283,27 @@ function handleRegisterDriverSubmit(e) {
     vehicles: newAccount.vehicles ?? [],
     vehicle: newAccount.vehicles?.[0] ?? null
   };
+
+  store.state.driverRequests.push({
+    id: 'req-' + Date.now(),
+    userId: newId,
+    userName: name,
+    userEmail: email,
+    status: 'PENDING',
+    date: new Date().toISOString()
+  });
+
   store.state.role = newAccount.role;
   store.saveState();
+
+  pushNotification({
+    title: 'Novo motorista aguardando verificação',
+    body: `O motorista ${name} enviou os documentos e aguarda análise.`,
+    icon: 'how_to_reg',
+    href: '#/admin',
+    category: 'system',
+    role: 'ADMIN'
+  });
 
   showToast('Boas-vindas à Cooperativa!', 'success');
   redirectAfterAuth();
