@@ -1452,8 +1452,7 @@ function renderHeader() {
   const currentPath = window.location.hash.slice(1) || '/';
   const isSearchActive = currentPath === '/' || currentPath === '/buscar';
   const avatar = store.state.currentUser.avatarUrl || DEFAULT_BLANK_AVATAR;
-  const session = typeof getLocalSession === 'function' ? getLocalSession() : localStorage.getItem('coop.session');
-  const isLoggedIn = !!session;
+  const userLoggedIn = isLoggedIn();
 
   headerRoot.innerHTML = `
     <div class="max-w-4xl mx-auto px-2.5 xs:px-3 sm:px-4 h-16 flex items-center justify-between gap-1.5 xs:gap-2 sm:gap-4">
@@ -1510,7 +1509,7 @@ function renderHeader() {
             style="display:none"></div>
         </div>
 
-        ${isLoggedIn ? `
+        ${userLoggedIn ? `
           <a href="#/perfil" class="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold text-white hover:opacity-90" aria-label="Ver perfil">
             <img src="${avatar}" alt="Avatar" class="w-6 h-6 rounded-md object-cover bg-uber-gray border border-white/30" />
             <span class="hidden xs:inline max-w-[80px] sm:max-w-none truncate">${store.state.currentUser.name ? store.state.currentUser.name.split(' ')[0] : 'Perfil'}</span>
@@ -3069,6 +3068,8 @@ function viewRideDetails(rideId) {
 }
 
 function handleStartBooking(rideId) {
+  const rotaAtual = `#/viagem/${rideId}`;
+  if (requireAuth(rotaAtual)) return;
   if (store.state.role === 'DRIVER') {
     showToast('Motoristas não podem reservar viagens. Mude para o perfil de Passageiro.', 'warning');
     return;
@@ -7708,6 +7709,7 @@ function handleConfirmDeleteVehicle(vehicleId) {
 // ==========================================
 
 function openPixModal(booking) {
+  if (booking && requireAuth(`#/viagem/${booking.rideId}`)) return;
   const modalRoot = document.getElementById('modal-root');
   modalRoot.innerHTML = `
     <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-uber-black/80 backdrop-blur-xs animate-fade-in">
@@ -7792,8 +7794,13 @@ function copyPixCode() {
 }
 
 function confirmPixPaymentModal(bookingId) {
-  closeModal();
   const b = store.state.bookings.find(x => x.id === bookingId);
+  const rotaAtual = b ? `#/viagem/${b.rideId}` : (window.location.hash || '#/');
+  if (requireAuth(rotaAtual)) {
+    closeModal();
+    return;
+  }
+  closeModal();
   if (b) {
     const ride = store.state.rides.find(r => r.id === b.rideId);
     pushNotification({
@@ -8474,6 +8481,37 @@ function clearLocalSession() {
   localStorage.removeItem('coop.session');
 }
 
+function isLoggedIn() {
+  return !!localStorage.getItem('coop.session');
+}
+
+function requireAuth(pathPretendido) {
+  if (!isLoggedIn()) {
+    const target = pathPretendido || (typeof window !== 'undefined' && window.location && window.location.hash ? window.location.hash : null);
+    if (target && target !== '#/login' && target !== '/login') {
+      localStorage.setItem('coop.auth.redirect', target);
+    }
+    if (typeof window !== 'undefined' && window.location) {
+      window.location.hash = '#/login';
+    }
+    return true;
+  }
+  return false;
+}
+
+function redirectAfterAuth() {
+  const redirectTarget = localStorage.getItem('coop.auth.redirect');
+  if (redirectTarget && redirectTarget !== '#/login' && redirectTarget !== '/login') {
+    localStorage.removeItem('coop.auth.redirect');
+    window.location.hash = redirectTarget.startsWith('#')
+      ? redirectTarget
+      : ('#' + (redirectTarget.startsWith('/') ? redirectTarget : '/' + redirectTarget));
+  } else {
+    localStorage.removeItem('coop.auth.redirect');
+    window.location.hash = '#/';
+  }
+}
+
 
 function handleLoginSubmit(e) {
   e.preventDefault();
@@ -8550,7 +8588,7 @@ function handleLoginSubmit(e) {
   store.saveState();
   
   showToast('Bem-vindo de volta!', 'success');
-  window.location.hash = '#/';
+  redirectAfterAuth();
 }
 
 // --------------------------------------------------
@@ -8802,7 +8840,7 @@ function handleRegisterPassengerSubmit(e) {
   store.saveState();
 
   showToast('Boas-vindas à Cooperativa!', 'success');
-  window.location.hash = '#/';
+  redirectAfterAuth();
 }
 
 // --------------------------------------------------
@@ -9165,7 +9203,7 @@ function handleRegisterDriverSubmit(e) {
   store.saveState();
 
   showToast('Boas-vindas à Cooperativa!', 'success');
-  window.location.hash = '#/';
+  redirectAfterAuth();
 }
 
 function handleDriverDocUpload(event, docType) {
@@ -9238,6 +9276,12 @@ function renderApp() {
   renderHeader();
   renderMobileNav();
 
+  // Rotas protegidas (Spec_Rotas_Protegidas): se deslogado, redireciona para login
+  const normalizedPath = path.startsWith('/') ? path : '/' + path;
+  if (['/minhas-viagens', '/perfil', '/admin', '/publicar'].includes(normalizedPath)) {
+    if (requireAuth(path)) return;
+  }
+
   if (path === '/' || path === '') {
     appRoot.innerHTML = viewHome();
   } else if (path === '/login') {
@@ -9255,8 +9299,10 @@ function renderApp() {
     const id = path.replace('/viagem/', '');
     appRoot.innerHTML = viewRideDetails(id);
   } else if (path === '/minhas-viagens') {
+    if (requireAuth(path)) return;
     appRoot.innerHTML = viewMyTrips();
   } else if (path === '/publicar') {
+    if (requireAuth(path)) return;
     appRoot.innerHTML = viewPublishRide();
   } else if (path.startsWith('/chat/')) {
     const rideId = path.replace('/chat/', '');
@@ -9265,8 +9311,10 @@ function renderApp() {
     const rideId = path.replace('/avaliar/', '');
     appRoot.innerHTML = viewRating(rideId);
   } else if (path === '/admin') {
+    if (requireAuth(path)) return;
     appRoot.innerHTML = viewAdmin();
   } else if (path === '/perfil') {
+    if (requireAuth(path)) return;
     appRoot.innerHTML = viewProfile();
   } else {
     appRoot.innerHTML = viewHome();
