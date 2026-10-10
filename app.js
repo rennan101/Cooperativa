@@ -1452,18 +1452,17 @@ function renderHeader() {
   const currentPath = window.location.hash.slice(1) || '/';
   const isSearchActive = currentPath === '/' || currentPath === '/buscar';
   const avatar = store.state.currentUser.avatarUrl || DEFAULT_BLANK_AVATAR;
+  const session = typeof getLocalSession === 'function' ? getLocalSession() : localStorage.getItem('coop.session');
+  const isLoggedIn = !!session;
 
   headerRoot.innerHTML = `
-    <div class="max-w-4xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2 sm:gap-4">
+    <div class="max-w-4xl mx-auto px-2.5 xs:px-3 sm:px-4 h-16 flex items-center justify-between gap-1.5 xs:gap-2 sm:gap-4">
       <!-- Logo -->
-      <a href="#/" class="flex items-center gap-2 sm:gap-2.5 shrink-0 group" aria-label="Página inicial Cooperativa">
-        <div class="bg-white text-uber-black w-8 h-8 rounded-lg flex items-center justify-center font-bold transition-transform group-hover:scale-105">
+      <a href="#/" class="flex items-center gap-1.5 xs:gap-2 sm:gap-2.5 shrink-0 group" aria-label="Página inicial Cooperativa">
+        <div class="bg-white text-uber-black w-7 h-7 xs:w-8 xs:h-8 rounded-lg flex items-center justify-center font-bold transition-transform group-hover:scale-105">
           ${icon('directions_car', { size: 'sm' })}
         </div>
-        <div class="flex flex-col text-left">
-          <span class="font-extrabold text-base sm:text-lg tracking-tight text-white leading-none">Cooperativa</span>
-          <span class="text-[9px] sm:text-[10px] font-semibold text-uber-iron uppercase tracking-wider">Nordeste</span>
-        </div>
+        <span class="font-extrabold text-sm xs:text-base sm:text-lg tracking-tight text-white leading-none">Cooperativa</span>
       </a>
 
       <!-- Desktop Nav -->
@@ -1495,7 +1494,7 @@ function renderHeader() {
       </nav>
 
       <!-- Role Switcher & Profile Quick Action -->
-      <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+      <div class="flex items-center gap-1 xs:gap-1.5 sm:gap-3 shrink-0">
         <!-- Notifications Bell + Badge -->
         <div class="relative">
           <button onclick="toggleNotificationCenter()" title="Notificações" aria-label="Abrir central de notificações"
@@ -1507,14 +1506,21 @@ function renderHeader() {
           </button>
           <!-- Notification dropdown -->
           <div id="notification-panel"
-            class="hidden fixed sm:absolute top-16 sm:top-10 left-3 right-3 sm:left-auto sm:right-0 max-w-sm sm:max-w-none sm:w-96 mx-auto sm:mx-0 bg-white rounded-xl border border-uber-border shadow-2xl z-50 overflow-hidden"
+            class="hidden fixed sm:absolute top-16 sm:top-10 left-2 right-2 xs:left-3 xs:right-3 sm:left-auto sm:right-0 max-w-sm sm:max-w-none sm:w-96 mx-auto sm:mx-0 bg-white rounded-xl border border-uber-border shadow-2xl z-50 overflow-hidden"
             style="display:none"></div>
         </div>
 
-        <a href="#/perfil" class="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold text-white hover:opacity-90" aria-label="Ver perfil">
-          <img src="${avatar}" alt="Avatar" class="w-6 h-6 rounded-md object-cover bg-uber-gray border border-white/30" />
-          <span class="hidden sm:inline">${store.state.currentUser.name.split(' ')[0]}</span>
-        </a>
+        ${isLoggedIn ? `
+          <a href="#/perfil" class="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold text-white hover:opacity-90" aria-label="Ver perfil">
+            <img src="${avatar}" alt="Avatar" class="w-6 h-6 rounded-md object-cover bg-uber-gray border border-white/30" />
+            <span class="hidden xs:inline max-w-[80px] sm:max-w-none truncate">${store.state.currentUser.name ? store.state.currentUser.name.split(' ')[0] : 'Perfil'}</span>
+          </a>
+        ` : `
+          <a href="#/login" class="h-8 px-2.5 xs:px-3 flex items-center gap-1 xs:gap-1.5 text-xs sm:text-sm font-semibold text-white bg-uber-charcoal hover:bg-uber-iron/30 rounded-lg transition-colors active:scale-95" aria-label="Entrar na conta">
+            ${icon('login', { size: 'sm', className: 'text-uber-slate' })}
+            <span>Entrar</span>
+          </a>
+        `}
 
         <button onclick="toggleRole()" title="Alternar Perfil para Teste" aria-label="Alternar perfil"
           class="h-8 w-8 flex items-center justify-center text-white bg-uber-charcoal hover:bg-uber-iron/30 rounded-lg transition-colors active:scale-95">
@@ -6841,13 +6847,16 @@ function handleReleaseCustodyAdmin(id, amount) {
 }
 
 // View: Profile (Edição completa: Foto, Google, Nome, CPF, Senha, PIX)
-let isPasswordVisible = false;
+function togglePasswordVisibility(inputId = 'profile-password', btnEl = null) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const isPass = input.type === 'password';
+  input.type = isPass ? 'text' : 'password';
 
-function togglePasswordVisibility() {
-  isPasswordVisible = !isPasswordVisible;
-  const input = document.getElementById('profile-password');
-  if (input) {
-    input.type = isPasswordVisible ? 'text' : 'password';
+  const btn = btnEl || input.parentElement?.querySelector('button[type="button"]');
+  const iconSpan = btn?.querySelector('.material-symbols-outlined') || btn;
+  if (iconSpan && iconSpan.classList && iconSpan.classList.contains('material-symbols-outlined')) {
+    iconSpan.textContent = isPass ? 'visibility_off' : 'visibility';
   }
 }
 
@@ -8258,14 +8267,11 @@ function setLoginRole(role) {
 
 function renderAuthLogo() {
   return `
-    <div class="flex items-center justify-center gap-2.5 mb-6">
-      <div class="bg-uber-black text-white w-9 h-9 rounded-lg flex items-center justify-center font-bold">
-        ${icon('directions_car', { size: 'sm' })}
+    <div class="flex flex-col items-center justify-center mb-6">
+      <div class="bg-uber-black text-white w-16 h-16 rounded-2xl flex items-center justify-center font-bold shadow-md transition-transform hover:scale-105">
+        ${icon('directions_car', { size: 'lg' })}
       </div>
-      <div class="flex flex-col text-left">
-        <span class="font-extrabold text-xl tracking-tight text-uber-black leading-none">Cooperativa</span>
-        <span class="text-[10px] font-semibold text-uber-iron uppercase tracking-wider">Nordeste</span>
-      </div>
+      <span class="font-extrabold text-2xl tracking-tight text-uber-black mt-3">Cooperativa</span>
     </div>
   `;
 }
@@ -8292,6 +8298,77 @@ function renderGoogleAuthButton(label = 'Continuar com Google') {
 // --------------------------------------------------
 // 8.5.1 VIEW: LOGIN (Passageiro / Motorista)
 // --------------------------------------------------
+function openForgotPasswordModal() {
+  const modalRoot = document.getElementById('modal-root');
+  if (!modalRoot) return;
+
+  const currentEmail = (document.getElementById('login-email')?.value || '').trim();
+
+  modalRoot.innerHTML = `
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-uber-black/80 backdrop-blur-xs animate-fade-in">
+      <div class="bg-white rounded-2xl border border-uber-border shadow-2xl max-w-md w-full p-6 text-left">
+        <div class="flex items-center justify-between pb-3 border-b border-uber-border">
+          <div class="flex items-center gap-2.5">
+            <div class="bg-uber-gray text-uber-black p-2 rounded-lg flex items-center justify-center">
+              ${icon('lock_reset', { size: 'sm' })}
+            </div>
+            <div>
+              <h3 class="font-bold text-base text-uber-black leading-tight">Recuperar Senha</h3>
+              <p class="text-xs text-uber-iron">Cooperativa</p>
+            </div>
+          </div>
+          <button type="button" onclick="closeModal()" class="text-uber-iron hover:text-uber-black p-1.5 rounded-lg hover:bg-uber-gray transition-colors" aria-label="Fechar">
+            ${icon('close', { size: 'sm' })}
+          </button>
+        </div>
+
+        <form onsubmit="handleForgotPasswordSubmit(event)" novalidate class="mt-4 flex flex-col gap-4">
+          <p class="text-xs text-uber-charcoal leading-relaxed">
+            Informe o e-mail cadastrado na sua conta para enviarmos o link de recuperação de senha.
+          </p>
+
+          <div>
+            <label for="forgot-email" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">E-mail</label>
+            <input type="email" id="forgot-email" value="${currentEmail}" placeholder="seu.email@exemplo.com" autocomplete="email" autofocus
+              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <p id="forgot-email-error" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <div class="flex items-center gap-2 pt-2">
+            <button type="button" onclick="closeModal()"
+              class="flex-1 py-2.5 px-4 rounded-xl border border-uber-border text-xs sm:text-sm font-semibold text-uber-charcoal hover:bg-uber-gray transition-colors">
+              Cancelar
+            </button>
+            <button type="submit"
+              class="flex-1 py-2.5 px-4 rounded-xl bg-uber-black text-white text-xs sm:text-sm font-bold hover:bg-neutral-900 transition-colors">
+              Enviar link
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+function handleForgotPasswordSubmit(e) {
+  e.preventDefault();
+  const emailInput = document.getElementById('forgot-email');
+  const emailErr = document.getElementById('forgot-email-error');
+  const email = (emailInput?.value || '').trim();
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (emailErr) {
+      emailErr.textContent = 'Informe um endereço de e-mail válido.';
+      emailErr.classList.remove('hidden');
+    }
+    if (emailInput) emailInput.classList.add('border-red-500');
+    return;
+  }
+
+  closeModal();
+  showToast(`Link de recuperacao enviado para ${email} (demo)`, 'info');
+}
+
 function viewLogin() {
   const isDriver = authLoginRole === 'DRIVER';
   return `
@@ -8328,13 +8405,20 @@ function viewLogin() {
           <div>
             <div class="flex items-center justify-between mb-1.5">
               <label for="login-password" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide">Senha</label>
-              <button type="button" onclick="showToast('Recuperação de senha estará disponível em breve.', 'info')"
+              <button type="button" onclick="openForgotPasswordModal()"
                 class="text-xs font-semibold text-uber-iron hover:text-uber-black transition-colors">
                 Esqueci minha senha
               </button>
             </div>
-            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
-              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <div class="relative">
+              <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+                class="uber-input pr-10 w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+              <button type="button" onclick="togglePasswordVisibility('login-password', this)"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-uber-slate hover:text-uber-black p-1 transition-colors"
+                aria-label="Alternar visibilidade da senha" tabindex="-1">
+                ${icon('visibility', { size: 'sm' })}
+              </button>
+            </div>
             <p id="login-password-error" class="text-xs text-red-500 mt-1 hidden"></p>
           </div>
 
@@ -8517,16 +8601,30 @@ function viewRegisterPassenger() {
           <!-- Senha -->
           <div>
             <label for="reg-pass-password" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">Senha</label>
-            <input type="password" id="reg-pass-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"
-              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <div class="relative">
+              <input type="password" id="reg-pass-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"
+                class="uber-input pr-10 w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+              <button type="button" onclick="togglePasswordVisibility('reg-pass-password', this)"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-uber-slate hover:text-uber-black p-1 transition-colors"
+                aria-label="Alternar visibilidade da senha" tabindex="-1">
+                ${icon('visibility', { size: 'sm' })}
+              </button>
+            </div>
             <p id="reg-pass-password-error" class="text-xs text-red-500 mt-1 hidden"></p>
           </div>
 
           <!-- Confirmar Senha -->
           <div>
             <label for="reg-pass-password-confirm" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">Confirmar senha</label>
-            <input type="password" id="reg-pass-password-confirm" placeholder="Repita sua senha" autocomplete="new-password"
-              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <div class="relative">
+              <input type="password" id="reg-pass-password-confirm" placeholder="Repita sua senha" autocomplete="new-password"
+                class="uber-input pr-10 w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+              <button type="button" onclick="togglePasswordVisibility('reg-pass-password-confirm', this)"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-uber-slate hover:text-uber-black p-1 transition-colors"
+                aria-label="Alternar visibilidade da senha" tabindex="-1">
+                ${icon('visibility', { size: 'sm' })}
+              </button>
+            </div>
             <p id="reg-pass-password-confirm-error" class="text-xs text-red-500 mt-1 hidden"></p>
           </div>
 
@@ -8819,15 +8917,29 @@ function viewRegisterDriver() {
 
           <div>
             <label for="reg-drv-password" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">Senha</label>
-            <input type="password" id="reg-drv-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"
-              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <div class="relative">
+              <input type="password" id="reg-drv-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"
+                class="uber-input pr-10 w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+              <button type="button" onclick="togglePasswordVisibility('reg-drv-password', this)"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-uber-slate hover:text-uber-black p-1 transition-colors"
+                aria-label="Alternar visibilidade da senha" tabindex="-1">
+                ${icon('visibility', { size: 'sm' })}
+              </button>
+            </div>
             <p id="reg-drv-password-error" class="text-xs text-red-500 mt-1 hidden"></p>
           </div>
 
           <div>
             <label for="reg-drv-password-confirm" class="block text-xs font-bold text-uber-charcoal uppercase tracking-wide mb-1.5">Confirmar senha</label>
-            <input type="password" id="reg-drv-password-confirm" placeholder="Repita sua senha" autocomplete="new-password"
-              class="uber-input w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+            <div class="relative">
+              <input type="password" id="reg-drv-password-confirm" placeholder="Repita sua senha" autocomplete="new-password"
+                class="uber-input pr-10 w-full px-4 py-3 rounded-xl border border-uber-border bg-white text-uber-black placeholder-uber-slate focus:border-uber-black focus:ring-1 focus:ring-uber-black outline-none transition-colors text-sm" />
+              <button type="button" onclick="togglePasswordVisibility('reg-drv-password-confirm', this)"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-uber-slate hover:text-uber-black p-1 transition-colors"
+                aria-label="Alternar visibilidade da senha" tabindex="-1">
+                ${icon('visibility', { size: 'sm' })}
+              </button>
+            </div>
             <p id="reg-drv-password-confirm-error" class="text-xs text-red-500 mt-1 hidden"></p>
           </div>
 
