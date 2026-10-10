@@ -1492,10 +1492,6 @@ function renderHeader() {
           </a>
         ` : ''}
 
-        <a href="#/perfil" class="h-full flex items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-semibold transition-colors border-b-2 ${currentPath === '/perfil' ? 'text-white border-white' : 'text-uber-slate border-transparent hover:text-white'}">
-          <img src="${avatar}" alt="Avatar" class="w-5 h-5 rounded-md object-cover bg-uber-gray border border-white/20" />
-          <span>Perfil</span>
-        </a>
       </nav>
 
       <!-- Role Switcher & Profile Quick Action -->
