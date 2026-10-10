@@ -8278,7 +8278,6 @@ function renderAuthLogo() {
       <div class="bg-uber-black text-white w-16 h-16 rounded-2xl flex items-center justify-center font-bold shadow-md transition-transform hover:scale-105">
         ${icon('directions_car', { size: 'lg' })}
       </div>
-      <span class="font-extrabold text-2xl tracking-tight text-uber-black mt-3">Cooperativa</span>
     </div>
   `;
 }
