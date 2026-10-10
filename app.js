@@ -8536,7 +8536,7 @@ function viewRegisterPassenger() {
               <input type="checkbox" id="reg-pass-terms"
                 class="mt-0.5 w-4 h-4 rounded-md border-uber-border text-uber-black focus:ring-uber-black focus:ring-offset-0" />
               <span class="text-xs text-uber-charcoal leading-relaxed">
-                Li e aceito os <a href="javascript:void(0)" onclick="showToast('Termos de Uso em desenvolvimento.', 'info')" class="underline font-bold text-uber-black">Termos de Uso</a> e a <a href="javascript:void(0)" onclick="showToast('Política de Privacidade em desenvolvimento.', 'info')" class="underline font-bold text-uber-black">Política de Privacidade</a> da Cooperativa.
+                Li e aceito os <a href="termos-de-uso.html" target="_blank" class="underline font-bold text-uber-black">Termos de Uso</a> e a <a href="politica-de-privacidade.html" target="_blank" class="underline font-bold text-uber-black">Política de Privacidade</a> da Cooperativa.
               </span>
             </label>
             <p id="reg-pass-terms-error" class="text-xs text-red-500 mt-1 hidden"></p>
