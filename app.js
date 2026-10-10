@@ -504,6 +504,7 @@ const INITIAL_STATE = {
         plate: 'BRA-2E19',
         renavam: '98765432101',
         year: 2023,
+        seats: 4,
         hasAC: true,
         hasUSB: true,
         noSmoking: true,
@@ -521,6 +522,7 @@ const INITIAL_STATE = {
       color: 'prata',
       renavam: '98765432101',
       year: 2023,
+      seats: 4,
       hasAC: true,
       hasUSB: true,
       noSmoking: true,
@@ -815,6 +817,16 @@ class AppStore {
           };
           this.saveState();
         }
+
+        // Migração suave: garantir que veículos tenham campo seats (passageiros)
+        if (Array.isArray(this.state.currentUser?.vehicles)) {
+          this.state.currentUser.vehicles.forEach(v => {
+            if (v && typeof v.seats !== 'number') v.seats = 4;
+          });
+        }
+        if (this.state.currentUser?.vehicle && typeof this.state.currentUser.vehicle.seats !== 'number') {
+          this.state.currentUser.vehicle.seats = 4;
+        }
       } catch (e) {
         this.state = JSON.parse(JSON.stringify(INITIAL_STATE));
       }
@@ -895,7 +907,7 @@ class AppStore {
     renderHeader();
   }
 
-  addVehicle({ brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, luggagePolicy, isPrimary }) {
+  addVehicle({ brand, model, plate, renavam, year, seats, color, hasAC, hasUSB, noSmoking, noPets, luggagePolicy, isPrimary }) {
     if (!Array.isArray(this.state.currentUser.vehicles)) {
       this.state.currentUser.vehicles = [];
     }
@@ -915,6 +927,7 @@ class AppStore {
       plate: (plate || '').toUpperCase().trim(),
       renavam: (renavam || '').trim(),
       year: parseInt(year, 10) || new Date().getFullYear(),
+      seats: Math.max(1, Math.min(8, parseInt(seats, 10) || 4)),
       hasAC: !!hasAC,
       hasUSB: !!hasUSB,
       noSmoking: !!noSmoking,
@@ -931,7 +944,7 @@ class AppStore {
     renderApp();
   }
 
-  updateVehicle(vehicleId, { brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, luggagePolicy, isPrimary }) {
+  updateVehicle(vehicleId, { brand, model, plate, renavam, year, seats, color, hasAC, hasUSB, noSmoking, noPets, luggagePolicy, isPrimary }) {
     if (!Array.isArray(this.state.currentUser.vehicles)) return;
     const idx = this.state.currentUser.vehicles.findIndex(v => v.id === vehicleId);
     if (idx === -1) return;
@@ -948,6 +961,7 @@ class AppStore {
       plate: (plate || '').toUpperCase().trim(),
       renavam: (renavam || '').trim(),
       year: parseInt(year, 10) || this.state.currentUser.vehicles[idx].year,
+      seats: seats !== undefined ? Math.max(1, Math.min(8, parseInt(seats, 10) || 4)) : (this.state.currentUser.vehicles[idx].seats || 4),
       hasAC: !!hasAC,
       hasUSB: !!hasUSB,
       noSmoking: !!noSmoking,
@@ -1210,12 +1224,16 @@ const store = new AppStore();
 const SoundEngine = {
   ctx: null,
   init() {
-    if (!this.ctx) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) this.ctx = new AudioCtx();
-    }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    try {
+      if (!this.ctx && typeof window !== 'undefined') {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) this.ctx = new AudioCtx();
+      }
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+    } catch (e) {
+      // Silencioso se o contexto de áudio não estiver disponível
     }
   },
   play(type = 'info') {
@@ -1229,53 +1247,56 @@ const SoundEngine = {
       gain.connect(this.ctx.destination);
 
       if (type === 'success') {
-        // Acorde maior brilhante e cristalino (C5 - E5 - G5)
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(523.25, now);
-        osc.frequency.setValueAtTime(659.25, now + 0.07);
-        osc.frequency.setValueAtTime(783.99, now + 0.14);
-        gain.gain.setValueAtTime(0.18, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
-        osc.start(now);
-        osc.stop(now + 0.42);
-      } else if (type === 'message') {
-        // Pop duplo sutil de conversa / chat
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(840, now);
-        osc.frequency.setValueAtTime(1180, now + 0.05);
-        gain.gain.setValueAtTime(0.16, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-        osc.start(now);
-        osc.stop(now + 0.2);
-      } else if (type === 'warning') {
-        // Tom descendente suave de cautela/aviso
+        // Dois tons ascendentes curtos e suaves (D5 -> G5)
         osc.type = 'sine';
         osc.frequency.setValueAtTime(587.33, now);
-        osc.frequency.setValueAtTime(440, now + 0.1);
-        gain.gain.setValueAtTime(0.18, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+        osc.frequency.setValueAtTime(783.99, now + 0.075);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.09, now + 0.015);
+        gain.gain.linearRampToValueAtTime(0.04, now + 0.07);
+        gain.gain.linearRampToValueAtTime(0.09, now + 0.085);
+        gain.gain.linearRampToValueAtTime(0.0001, now + 0.18);
         osc.start(now);
-        osc.stop(now + 0.32);
+        osc.stop(now + 0.19);
+      } else if (type === 'message') {
+        // Único tom curto e límpido (A5)
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.08, now + 0.012);
+        gain.gain.linearRampToValueAtTime(0.0001, now + 0.10);
+        osc.start(now);
+        osc.stop(now + 0.11);
+      } else if (type === 'warning') {
+        // Tom médio suave e contido (Bb4)
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(466.16, now);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.08, now + 0.015);
+        gain.gain.linearRampToValueAtTime(0.0001, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.13);
       } else if (type === 'error') {
-        // Tom de alerta suave grave
-        osc.type = 'sawtooth';
+        // Tom grave curto e contido (sem sawtooth, sine suave)
+        osc.type = 'sine';
         osc.frequency.setValueAtTime(220, now);
-        osc.frequency.setValueAtTime(170, now + 0.09);
-        gain.gain.setValueAtTime(0.14, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.09, now + 0.015);
+        gain.gain.linearRampToValueAtTime(0.0001, now + 0.13);
         osc.start(now);
-        osc.stop(now + 0.28);
+        osc.stop(now + 0.14);
       } else {
-        // Pop limpo para informações e ações gerais
+        // Clique / tono muito curto e neutro para informações e ações
         osc.type = 'sine';
         osc.frequency.setValueAtTime(620, now);
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.07, now + 0.008);
+        gain.gain.linearRampToValueAtTime(0.0001, now + 0.045);
         osc.start(now);
-        osc.stop(now + 0.15);
+        osc.stop(now + 0.05);
       }
     } catch (e) {
-      // Ignora silenciosamente se o áudio não estiver inicializado
+      // Ignora silenciosamente se o áudio não puder ser reproduzido
     }
   }
 };
@@ -5361,17 +5382,18 @@ function viewPublishRide() {
 
           <!-- Vagas Disponíveis -->
           <div>
-            <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Vagas Disponíveis para Passageiros</label>
+            <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1.5">Vagas Disponíveis (passageiros, sem contar o motorista)</label>
             <select
               id="pub-seats"
               class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-uber-black font-bold text-sm rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none cursor-pointer transition-all"
             >
-              ${[1, 2, 3, 4, 5, 6, 7].map(num => `
+              ${[1, 2, 3, 4, 5, 6, 7, 8].map(num => `
                 <option value="${num}" ${num === publishWizardState.seats ? 'selected' : ''}>
-                  ${num} ${num === 1 ? 'passageiro' : 'passageiros'}
+                  ${num} ${num === 1 ? 'passageiro (1 vaga)' : `${num} passageiros (${num} vagas)`}
                 </option>
               `).join('')}
             </select>
+            <span class="text-[10px] text-uber-iron mt-1 block">Informe quantas pessoas você vai levar (não conte você mesmo).</span>
           </div>
 
           <!-- Precificação Inteligente por Distância (Uber & BlaBlaCar Style) -->
@@ -5510,17 +5532,18 @@ function viewPublishRide() {
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
               <div class="min-w-0 w-full">
-                <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Vagas na Volta</label>
+                <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Vagas na Volta (passageiros, sem contar o motorista)</label>
                 <select
                   id="pub-return-seats"
                   class="w-full max-w-full box-border bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-uber-black font-bold text-sm rounded-xl h-12 px-3.5 sm:px-4 focus:outline-none cursor-pointer transition-all"
                 >
-                  ${[1, 2, 3, 4, 5, 6, 7].map(num => `
+                  ${[1, 2, 3, 4, 5, 6, 7, 8].map(num => `
                     <option value="${num}" ${num === publishWizardState.returnSeats ? 'selected' : ''}>
-                      ${num} ${num === 1 ? 'passageiro' : 'passageiros'}
+                      ${num} ${num === 1 ? 'passageiro (1 vaga)' : `${num} passageiros (${num} vagas)`}
                     </option>
                   `).join('')}
                 </select>
+                <span class="text-[10px] text-uber-iron mt-1 block">Apenas passageiros no retorno.</span>
               </div>
               <div class="min-w-0 w-full">
                 <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Valor na Volta (R$)</label>
@@ -7166,6 +7189,8 @@ function viewProfile() {
                             <span class="text-uber-border">•</span>
                             <span class="font-mono font-semibold">${veh.plate}</span>
                             <span class="text-uber-border">•</span>
+                            <span>${veh.seats || 4} vagas passageiros</span>
+                            <span class="text-uber-border">•</span>
                             <span class="inline-flex items-center gap-1 font-medium text-uber-charcoal">
                               <span class="w-2 h-2 rounded-xs inline-block border ${colorObj.border}" style="background-color: ${colorObj.hex}"></span>
                               <span>${colorObj.name}</span>
@@ -7318,6 +7343,7 @@ function openVehicleModal(vehicleId = null) {
 
   const currentYear = new Date().getFullYear();
   const selectedYear = veh ? veh.year : currentYear;
+  const selectedSeats = veh ? (Number(veh.seats) || 4) : 4;
   const selectedColor = veh ? (veh.color || 'branco') : 'branco';
 
   // Generate Year Options
@@ -7448,17 +7474,35 @@ function openVehicleModal(vehicleId = null) {
             <span class="text-[10px] text-uber-iron mt-1.5 block">A cor exata será aplicada no ícone do carro para identificação pelos passageiros</span>
           </div>
 
-          <!-- Ano de Fabricação/Modelo -->
-          <div>
-            <label class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Ano de Fabricação / Modelo</label>
-            <select
-              id="veh-form-year"
-              required
-              class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
-            >
-              ${yearOptions}
-            </select>
+          <!-- Ano de Fabricação e Vagas para Passageiros -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="veh-form-year" class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Ano de Fabricação / Modelo</label>
+              <select
+                id="veh-form-year"
+                required
+                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+              >
+                ${yearOptions}
+              </select>
+            </div>
+
+            <div>
+              <label for="veh-form-seats" class="block text-xs font-bold text-uber-black uppercase tracking-wider mb-1">Vagas (passageiros, sem contar o motorista)</label>
+              <select
+                id="veh-form-seats"
+                required
+                class="w-full bg-uber-gray border border-transparent focus:border-uber-black focus:bg-white text-sm font-semibold rounded-xl h-12 px-4 focus:outline-none cursor-pointer transition-all"
+              >
+                ${[1, 2, 3, 4, 5, 6, 7, 8].map(n => `
+                  <option value="${n}" ${n === selectedSeats ? 'selected' : ''}>
+                    ${n} ${n === 1 ? 'passageiro (1 vaga)' : `${n} passageiros (${n} vagas)`}
+                  </option>
+                `).join('')}
+              </select>
+            </div>
           </div>
+          <span class="text-[10px] text-uber-iron -mt-2 block leading-relaxed">Informe a quantidade de pessoas que cabem no veículo sem contar você (apenas passageiros). Exemplo: carro de 5 lugares = 4 vagas.</span>
 
           <!-- Recursos e Regras do Carro (Checkboxes) -->
           <!-- Recursos e Regras do Carro (Checkboxes) -->
@@ -7612,6 +7656,8 @@ function handleSaveVehicle(e, vehicleId = null) {
   let model = document.getElementById('veh-model').value.trim();
   const color = (document.getElementById('veh-form-color')?.value || 'branco').trim().toLowerCase();
   const year = parseInt(document.getElementById('veh-form-year').value, 10);
+  const seatsInput = document.getElementById('veh-form-seats');
+  const seats = seatsInput ? parseInt(seatsInput.value, 10) : 4;
   const hasAC = document.getElementById('veh-form-has-ac').checked;
   const hasUSB = document.getElementById('veh-form-has-usb').checked;
   const noSmoking = document.getElementById('veh-form-no-smoking').checked;
@@ -7631,6 +7677,11 @@ function handleSaveVehicle(e, vehicleId = null) {
     return;
   }
 
+  if (isNaN(seats) || seats < 1 || seats > 8) {
+    showToast('Informe uma quantidade válida de vagas (entre 1 e 8 passageiros).', 'error');
+    return;
+  }
+
   // Se o usuário digitou diretamente sem clicar no dropdown
   if (!brand || !model || `${brand} ${model}`.toLowerCase() !== rawInput.toLowerCase()) {
     const parts = rawInput.split(' ');
@@ -7639,10 +7690,10 @@ function handleSaveVehicle(e, vehicleId = null) {
   }
 
   if (vehicleId) {
-    store.updateVehicle(vehicleId, { brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, luggagePolicy, isPrimary });
+    store.updateVehicle(vehicleId, { brand, model, plate, renavam, year, seats, color, hasAC, hasUSB, noSmoking, noPets, luggagePolicy, isPrimary });
     showToast('Veículo atualizado com sucesso!', 'success');
   } else {
-    store.addVehicle({ brand, model, plate, renavam, year, color, hasAC, hasUSB, noSmoking, noPets, luggagePolicy, isPrimary });
+    store.addVehicle({ brand, model, plate, renavam, year, seats, color, hasAC, hasUSB, noSmoking, noPets, luggagePolicy, isPrimary });
     showToast('Novo veículo cadastrado com sucesso!', 'success');
   }
 
