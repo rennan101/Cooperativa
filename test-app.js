@@ -123,6 +123,43 @@ test('todas as funções de notificação estão definidas', () => {
   }
 });
 
+// ---- 4b. Regressão: perfil com conta demo não quebra -------------------------
+console.log('\n[4b] Perfil com conta demo');
+// Simula um DOM mínimo para viewProfile conseguir montar o HTML.
+function makeDomEnv() {
+  const els = {};
+  const mkEl = () => ({
+    _html: '', innerHTML: '', style: {}, children: [],
+    set innerHTML(v) { this._html = v; }, get innerHTML() { return this._html; },
+    getBoundingClientRect: () => ({ x:0, y:0, width:0, height:0 }),
+    addEventListener: () => {}, querySelector: () => null, querySelectorAll: () => [],
+    contains: () => false, classList: { add(){}, remove(){}, toggle(){} },
+    scrollIntoView(){}, click(){}, setAttribute(){}, getAttribute(){ return null; },
+  });
+  return {
+    getElementById: (id) => (els[id] = els[id] || mkEl()),
+    querySelector: () => null, querySelectorAll: () => [],
+    addEventListener: () => {},
+  };
+}
+
+test('viewProfile() renderiza com conta demo mínima (sem toFixed em undefined)', () => {
+  const { sandbox } = loadAppStore(null);
+  // simular uma conta demo pobre (só o que o cadastro gravaria)
+  sandbox.store.state.currentUser = {
+    id: 'user-demo', name: 'Ana Teste', cpf: '111.444.777-35',
+    email: 'ana@demo.com', phone: '(85) 98888-7777',
+  };
+  sandbox.document = makeDomEnv();
+  sandbox.window = sandbox.window || {};
+  sandbox.window.location = { hash: '#/perfil' };
+  let html;
+  try { html = sandbox.viewProfile(); }
+  catch (e) { throw new Error('viewProfile lançou com conta demo: ' + e.message); }
+  assert(typeof html === 'string' && html.length > 100, 'viewProfile deveria retornar HTML');
+  assert(/Carteira|R\$/.test(html), 'viewProfile deveria conter a carteira/saldo');
+});
+
 // ---- 5. Header contém o sino + badge ----------------------------------------
 console.log('\n[5] Header');
 test('renderHeader injeta sino, badge e painel de notificações', () => {

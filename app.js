@@ -839,7 +839,13 @@ class AppStore {
               email: acc.email,
               cpf: acc.cpf,
               phone: acc.phone,
-              wallet: acc.wallet || { balance: 0, pending: 0, transactions: [] }
+              avatarUrl: acc.avatarUrl ?? DEFAULT_BLANK_AVATAR,
+              rating: acc.rating ?? 5.0,
+              totalTrips: acc.totalTrips ?? 0,
+              wallet: acc.wallet ?? { balance: 0, pending: 0, transactions: [] },
+              documents: acc.documents ?? { cnh: null, antecedentes: null },
+              vehicles: acc.vehicles ?? [],
+              vehicle: acc.vehicles?.[0] ?? null
             };
             this.state.role = acc.role;
           }
@@ -7000,9 +7006,9 @@ function viewProfile() {
                 
                 <div class="flex items-center gap-1 text-xs text-uber-black font-semibold mt-1 justify-center sm:justify-start">
                   ${icon('star', { size: 'sm', fill: true, className: 'star-gold' })}
-                  <span>${currentUser.rating.toFixed(1)} de reputação</span>
+                  <span>${(currentUser.rating ?? 5.0).toFixed(1)} de reputação</span>
                   <span class="text-uber-border">•</span>
-                  <span class="text-uber-charcoal font-normal">${currentUser.totalTrips} viagens concluídas</span>
+                  <span class="text-uber-charcoal font-normal">${currentUser.totalTrips ?? 0} viagens concluídas</span>
                 </div>
               </div>
             </div>
@@ -8446,15 +8452,19 @@ function handleLoginSubmit(e) {
 
   setLocalSession(acc.id);
   store.state.currentUser = {
+    ...store.state.currentUser,
     id: acc.id,
     name: acc.name,
     email: acc.email,
     cpf: acc.cpf,
     phone: acc.phone,
-    avatarUrl: DEFAULT_BLANK_AVATAR,
-    wallet: acc.wallet || { balance: 0, pending: 0, transactions: [] },
-    vehicles: [],
-    vehicle: null
+    avatarUrl: acc.avatarUrl ?? DEFAULT_BLANK_AVATAR,
+    rating: acc.rating ?? 5.0,
+    totalTrips: acc.totalTrips ?? 0,
+    wallet: acc.wallet ?? { balance: 0, pending: 0, transactions: [] },
+    documents: acc.documents ?? { cnh: null, antecedentes: null },
+    vehicles: acc.vehicles ?? [],
+    vehicle: acc.vehicles?.[0] ?? null
   };
   store.state.role = acc.role;
   store.saveState();
@@ -8680,15 +8690,19 @@ function handleRegisterPassengerSubmit(e) {
   setLocalSession(newId);
 
   store.state.currentUser = {
+    ...store.state.currentUser,
     id: newAccount.id,
     name: newAccount.name,
     email: newAccount.email,
     cpf: newAccount.cpf,
     phone: newAccount.phone,
-    avatarUrl: DEFAULT_BLANK_AVATAR,
-    wallet: newAccount.wallet,
-    vehicles: [],
-    vehicle: null
+    avatarUrl: newAccount.avatarUrl ?? DEFAULT_BLANK_AVATAR,
+    rating: newAccount.rating ?? 5.0,
+    totalTrips: newAccount.totalTrips ?? 0,
+    wallet: newAccount.wallet ?? { balance: 0, pending: 0, transactions: [] },
+    documents: newAccount.documents ?? { cnh: null, antecedentes: null },
+    vehicles: newAccount.vehicles ?? [],
+    vehicle: newAccount.vehicles?.[0] ?? null
   };
   store.state.role = newAccount.role;
   store.saveState();
@@ -9025,15 +9039,19 @@ function handleRegisterDriverSubmit(e) {
   setLocalSession(newId);
 
   store.state.currentUser = {
+    ...store.state.currentUser,
     id: newAccount.id,
     name: newAccount.name,
     email: newAccount.email,
     cpf: newAccount.cpf,
     phone: newAccount.phone,
-    avatarUrl: DEFAULT_BLANK_AVATAR,
-    wallet: newAccount.wallet,
-    vehicles: [],
-    vehicle: null
+    avatarUrl: newAccount.avatarUrl ?? DEFAULT_BLANK_AVATAR,
+    rating: newAccount.rating ?? 5.0,
+    totalTrips: newAccount.totalTrips ?? 0,
+    wallet: newAccount.wallet ?? { balance: 0, pending: 0, transactions: [] },
+    documents: newAccount.documents ?? { cnh: null, antecedentes: null },
+    vehicles: newAccount.vehicles ?? [],
+    vehicle: newAccount.vehicles?.[0] ?? null
   };
   store.state.role = newAccount.role;
   store.saveState();
